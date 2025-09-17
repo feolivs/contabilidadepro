@@ -51,12 +51,22 @@ GOOGLE_OAUTH_CLIENT_SECRET=your-google-client-secret
 
 ## 🌐 Deploy na Vercel
 
-### **Método 1: Deploy Automático (Recomendado)**
+### **✅ STATUS: Repositório GitHub Pronto!**
+- ✅ Código commitado e enviado para GitHub
+- ✅ Edge Functions deployadas no Supabase
+- ✅ Secrets configurados no Supabase
+- ✅ Arquivos de configuração criados
+
+### **🚀 PRÓXIMOS PASSOS - Deploy na Vercel**
+
+#### **Método 1: Deploy Automático (Recomendado)**
 
 1. **Conectar Repositório**
    - Acesse [vercel.com](https://vercel.com)
+   - Faça login com sua conta GitHub
    - Clique em "New Project"
-   - Importe o repositório `feolivs/contabilidadepro`
+   - Selecione "Import Git Repository"
+   - Escolha o repositório `feolivs/contabilidadepro`
 
 2. **Configurar Projeto**
    ```json
@@ -71,15 +81,40 @@ GOOGLE_OAUTH_CLIENT_SECRET=your-google-client-secret
    ```
 
 3. **Adicionar Variáveis de Ambiente**
-   - Vá em Settings → Environment Variables
-   - Adicione todas as variáveis listadas acima
-   - Marque para todos os ambientes (Production, Preview, Development)
+
+   **⚠️ IMPORTANTE: As chaves reais estão no arquivo `contador-solo-ai/.env.local`**
+
+   **📋 Copie os valores do arquivo `.env.local` para as seguintes variáveis:**
+
+   ```bash
+   # Supabase (Obrigatórias)
+   NEXT_PUBLIC_SUPABASE_URL=https://selnwgpyjctpjzdrfrey.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=[COPIAR_DO_ARQUIVO_.env.local]
+   SUPABASE_SERVICE_ROLE_KEY=[COPIAR_DO_ARQUIVO_.env.local]
+
+   # OpenAI (Obrigatória)
+   OPENAI_API_KEY=[COPIAR_DO_ARQUIVO_.env.local]
+
+   # Aplicação
+   NEXT_PUBLIC_APP_URL=https://contabilidadepro.vercel.app
+   NODE_ENV=production
+
+   # OCR APIs (Opcionais - para funcionalidades avançadas)
+   GOOGLE_VISION_API_KEY=[COPIAR_DO_ARQUIVO_.env.local]
+   CLOUDFLARE_AI_TOKEN=[COPIAR_DO_ARQUIVO_.env.local]
+
+   # Sentry (Opcional - para monitoramento)
+   NEXT_PUBLIC_SENTRY_DSN=[COPIAR_DO_ARQUIVO_.env.local]
+   SENTRY_ORG=[COPIAR_DO_ARQUIVO_.env.local]
+   SENTRY_PROJECT=[COPIAR_DO_ARQUIVO_.env.local]
+   ```
 
 4. **Deploy**
    - Clique em "Deploy"
    - Aguarde o build completar (~3-5 minutos)
+   - ✅ Seu app estará disponível em: `https://contabilidadepro.vercel.app`
 
-### **Método 2: Deploy via CLI**
+#### **Método 2: Deploy via CLI**
 
 ```bash
 # Instalar Vercel CLI
@@ -88,11 +123,13 @@ npm i -g vercel
 # Login na Vercel
 vercel login
 
-# Deploy
+# Navegar para o diretório do app
 cd contador-solo-ai
+
+# Deploy de desenvolvimento
 vercel
 
-# Para produção
+# Deploy para produção
 vercel --prod
 ```
 

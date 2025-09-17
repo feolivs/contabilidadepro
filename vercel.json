@@ -6,7 +6,6 @@
   "devCommand": "cd contador-solo-ai && npm run dev",
   "installCommand": "cd contador-solo-ai && npm ci",
   "outputDirectory": "contador-solo-ai/.next",
-  "rootDirectory": "contador-solo-ai",
   "regions": ["gru1"],
   "functions": {
     "contador-solo-ai/src/app/api/**/*.ts": {

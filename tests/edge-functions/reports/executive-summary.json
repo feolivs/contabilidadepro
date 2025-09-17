@@ -1,0 +1,123 @@
+{
+  "timestamp": "2025-09-15T20:58:45.356Z",
+  "totalFunctions": 55,
+  "operationalFunctions": [
+    "consultar-cnpj",
+    "intelligent-document-processor",
+    "consultar-cnpj-optimized"
+  ],
+  "partialFunctions": [],
+  "failedFunctions": [
+    "test-simple",
+    "calculate-das-service",
+    "simulador-tributario",
+    "pdf-ocr-service",
+    "assistente-contabil-ia"
+  ],
+  "notTestedFunctions": [
+    "ai-contextual-assistant",
+    "ai-semantic-service",
+    "ai-service",
+    "analytics-service",
+    "assistant-dashboard-data",
+    "assistente-contabil-ia-enhanced",
+    "automation-monitor",
+    "automation-service",
+    "backup-service",
+    "bank-reconciliation-engine",
+    "calculo-das-automatico",
+    "classify-document",
+    "cleanup-notifications",
+    "company-service",
+    "compliance-monitor",
+    "consulta-ia",
+    "create-test-user",
+    "crm-service",
+    "dashboard-analytics",
+    "document-service",
+    "export-analytics-report",
+    "fiscal-automation-engine",
+    "generate-accounting-entries",
+    "generate-analytics-reports",
+    "generate-das-service",
+    "generate-notifications",
+    "gerar-guia-pdf",
+    "gerar-relatorio-pdf",
+    "get-fiscal-obligations",
+    "health-service",
+    "intelligent-alerts-scheduler",
+    "intelligent-notifications",
+    "mcp-context-provider",
+    "metrics-dashboard",
+    "nfe-processor",
+    "notification-service",
+    "ofx-parser-multi-bank",
+    "performance-monitor",
+    "portal-service",
+    "process-document",
+    "process-document-service",
+    "process-ocr",
+    "queue-document-processor",
+    "simple-analytics",
+    "unified-api-gateway",
+    "unified-document-processor",
+    "webhook-dispatcher"
+  ],
+  "overallStats": {
+    "tested": 8,
+    "operational": 3,
+    "partial": 0,
+    "failed": 5,
+    "notTested": 47
+  },
+  "recommendations": [
+    {
+      "type": "success",
+      "priority": "low",
+      "title": "Funções Operacionais Confirmadas",
+      "description": "3 edge functions estão funcionando corretamente e podem ser utilizadas em produção.",
+      "actions": [
+        "Manter monitoramento contínuo",
+        "Documentar casos de uso"
+      ]
+    },
+    {
+      "type": "warning",
+      "priority": "medium",
+      "title": "Muitas Funções Não Testadas",
+      "description": "47 edge functions não foram testadas.",
+      "actions": [
+        "Expandir cobertura de testes",
+        "Priorizar testes para funções críticas",
+        "Implementar testes automatizados no CI/CD"
+      ]
+    }
+  ],
+  "criticalIssues": [
+    {
+      "type": "critical",
+      "title": "Funções Críticas com Falhas",
+      "description": "Funções essenciais do sistema não estão funcionando: calculate-das-service",
+      "impact": "Alto - Pode afetar operações principais do sistema",
+      "actions": [
+        "Investigar logs de erro imediatamente",
+        "Verificar configurações de ambiente",
+        "Testar em ambiente de desenvolvimento",
+        "Considerar rollback se necessário"
+      ]
+    },
+    {
+      "type": "critical",
+      "title": "Taxa de Sucesso Baixa",
+      "description": "Apenas 37.5% das funções testadas estão operacionais.",
+      "impact": "Alto - Indica problemas sistêmicos",
+      "actions": [
+        "Revisar arquitetura das edge functions",
+        "Verificar configurações do Supabase",
+        "Analisar logs de sistema",
+        "Considerar refatoração de funções problemáticas"
+      ]
+    }
+  ],
+  "performanceMetrics": {}
+}

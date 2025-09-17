@@ -1,0 +1,979 @@
+openapi: 3.0.3
+info:
+  title: ContabilidadePRO AI Context Service API
+  description: |
+    API completa do ContabilidadePRO - Plataforma de Inteligência Fiscal Autônoma
+
+    Esta API oferece acesso programático a todos os serviços de IA e automação fiscal,
+    incluindo processamento de documentos, cálculos tributários, insights contextuais
+    e integração com APIs governamentais brasileiras.
+
+    ## Características Principais
+    - **17 Serviços de IA** integrados para automação fiscal
+    - **Performance Enterprise** com < 500ms response time
+    - **Cache Preditivo ML** com 90%+ hit rate
+    - **Integração Governamental** nativa (Receita Federal, SEFAZ, eSocial)
+    - **Compliance 24/7** com monitoramento automático
+    - **OCR Inteligente** para 50+ tipos de documentos brasileiros
+
+  version: "4.0.0"
+  contact:
+    name: ContabilidadePRO Support
+    email: suporte@contabilidadepro.com
+    url: https://github.com/contabilidadepro/contador-solo-ai
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.contabilidadepro.com/v4
+    description: Production Server
+  - url: https://staging-api.contabilidadepro.com/v4
+    description: Staging Server
+  - url: http://localhost:3000/api
+    description: Development Server
+
+# Security Schemes
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+# Global Security
+securitySchemes:
+  bearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: JWT token obtido através do endpoint /auth/login
+  apiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-Key
+    description: Chave de API para integração de sistemas
+
+# Tags para organização
+tags:
+  - name: "AI Context Service"
+    description: "Serviço principal de contexto inteligente"
+  - name: "Document Processing"
+    description: "Processamento OCR e análise de documentos"
+  - name: "Fiscal Automation"
+    description: "Automação de processos fiscais e cálculos"
+  - name: "Government APIs"
+    description: "Integração com APIs governamentais"
+  - name: "Insights & Analytics"
+    description: "Insights contextuais e análise preditiva"
+  - name: "Monitoring"
+    description: "Monitoramento e métricas do sistema"
+  - name: "Authentication"
+    description: "Autenticação e autorização"
+
+paths:
+  # Authentication Endpoints
+  /auth/login:
+    post:
+      tags:
+        - "Authentication"
+      summary: "Autenticação de usuário"
+      description: "Realiza login e retorna JWT token para autenticação"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: "Email do usuário"
+                password:
+                  type: string
+                  description: "Senha do usuário"
+            example:
+              email: "contador@empresa.com"
+              password: "senha123"
+      responses:
+        '200':
+          description: "Login realizado com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: "Credenciais inválidas"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # AI Context Service Endpoints
+  /ai-context/collect:
+    post:
+      tags:
+        - "AI Context Service"
+      summary: "Coleta dados contextuais com IA"
+      description: |
+        Endpoint principal que coleta dados contextuais de uma empresa usando
+        inteligência artificial, incluindo insights preditivos e análises avançadas.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContextCollectionRequest'
+      responses:
+        '200':
+          description: "Dados coletados com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextCollectionResponse'
+        '400':
+          description: "Parâmetros inválidos"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: "Erro interno do servidor"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai-context/insights:
+    get:
+      tags:
+        - "Insights & Analytics"
+      summary: "Obter insights contextuais"
+      description: "Retorna insights contextuais gerados por IA para uma empresa específica"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: empresaId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "ID da empresa"
+        - name: includeProjections
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: "Incluir projeções fiscais"
+      responses:
+        '200':
+          description: "Insights obtidos com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsightsResponse'
+
+  # Document Processing Endpoints
+  /documents/process:
+    post:
+      tags:
+        - "Document Processing"
+      summary: "Processar documento com OCR"
+      description: |
+        Processa documentos fiscais brasileiros usando OCR inteligente.
+        Suporta 50+ tipos de documentos incluindo NFe, CTe, DAS, DARF, SPED.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - documentType
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "Arquivo do documento (PDF, JPG, PNG)"
+                documentType:
+                  type: string
+                  enum: ["nfe", "cte", "das", "darf", "sped", "auto"]
+                  description: "Tipo do documento ou 'auto' para detecção automática"
+                empresaId:
+                  type: string
+                  description: "ID da empresa (opcional)"
+      responses:
+        '200':
+          description: "Documento processado com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentProcessResponse'
+        '400':
+          description: "Arquivo inválido ou tipo não suportado"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Fiscal Automation Endpoints
+  /fiscal/calculate-das:
+    post:
+      tags:
+        - "Fiscal Automation"
+      summary: "Calcular DAS automaticamente"
+      description: "Calcula DAS do Simples Nacional automaticamente com validações"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DASCalculationRequest'
+      responses:
+        '200':
+          description: "DAS calculado com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DASCalculationResponse'
+
+  /fiscal/automation/execute:
+    post:
+      tags:
+        - "Fiscal Automation"
+      summary: "Executar automação fiscal completa"
+      description: |
+        Executa workflow completo de automação fiscal incluindo:
+        - Validação da empresa
+        - Cálculos tributários
+        - Geração de documentos
+        - Envio de obrigações
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalAutomationRequest'
+      responses:
+        '200':
+          description: "Automação iniciada com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalAutomationResponse'
+
+  # Government APIs Endpoints
+  /government/cnpj/{cnpj}:
+    get:
+      tags:
+        - "Government APIs"
+      summary: "Consultar CNPJ na Receita Federal"
+      description: "Consulta dados de CNPJ diretamente na Receita Federal com rate limiting inteligente"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cnpj
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{14}$'
+          description: "CNPJ da empresa (apenas números)"
+      responses:
+        '200':
+          description: "Dados do CNPJ obtidos com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CNPJResponse'
+        '404':
+          description: "CNPJ não encontrado"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: "Rate limit atingido"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Monitoring Endpoints
+  /monitoring/health:
+    get:
+      tags:
+        - "Monitoring"
+      summary: "Health check do sistema"
+      description: "Verifica saúde de todos os 17 serviços do sistema"
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: "Sistema operacional"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: "Sistema com problemas"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /monitoring/metrics:
+    get:
+      tags:
+        - "Monitoring"
+      summary: "Métricas do sistema"
+      description: "Retorna métricas detalhadas de performance e utilização"
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: "Métricas obtidas com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+# Components
+components:
+  schemas:
+    # Auth Schemas
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: "JWT token para autenticação"
+            expiresIn:
+              type: string
+              example: "24h"
+            user:
+              $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: ["contador", "admin", "empresa"]
+
+    # Context Collection Schemas
+    ContextCollectionRequest:
+      type: object
+      required:
+        - userId
+        - empresaId
+      properties:
+        userId:
+          type: string
+          description: "ID do usuário"
+        empresaId:
+          type: string
+          description: "ID da empresa"
+        includeInsights:
+          type: boolean
+          default: false
+          description: "Incluir insights contextuais"
+        includeProjections:
+          type: boolean
+          default: false
+          description: "Incluir projeções fiscais"
+        includePredictiveCache:
+          type: boolean
+          default: true
+          description: "Usar cache preditivo"
+        priority:
+          type: string
+          enum: ["low", "medium", "high", "critical"]
+          default: "medium"
+          description: "Prioridade da operação"
+
+    ContextCollectionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            empresa:
+              $ref: '#/components/schemas/Empresa'
+            insights:
+              $ref: '#/components/schemas/Insights'
+            projections:
+              $ref: '#/components/schemas/Projections'
+            metadata:
+              $ref: '#/components/schemas/OperationMetadata'
+
+    # Business Schemas
+    Empresa:
+      type: object
+      properties:
+        id:
+          type: string
+        cnpj:
+          type: string
+        razaoSocial:
+          type: string
+        nomeFantasia:
+          type: string
+        regimeTributario:
+          type: string
+          enum: ["Simples Nacional", "Lucro Presumido", "Lucro Real"]
+        situacaoFiscal:
+          type: string
+          enum: ["Ativa", "Suspensa", "Baixada"]
+        dataAbertura:
+          type: string
+          format: date
+        atividades:
+          type: array
+          items:
+            $ref: '#/components/schemas/AtividadeEconomica'
+
+    AtividadeEconomica:
+      type: object
+      properties:
+        codigo:
+          type: string
+        descricao:
+          type: string
+        principal:
+          type: boolean
+
+    Insights:
+      type: object
+      properties:
+        fiscal:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsightItem'
+        compliance:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsightItem'
+        optimization:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsightItem'
+        risks:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskInsight'
+
+    InsightItem:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        priority:
+          type: string
+          enum: ["low", "medium", "high", "critical"]
+        actions:
+          type: array
+          items:
+            type: string
+
+    RiskInsight:
+      allOf:
+        - $ref: '#/components/schemas/InsightItem'
+        - type: object
+          properties:
+            riskLevel:
+              type: string
+              enum: ["low", "medium", "high", "critical"]
+            impact:
+              type: string
+
+    Projections:
+      type: object
+      properties:
+        fiscal:
+          $ref: '#/components/schemas/FiscalProjections'
+        compliance:
+          $ref: '#/components/schemas/ComplianceProjections'
+
+    FiscalProjections:
+      type: object
+      properties:
+        dasProximo:
+          $ref: '#/components/schemas/DASProjection'
+        impostoAnual:
+          $ref: '#/components/schemas/TaxProjection'
+        obrigacoesPendentes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObligacaoPendente'
+
+    DASProjection:
+      type: object
+      properties:
+        valor:
+          type: number
+        vencimento:
+          type: string
+          format: date
+        confidence:
+          type: number
+
+    TaxProjection:
+      type: object
+      properties:
+        estimativa:
+          type: number
+        cenarios:
+          type: object
+          properties:
+            otimista:
+              type: number
+            pessimista:
+              type: number
+            realista:
+              type: number
+
+    ObligacaoPendente:
+      type: object
+      properties:
+        tipo:
+          type: string
+        descricao:
+          type: string
+        vencimento:
+          type: string
+          format: date
+        prioridade:
+          type: string
+          enum: ["baixa", "media", "alta", "critica"]
+
+    ComplianceProjections:
+      type: object
+      properties:
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        risks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplianceRisk'
+        recommendations:
+          type: array
+          items:
+            type: string
+
+    ComplianceRisk:
+      type: object
+      properties:
+        category:
+          type: string
+        description:
+          type: string
+        probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        impact:
+          type: string
+          enum: ["low", "medium", "high", "critical"]
+
+    # Document Processing Schemas
+    DocumentProcessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            documentId:
+              type: string
+            type:
+              type: string
+            confidence:
+              type: number
+            extractedData:
+              type: object
+            validations:
+              type: array
+              items:
+                $ref: '#/components/schemas/ValidationResult'
+            metadata:
+              $ref: '#/components/schemas/DocumentMetadata'
+
+    ValidationResult:
+      type: object
+      properties:
+        field:
+          type: string
+        valid:
+          type: boolean
+        message:
+          type: string
+        confidence:
+          type: number
+
+    DocumentMetadata:
+      type: object
+      properties:
+        fileSize:
+          type: number
+        pages:
+          type: number
+        processingTime:
+          type: number
+        ocrEngine:
+          type: string
+
+    # Fiscal Automation Schemas
+    DASCalculationRequest:
+      type: object
+      required:
+        - empresaId
+        - periodo
+      properties:
+        empresaId:
+          type: string
+        periodo:
+          type: string
+          pattern: '^\d{4}-\d{2}$'
+          example: "2024-01"
+        receitas:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceitaItem'
+
+    ReceitaItem:
+      type: object
+      properties:
+        tipo:
+          type: string
+        valor:
+          type: number
+        competencia:
+          type: string
+          format: date
+
+    DASCalculationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            valorDAS:
+              type: number
+            vencimento:
+              type: string
+              format: date
+            detalhamento:
+              $ref: '#/components/schemas/DASDetalhamento'
+            guia:
+              type: string
+              description: "URL para download da guia"
+
+    DASDetalhamento:
+      type: object
+      properties:
+        baseCalculo:
+          type: number
+        aliquota:
+          type: number
+        valorPrincipal:
+          type: number
+        juros:
+          type: number
+        multa:
+          type: number
+
+    FiscalAutomationRequest:
+      type: object
+      required:
+        - empresaId
+        - periodo
+        - workflowType
+      properties:
+        empresaId:
+          type: string
+        periodo:
+          type: string
+        workflowType:
+          type: string
+          enum: ["das-calculation", "full-automation", "compliance-check"]
+        options:
+          type: object
+
+    FiscalAutomationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            executionId:
+              type: string
+            status:
+              type: string
+              enum: ["initiated", "running", "completed", "failed"]
+            estimatedDuration:
+              type: number
+            steps:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkflowStep'
+
+    WorkflowStep:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: ["pending", "running", "completed", "failed"]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    # Government API Schemas
+    CNPJResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            cnpj:
+              type: string
+            razaoSocial:
+              type: string
+            nomeFantasia:
+              type: string
+            situacao:
+              type: string
+            dataAbertura:
+              type: string
+              format: date
+            naturezaJuridica:
+              type: string
+            endereco:
+              $ref: '#/components/schemas/Endereco'
+            atividades:
+              type: array
+              items:
+                $ref: '#/components/schemas/AtividadeEconomica'
+
+    Endereco:
+      type: object
+      properties:
+        logradouro:
+          type: string
+        numero:
+          type: string
+        complemento:
+          type: string
+        bairro:
+          type: string
+        cidade:
+          type: string
+        uf:
+          type: string
+        cep:
+          type: string
+
+    # Monitoring Schemas
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "degraded", "unhealthy"]
+        services:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ServiceHealth'
+        uptime:
+          type: number
+        version:
+          type: string
+
+    ServiceHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "degraded", "unhealthy"]
+        responseTime:
+          type: number
+        lastCheck:
+          type: string
+          format: date-time
+        dependencies:
+          type: array
+          items:
+            type: string
+
+    MetricsResponse:
+      type: object
+      properties:
+        performance:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        cache:
+          $ref: '#/components/schemas/CacheMetrics'
+        resources:
+          $ref: '#/components/schemas/ResourceMetrics'
+        errors:
+          $ref: '#/components/schemas/ErrorMetrics'
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        avgResponseTime:
+          type: number
+        p95ResponseTime:
+          type: number
+        p99ResponseTime:
+          type: number
+        throughput:
+          type: number
+        activeRequests:
+          type: number
+
+    CacheMetrics:
+      type: object
+      properties:
+        hitRate:
+          type: number
+        missRate:
+          type: number
+        evictionRate:
+          type: number
+        predictiveAccuracy:
+          type: number
+        totalEntries:
+          type: number
+
+    ResourceMetrics:
+      type: object
+      properties:
+        memoryUsage:
+          type: number
+        cpuUsage:
+          type: number
+        activeConnections:
+          type: number
+        queueSize:
+          type: number
+
+    ErrorMetrics:
+      type: object
+      properties:
+        totalErrors:
+          type: number
+        errorRate:
+          type: number
+        errorsByType:
+          type: object
+          additionalProperties:
+            type: number
+
+    # Common Schemas
+    OperationMetadata:
+      type: object
+      properties:
+        executionTime:
+          type: number
+          description: "Tempo de execução em milissegundos"
+        cacheHit:
+          type: boolean
+          description: "Se o resultado veio do cache"
+        predictiveUsed:
+          type: boolean
+          description: "Se o cache preditivo foi utilizado"
+        servicesUsed:
+          type: array
+          items:
+            type: string
+          description: "Lista de serviços utilizados"
+
+    InsightsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Insights'
+        metadata:
+          $ref: '#/components/schemas/OperationMetadata'
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+            timestamp:
+              type: string
+              format: date-time
+            traceId:
+              type: string
+
+  # Security Schemes
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key

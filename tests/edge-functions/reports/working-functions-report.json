@@ -1,0 +1,163 @@
+{
+  "timestamp": "2025-09-15T20:55:50.943Z",
+  "duration": 10960,
+  "stats": {
+    "total": 6,
+    "passed": 2,
+    "failed": 4,
+    "successRate": 33.33333333333333
+  },
+  "results": [
+    {
+      "functionName": "consultar-cnpj",
+      "status": "PASSED",
+      "message": "Consulta CNPJ funcionando (avg: 600ms)",
+      "data": {
+        "results": [
+          {
+            "cnpj": "11.222.333/0001-81",
+            "status": 200,
+            "responseTime": 892,
+            "found": true,
+            "data": {
+              "cnpj": "11.222.333/0001-81",
+              "razao_social": "CAIXA ESCOLAR DA ESCOLA ESTADUAL DE ENSINO FUNDAMENTAL JOSEFINA JACQUES NORONHA",
+              "nome_fantasia": "CAIXA ESCOLA DA ESCOLA ESTADUAL DE ENSINO FUNDAMENTAL J",
+              "situacao": "ATIVA",
+              "data_situacao": "02/09/2009",
+              "tipo": "MATRIZ",
+              "porte": "DEMAIS",
+              "natureza_juridica": "399-9 - Associação Privada",
+              "atividade_principal": {
+                "codigo": "85.50-3-01",
+                "descricao": "Administração de caixas escolares"
+              },
+              "atividades_secundarias": [
+                {
+                  "codigo": "00.00-0-00",
+                  "descricao": "Não informada"
+                }
+              ],
+              "endereco": {
+                "logradouro": "R GARIBALDI",
+                "numero": "070",
+                "bairro": "VILA RICA",
+                "cep": "95.760-000",
+                "municipio": "SAO SEBASTIAO DO CAI",
+                "uf": "RS"
+              },
+              "telefones": [
+                "(51) 3635-4333/ (51) 3635-1603"
+              ],
+              "email": "josefinanoronha@hotmail.com",
+              "capital_social": 0,
+              "data_abertura": "02/09/2009"
+            }
+          },
+          {
+            "cnpj": "12.345.678/0001-90",
+            "status": 404,
+            "responseTime": 445,
+            "found": false,
+            "data": null
+          },
+          {
+            "cnpj": "00.000.000/0001-91",
+            "status": 200,
+            "responseTime": 463,
+            "found": true,
+            "data": {
+              "cnpj": "00.000.000/0001-91",
+              "razao_social": "BANCO DO BRASIL SA",
+              "nome_fantasia": "DIRECAO GERAL",
+              "situacao": "ATIVA",
+              "data_situacao": "03/11/2005",
+              "tipo": "MATRIZ",
+              "porte": "DEMAIS",
+              "natureza_juridica": "203-8 - Sociedade de Economia Mista",
+              "atividade_principal": {
+                "codigo": "64.22-1-00",
+                "descricao": "Bancos múltiplos, com carteira comercial"
+              },
+              "atividades_secundarias": [
+                {
+                  "codigo": "64.99-9-99",
+                  "descricao": "Outras atividades de serviços financeiros não especificadas anteriormente"
+                }
+              ],
+              "endereco": {
+                "logradouro": "Q SAUN QUADRA 5 BLOCO B TORRE I, II, III",
+                "numero": "SN",
+                "complemento": "ANDAR T I SL S101 A S1602 T II SL C101 A C1602 TIII SL N101 A N1602",
+                "bairro": "ASA NORTE",
+                "cep": "70.040-912",
+                "municipio": "BRASILIA",
+                "uf": "DF"
+              },
+              "telefones": [
+                "(61) 3493-9002"
+              ],
+              "email": "secex@bb.com.br",
+              "capital_social": 120000000000,
+              "data_abertura": "01/08/1966"
+            }
+          }
+        ],
+        "avgResponseTime": 600
+      }
+    },
+    {
+      "functionName": "intelligent-document-processor",
+      "status": "PASSED",
+      "message": "Processamento de documentos: 2/2 casos funcionando",
+      "data": [
+        {
+          "testCase": "Documento Simples",
+          "status": "PASSED",
+          "responseTime": 208,
+          "extractedData": {
+            "tipo_documento": "Documento",
+            "confidence": 0.8,
+            "method": "simplified"
+          },
+          "confidence": 0.8
+        },
+        {
+          "testCase": "Nota Fiscal",
+          "status": "PASSED",
+          "responseTime": 134,
+          "extractedData": {
+            "tipo_documento": "Documento",
+            "confidence": 0.8,
+            "method": "simplified"
+          },
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "functionName": "calculate-das-service",
+      "status": "FAILED",
+      "message": "Cálculo DAS falhou: Empresa não encontrada",
+      "error": "Error: Cálculo DAS falhou: Empresa não encontrada\n    at CalculateDASWorkingTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\working-functions-test.js:165:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runWorkingFunctionsTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\working-functions-test.js:312:22)"
+    },
+    {
+      "functionName": "simulador-tributario",
+      "status": "FAILED",
+      "message": "Simulador falhou: Receita anual deve ser maior que zero",
+      "error": "Error: Simulador falhou: Receita anual deve ser maior que zero\n    at SimuladorTributarioWorkingTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\working-functions-test.js:206:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runWorkingFunctionsTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\working-functions-test.js:312:22)"
+    },
+    {
+      "functionName": "pdf-ocr-service",
+      "status": "FAILED",
+      "message": "OCR falhou: 503",
+      "error": "Error: OCR falhou: 503\n    at PDFOCRWorkingTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\working-functions-test.js:237:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runWorkingFunctionsTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\working-functions-test.js:312:22)"
+    },
+    {
+      "functionName": "assistente-contabil-ia",
+      "status": "FAILED",
+      "message": "Assistente IA falhou: Erro interno do servidor",
+      "error": "Error: Assistente IA falhou: Erro interno do servidor\n    at AssistenteContabilWorkingTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\working-functions-test.js:271:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runWorkingFunctionsTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\working-functions-test.js:312:22)"
+    }
+  ]
+}

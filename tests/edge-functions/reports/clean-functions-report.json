@@ -1,0 +1,331 @@
+{
+  "timestamp": "2025-09-15T21:18:03.141Z",
+  "testType": "post-cleanup",
+  "totalFunctions": 28,
+  "results": {
+    "connectivity": [
+      {
+        "functionName": "calculate-das-service",
+        "status": "PASSED",
+        "message": "Função calculate-das-service está acessível",
+        "data": {
+          "status": 500,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "simulador-tributario",
+        "status": "PASSED",
+        "message": "Função simulador-tributario está acessível",
+        "data": {
+          "status": 400,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "gerar-guia-pdf",
+        "status": "PASSED",
+        "message": "Função gerar-guia-pdf está acessível",
+        "data": {
+          "status": 400,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "gerar-relatorio-pdf",
+        "status": "PASSED",
+        "message": "Função gerar-relatorio-pdf está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "get-fiscal-obligations",
+        "status": "PASSED",
+        "message": "Função get-fiscal-obligations está acessível",
+        "data": {
+          "status": 500,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "compliance-monitor",
+        "status": "PASSED",
+        "message": "Função compliance-monitor está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "fiscal-automation-engine",
+        "status": "PASSED",
+        "message": "Função fiscal-automation-engine está acessível",
+        "data": {
+          "status": 500,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "generate-accounting-entries",
+        "status": "PASSED",
+        "message": "Função generate-accounting-entries está acessível",
+        "data": {
+          "status": 500,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "assistente-contabil-ia",
+        "status": "PASSED",
+        "message": "Função assistente-contabil-ia está acessível",
+        "data": {
+          "status": 500,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "assistente-contabil-ia-enhanced",
+        "status": "PASSED",
+        "message": "Função assistente-contabil-ia-enhanced está acessível",
+        "data": {
+          "status": 404,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "ai-service",
+        "status": "PASSED",
+        "message": "Função ai-service está acessível",
+        "data": {
+          "status": 400,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "intelligent-document-processor",
+        "status": "PASSED",
+        "message": "Função intelligent-document-processor está acessível",
+        "data": {
+          "status": 500,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "unified-document-processor",
+        "status": "PASSED",
+        "message": "Função unified-document-processor está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "classify-document",
+        "status": "PASSED",
+        "message": "Função classify-document está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "pdf-ocr-service",
+        "status": "PASSED",
+        "message": "Função pdf-ocr-service está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "nfe-processor",
+        "status": "PASSED",
+        "message": "Função nfe-processor está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "consultar-cnpj-optimized",
+        "status": "PASSED",
+        "message": "Função consultar-cnpj-optimized está acessível",
+        "data": {
+          "status": 500,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "bank-reconciliation-engine",
+        "status": "PASSED",
+        "message": "Função bank-reconciliation-engine está acessível",
+        "data": {
+          "status": 400,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "ofx-parser-multi-bank",
+        "status": "PASSED",
+        "message": "Função ofx-parser-multi-bank está acessível",
+        "data": {
+          "status": 400,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "backup-service",
+        "status": "PASSED",
+        "message": "Função backup-service está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "webhook-dispatcher",
+        "status": "PASSED",
+        "message": "Função webhook-dispatcher está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "health-service",
+        "status": "PASSED",
+        "message": "Função health-service está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "notification-service",
+        "status": "PASSED",
+        "message": "Função notification-service está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "analytics-service",
+        "status": "PASSED",
+        "message": "Função analytics-service está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "simple-analytics",
+        "status": "PASSED",
+        "message": "Função simple-analytics está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "automation-service",
+        "status": "PASSED",
+        "message": "Função automation-service está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "company-service",
+        "status": "PASSED",
+        "message": "Função company-service está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      },
+      {
+        "functionName": "document-service",
+        "status": "PASSED",
+        "message": "Função document-service está acessível",
+        "data": {
+          "status": 503,
+          "accessible": true
+        }
+      }
+    ],
+    "specific": [
+      {
+        "testName": "CNPJ Otimizado",
+        "status": "PASSED",
+        "message": "CNPJ: 200 - Funcionando",
+        "data": {
+          "status": 200,
+          "hasData": true
+        }
+      },
+      {
+        "testName": "Processamento Documentos",
+        "status": "PASSED",
+        "message": "Documentos: 200 - Funcionando",
+        "data": {
+          "status": 200,
+          "hasExtractedData": true
+        }
+      },
+      {
+        "testName": "Health Service",
+        "status": "PARTIAL",
+        "message": "Health: 503 - Com problemas",
+        "data": {
+          "status": 503,
+          "healthy": false
+        }
+      }
+    ],
+    "summary": {
+      "total": 28,
+      "accessible": 28,
+      "working": 2,
+      "failed": 0
+    }
+  },
+  "summary": {
+    "accessibilityRate": 100,
+    "accessibleFunctions": [
+      "calculate-das-service",
+      "simulador-tributario",
+      "gerar-guia-pdf",
+      "gerar-relatorio-pdf",
+      "get-fiscal-obligations",
+      "compliance-monitor",
+      "fiscal-automation-engine",
+      "generate-accounting-entries",
+      "assistente-contabil-ia",
+      "assistente-contabil-ia-enhanced",
+      "ai-service",
+      "intelligent-document-processor",
+      "unified-document-processor",
+      "classify-document",
+      "pdf-ocr-service",
+      "nfe-processor",
+      "consultar-cnpj-optimized",
+      "bank-reconciliation-engine",
+      "ofx-parser-multi-bank",
+      "backup-service",
+      "webhook-dispatcher",
+      "health-service",
+      "notification-service",
+      "analytics-service",
+      "simple-analytics",
+      "automation-service",
+      "company-service",
+      "document-service"
+    ],
+    "failedFunctions": [],
+    "workingSpecificTests": 2
+  }
+}

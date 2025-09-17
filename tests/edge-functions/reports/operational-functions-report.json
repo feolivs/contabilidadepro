@@ -1,0 +1,134 @@
+{
+  "timestamp": "2025-09-15T20:57:24.892Z",
+  "testType": "operational",
+  "duration": 8943,
+  "stats": {
+    "total": 4,
+    "passed": 3,
+    "failed": 1,
+    "partial": 0,
+    "successRate": 75
+  },
+  "results": [
+    {
+      "functionName": "consultar-cnpj",
+      "status": "PASSED",
+      "message": "Consulta CNPJ: 2/2 casos OK (avg: 522ms)",
+      "data": {
+        "results": [
+          {
+            "cnpj": "11.222.333/0001-81",
+            "description": "CNPJ válido existente",
+            "expectedStatus": 200,
+            "actualStatus": 200,
+            "responseTime": 643,
+            "success": true,
+            "data": {
+              "cnpj": "11.222.333/0001-81",
+              "razao_social": "CAIXA ESCOLAR DA ESCOLA ESTADUAL DE ENSINO FUNDAMENTAL JOSEFINA JACQUES NORONHA",
+              "nome_fantasia": "CAIXA ESCOLA DA ESCOLA ESTADUAL DE ENSINO FUNDAMENTAL J",
+              "situacao": "ATIVA",
+              "data_situacao": "02/09/2009",
+              "tipo": "MATRIZ",
+              "porte": "DEMAIS",
+              "natureza_juridica": "399-9 - Associação Privada",
+              "atividade_principal": {
+                "codigo": "85.50-3-01",
+                "descricao": "Administração de caixas escolares"
+              },
+              "atividades_secundarias": [
+                {
+                  "codigo": "00.00-0-00",
+                  "descricao": "Não informada"
+                }
+              ],
+              "endereco": {
+                "logradouro": "R GARIBALDI",
+                "numero": "070",
+                "bairro": "VILA RICA",
+                "cep": "95.760-000",
+                "municipio": "SAO SEBASTIAO DO CAI",
+                "uf": "RS"
+              },
+              "telefones": [
+                "(51) 3635-4333/ (51) 3635-1603"
+              ],
+              "email": "josefinanoronha@hotmail.com",
+              "capital_social": 0,
+              "data_abertura": "02/09/2009"
+            }
+          },
+          {
+            "cnpj": "99.999.999/0001-99",
+            "description": "CNPJ válido inexistente",
+            "expectedStatus": 404,
+            "actualStatus": 404,
+            "responseTime": 400,
+            "success": true,
+            "data": null
+          }
+        ],
+        "avgResponseTime": 521.5,
+        "successRate": 100
+      }
+    },
+    {
+      "functionName": "intelligent-document-processor",
+      "status": "PASSED",
+      "message": "Processamento de documentos: 2/2 casos OK (avg: 168ms)",
+      "data": {
+        "results": [
+          {
+            "testCase": "Documento PDF Simples",
+            "status": "PASSED",
+            "responseTime": 185,
+            "hasExtractedData": true,
+            "confidence": 0.8,
+            "method": "simplified",
+            "documentId": "test-doc-simple-001"
+          },
+          {
+            "testCase": "Documento de Texto",
+            "status": "PASSED",
+            "responseTime": 151,
+            "hasExtractedData": true,
+            "confidence": 0.8,
+            "method": "simplified",
+            "documentId": "test-doc-text-001"
+          }
+        ],
+        "avgResponseTime": 168,
+        "successRate": 100
+      }
+    },
+    {
+      "functionName": "test-simple",
+      "status": "FAILED",
+      "message": "Test simple falhou: Unexpected end of JSON input",
+      "error": "Error: Test simple falhou: Unexpected end of JSON input\n    at TestSimpleOperationalTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\operational-functions-test.js:181:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runOperationalTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\operational-functions-test.js:254:22)"
+    },
+    {
+      "functionName": "consultar-cnpj-optimized",
+      "status": "PASSED",
+      "message": "Consulta CNPJ otimizada funcionando (1999ms)",
+      "data": {
+        "cnpj": "11.222.333/0001-81",
+        "status": 200,
+        "responseTime": 1999,
+        "found": true,
+        "cached": false
+      }
+    }
+  ],
+  "summary": {
+    "operationalFunctions": [
+      "consultar-cnpj",
+      "intelligent-document-processor",
+      "consultar-cnpj-optimized"
+    ],
+    "partialFunctions": [],
+    "failedFunctions": [
+      "test-simple"
+    ]
+  }
+}

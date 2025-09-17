@@ -1,0 +1,162 @@
+{
+  "supabase": {
+    "url": "https://selnwgpyjctpjzdrfrey.supabase.co",
+    "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlbG53Z3B5amN0cGp6ZHJmcmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDE5NzEsImV4cCI6MjA2NDcxNzk3MX0.x2GdGtvLbslKMBE2u3EWuwMijDg0_CAxp6McwjUei6k"
+  },
+  "testSettings": {
+    "timeout": 30000,
+    "retries": 2,
+    "parallelExecution": false,
+    "pauseBetweenTests": 1000,
+    "pauseBetweenSuites": 2000
+  },
+  "reporting": {
+    "generateHTML": true,
+    "generateJSON": true,
+    "generateCSV": false,
+    "includeStackTraces": true,
+    "includeResponseData": true
+  },
+  "testData": {
+    "empresaId": "test-empresa-123",
+    "userId": "test-user-456",
+    "cnpjTeste": "11.222.333/0001-81",
+    "documentoTeste": {
+      "id": "test-doc-001",
+      "fileName": "documento-teste.pdf",
+      "filePath": "documentos/teste.pdf",
+      "fileType": "application/pdf"
+    }
+  },
+  "edgeFunctions": {
+    "fiscal": [
+      "calculate-das-service",
+      "simulador-tributario",
+      "gerar-guia-pdf",
+      "gerar-relatorio-pdf",
+      "get-fiscal-obligations",
+      "compliance-monitor",
+      "fiscal-automation-engine",
+      "generate-accounting-entries"
+    ],
+    "documentAI": [
+      "intelligent-document-processor",
+      "classify-document",
+      "pdf-ocr-service",
+      "assistente-contabil-ia",
+      "assistente-contabil-ia-enhanced",
+      "nfe-processor",
+      "unified-document-processor"
+    ],
+    "integrationServices": [
+      "consultar-cnpj-optimized",
+      "bank-reconciliation-engine",
+      "ofx-parser-multi-bank",
+      "crm-service",
+      "backup-service",
+      "webhook-dispatcher",
+      "health-service",
+      "notification-service"
+    ],
+    "analytics": [
+      "analytics-service",
+      "simple-analytics"
+    ],
+    "automation": [
+      "automation-service"
+    ],
+    "ai": [
+      "ai-service"
+    ],
+    "utility": [
+      "portal-service",
+      "company-service",
+      "document-service"
+    ]
+  },
+  "expectedResponses": {
+    "health-service": {
+      "status": 200,
+      "requiredFields": ["status", "timestamp", "version"]
+    },
+    "calculate-das-service": {
+      "status": 200,
+      "requiredFields": ["valorDAS", "aliquota", "dataVencimento"]
+    },
+    "consultar-cnpj": {
+      "status": [200, 404],
+      "requiredFields": ["cnpj"]
+    },
+    "intelligent-document-processor": {
+      "status": 200,
+      "requiredFields": ["extractedData", "classification", "confidence"]
+    }
+  },
+  "testCategories": {
+    "smoke": {
+      "description": "Testes básicos de conectividade e saúde",
+      "functions": ["health-service", "test-simple"]
+    },
+    "critical": {
+      "description": "Testes de funcionalidades críticas do sistema",
+      "functions": [
+        "calculate-das-service",
+        "intelligent-document-processor",
+        "consultar-cnpj",
+        "backup-service"
+      ]
+    },
+    "integration": {
+      "description": "Testes de integração com APIs externas",
+      "functions": [
+        "consultar-cnpj-optimized",
+        "bank-reconciliation-engine",
+        "webhook-dispatcher"
+      ]
+    },
+    "ai": {
+      "description": "Testes de funcionalidades de IA",
+      "functions": [
+        "assistente-contabil-ia",
+        "ai-service",
+        "classify-document",
+        "pdf-ocr-service"
+      ]
+    }
+  },
+  "performance": {
+    "maxResponseTime": {
+      "health-service": 1000,
+      "calculate-das-service": 5000,
+      "consultar-cnpj": 3000,
+      "intelligent-document-processor": 15000,
+      "pdf-ocr-service": 20000
+    },
+    "memoryLimits": {
+      "default": "512MB",
+      "heavy": "1GB"
+    }
+  },
+  "security": {
+    "testUnauthorizedAccess": true,
+    "testRateLimiting": false,
+    "testInputValidation": true
+  },
+  "environment": {
+    "development": {
+      "logLevel": "debug",
+      "strictValidation": false,
+      "allowMockData": true
+    },
+    "staging": {
+      "logLevel": "info",
+      "strictValidation": true,
+      "allowMockData": true
+    },
+    "production": {
+      "logLevel": "error",
+      "strictValidation": true,
+      "allowMockData": false
+    }
+  }
+}

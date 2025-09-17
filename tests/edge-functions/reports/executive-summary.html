@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumo Executivo - Testes Edge Functions ContabilidadePRO</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; text-align: center; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .stat-number { font-size: 2.5em; font-weight: bold; margin-bottom: 10px; }
+        .stat-card.operational .stat-number { color: #28a745; }
+        .stat-card.partial .stat-number { color: #ffc107; }
+        .stat-card.failed .stat-number { color: #dc3545; }
+        .stat-card.not-tested .stat-number { color: #6c757d; }
+        .section { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .section h2 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .function-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+        .function-item { padding: 10px 15px; border-radius: 5px; font-family: monospace; }
+        .function-item.operational { background: #d4edda; color: #155724; }
+        .function-item.partial { background: #fff3cd; color: #856404; }
+        .function-item.failed { background: #f8d7da; color: #721c24; }
+        .function-item.not-tested { background: #e2e3e5; color: #383d41; }
+        .critical-issue { background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; padding: 15px; margin-bottom: 15px; }
+        .recommendation { background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 5px; padding: 15px; margin-bottom: 15px; }
+        .success-rate { font-size: 3em; font-weight: bold; text-align: center; margin: 20px 0; }
+        .success-rate.good { color: #28a745; }
+        .success-rate.warning { color: #ffc107; }
+        .success-rate.danger { color: #dc3545; }
+        .timestamp { color: #6c757d; font-size: 0.9em; text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Resumo Executivo - Testes Edge Functions</h1>
+            <h2>ContabilidadePRO</h2>
+            <p>Análise completa do status operacional das funções serverless</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">55</div>
+                <div>Total de Funções</div>
+            </div>
+            <div class="stat-card operational">
+                <div class="stat-number">3</div>
+                <div>Operacionais</div>
+            </div>
+            <div class="stat-card partial">
+                <div class="stat-number">0</div>
+                <div>Parciais</div>
+            </div>
+            <div class="stat-card failed">
+                <div class="stat-number">5</div>
+                <div>Com Falhas</div>
+            </div>
+            <div class="stat-card not-tested">
+                <div class="stat-number">47</div>
+                <div>Não Testadas</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📈 Taxa de Sucesso Geral</h2>
+            <div class="success-rate danger">
+                37.5%
+            </div>
+            <p style="text-align: center; color: #6c757d;">
+                3 de 8 funções testadas estão operacionais
+            </p>
+        </div>
+
+        
+        <div class="section">
+            <h2>🚨 Problemas Críticos</h2>
+            
+                <div class="critical-issue">
+                    <h4>Funções Críticas com Falhas</h4>
+                    <p><strong>Impacto:</strong> Alto - Pode afetar operações principais do sistema</p>
+                    <p>Funções essenciais do sistema não estão funcionando: calculate-das-service</p>
+                    <p><strong>Ações Recomendadas:</strong></p>
+                    <ul>
+                        <li>Investigar logs de erro imediatamente</li><li>Verificar configurações de ambiente</li><li>Testar em ambiente de desenvolvimento</li><li>Considerar rollback se necessário</li>
+                    </ul>
+                </div>
+            
+                <div class="critical-issue">
+                    <h4>Taxa de Sucesso Baixa</h4>
+                    <p><strong>Impacto:</strong> Alto - Indica problemas sistêmicos</p>
+                    <p>Apenas 37.5% das funções testadas estão operacionais.</p>
+                    <p><strong>Ações Recomendadas:</strong></p>
+                    <ul>
+                        <li>Revisar arquitetura das edge functions</li><li>Verificar configurações do Supabase</li><li>Analisar logs de sistema</li><li>Considerar refatoração de funções problemáticas</li>
+                    </ul>
+                </div>
+            
+        </div>
+        
+
+        <div class="section">
+            <h2>✅ Funções Operacionais (3)</h2>
+            <div class="function-list">
+                <div class="function-item operational">✅ consultar-cnpj</div><div class="function-item operational">✅ intelligent-document-processor</div><div class="function-item operational">✅ consultar-cnpj-optimized</div>
+            </div>
+        </div>
+
+        
+
+        
+        <div class="section">
+            <h2>❌ Funções com Falhas (5)</h2>
+            <div class="function-list">
+                <div class="function-item failed">❌ test-simple</div><div class="function-item failed">❌ calculate-das-service</div><div class="function-item failed">❌ simulador-tributario</div><div class="function-item failed">❌ pdf-ocr-service</div><div class="function-item failed">❌ assistente-contabil-ia</div>
+            </div>
+        </div>
+        
+
+        
+        <div class="section">
+            <h2>⚪ Funções Não Testadas (47)</h2>
+            <div class="function-list">
+                <div class="function-item not-tested">⚪ ai-contextual-assistant</div><div class="function-item not-tested">⚪ ai-semantic-service</div><div class="function-item not-tested">⚪ ai-service</div><div class="function-item not-tested">⚪ analytics-service</div><div class="function-item not-tested">⚪ assistant-dashboard-data</div><div class="function-item not-tested">⚪ assistente-contabil-ia-enhanced</div><div class="function-item not-tested">⚪ automation-monitor</div><div class="function-item not-tested">⚪ automation-service</div><div class="function-item not-tested">⚪ backup-service</div><div class="function-item not-tested">⚪ bank-reconciliation-engine</div><div class="function-item not-tested">⚪ calculo-das-automatico</div><div class="function-item not-tested">⚪ classify-document</div><div class="function-item not-tested">⚪ cleanup-notifications</div><div class="function-item not-tested">⚪ company-service</div><div class="function-item not-tested">⚪ compliance-monitor</div><div class="function-item not-tested">⚪ consulta-ia</div><div class="function-item not-tested">⚪ create-test-user</div><div class="function-item not-tested">⚪ crm-service</div><div class="function-item not-tested">⚪ dashboard-analytics</div><div class="function-item not-tested">⚪ document-service</div><div class="function-item not-tested">⚪ export-analytics-report</div><div class="function-item not-tested">⚪ fiscal-automation-engine</div><div class="function-item not-tested">⚪ generate-accounting-entries</div><div class="function-item not-tested">⚪ generate-analytics-reports</div><div class="function-item not-tested">⚪ generate-das-service</div><div class="function-item not-tested">⚪ generate-notifications</div><div class="function-item not-tested">⚪ gerar-guia-pdf</div><div class="function-item not-tested">⚪ gerar-relatorio-pdf</div><div class="function-item not-tested">⚪ get-fiscal-obligations</div><div class="function-item not-tested">⚪ health-service</div><div class="function-item not-tested">⚪ intelligent-alerts-scheduler</div><div class="function-item not-tested">⚪ intelligent-notifications</div><div class="function-item not-tested">⚪ mcp-context-provider</div><div class="function-item not-tested">⚪ metrics-dashboard</div><div class="function-item not-tested">⚪ nfe-processor</div><div class="function-item not-tested">⚪ notification-service</div><div class="function-item not-tested">⚪ ofx-parser-multi-bank</div><div class="function-item not-tested">⚪ performance-monitor</div><div class="function-item not-tested">⚪ portal-service</div><div class="function-item not-tested">⚪ process-document</div><div class="function-item not-tested">⚪ process-document-service</div><div class="function-item not-tested">⚪ process-ocr</div><div class="function-item not-tested">⚪ queue-document-processor</div><div class="function-item not-tested">⚪ simple-analytics</div><div class="function-item not-tested">⚪ unified-api-gateway</div><div class="function-item not-tested">⚪ unified-document-processor</div><div class="function-item not-tested">⚪ webhook-dispatcher</div>
+            </div>
+        </div>
+        
+
+        
+        <div class="section">
+            <h2>💡 Recomendações</h2>
+            
+                <div class="recommendation">
+                    <h4>Funções Operacionais Confirmadas</h4>
+                    <p>3 edge functions estão funcionando corretamente e podem ser utilizadas em produção.</p>
+                    <p><strong>Ações:</strong></p>
+                    <ul>
+                        <li>Manter monitoramento contínuo</li><li>Documentar casos de uso</li>
+                    </ul>
+                </div>
+            
+                <div class="recommendation">
+                    <h4>Muitas Funções Não Testadas</h4>
+                    <p>47 edge functions não foram testadas.</p>
+                    <p><strong>Ações:</strong></p>
+                    <ul>
+                        <li>Expandir cobertura de testes</li><li>Priorizar testes para funções críticas</li><li>Implementar testes automatizados no CI/CD</li>
+                    </ul>
+                </div>
+            
+        </div>
+        
+
+        <div class="timestamp">
+            Relatório gerado em: 15/09/2025, 17:58:45
+        </div>
+    </div>
+</body>
+</html>

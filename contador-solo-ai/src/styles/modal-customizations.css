@@ -1,0 +1,82 @@
+/* Customizações específicas para o modal de visualização de documentos */
+
+/* Instrução 1: Aumentar a largura máxima do modal */
+.modal-content {
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Instrução 2: Layout flexbox para o conteúdo interno */
+.modal-body {
+  display: flex;
+  gap: 24px; /* Espaço entre as colunas */
+}
+
+/* Instrução 3: Comportamento das colunas */
+.coluna-visualizacao {
+  flex: 1;
+}
+
+.coluna-dados {
+  flex: 1;
+  min-width: 350px;
+}
+
+/* Instrução 4: Padding interno do modal */
+.modal-content {
+  padding: 24px;
+}
+
+/* Melhorias adicionais para responsividade */
+@media (max-width: 1024px) {
+  .modal-body {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .coluna-dados {
+    min-width: unset;
+  }
+}
+
+/* Garantir que o modal seja responsivo em telas menores */
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95vw;
+    padding: 16px;
+  }
+
+  .modal-body {
+    gap: 12px;
+  }
+}
+
+/* Estilos para o visualizador de PDF */
+.react-pdf__Document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.react-pdf__Page {
+  max-width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: 8px 0;
+}
+
+.react-pdf__Page__canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+/* Melhorar a aparência dos controles do PDF */
+.pdf-controls {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark .pdf-controls {
+  background: rgba(0, 0, 0, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}

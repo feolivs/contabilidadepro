@@ -1,0 +1,36 @@
+{
+  "empresas": [
+    {
+      "id": "test-empresa-123",
+      "nome": "Empresa Teste LTDA",
+      "cnpj": "11.222.333/0001-81",
+      "regimeTributario": "Simples Nacional",
+      "atividade": "comercio"
+    }
+  ],
+  "usuarios": [
+    {
+      "id": "test-user-456",
+      "nome": "Usuário Teste",
+      "email": "teste@contabilidadepro.com",
+      "role": "contador"
+    }
+  ],
+  "documentos": [
+    {
+      "id": "test-doc-001",
+      "nome": "Nota Fiscal Teste",
+      "tipo": "nota_fiscal",
+      "conteudo": "Dados de teste para processamento"
+    }
+  ],
+  "transacoes": [
+    {
+      "id": "test-txn-001",
+      "data": "2024-01-15",
+      "valor": 2500,
+      "tipo": "receita",
+      "descricao": "Venda de produtos"
+    }
+  ]
+}

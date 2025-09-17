@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-09-15T20:53:33.875Z",
+  "nodeVersion": "v24.5.0",
+  "platform": "win32",
+  "arch": "x64",
+  "directories": {
+    "reports": "C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\reports",
+    "testData": "C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-data"
+  },
+  "status": "ready"
+}

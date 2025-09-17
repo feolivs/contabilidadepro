@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(dir)",
+      "Bash(find:*)",
+      "Bash(dir:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx supabase functions:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(supabase status:*)",
+      "Bash(curl:*)",
+      "Bash(supabase functions deploy:*)",
+      "Bash(npm install:*)",
+      "Bash(start http://localhost:3004)",
+      "Bash(start http://localhost:3005)",
+      "Bash(taskkill:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

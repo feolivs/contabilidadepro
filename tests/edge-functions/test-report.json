@@ -1,0 +1,179 @@
+{
+  "timestamp": "2025-09-15T20:54:24.865Z",
+  "duration": 19828,
+  "stats": {
+    "total": 6,
+    "passed": 2,
+    "failed": 4,
+    "skipped": 0,
+    "startTime": 1757969645036,
+    "results": [
+      {
+        "functionName": "health-service",
+        "status": "FAILED",
+        "message": "Health check falhou: 503",
+        "error": "Error: Health check falhou: 503\n    at HealthServiceTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:130:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runSingleTest (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:324:20)\n    at async runAllTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:362:5)"
+      },
+      {
+        "functionName": "consultar-cnpj",
+        "status": "PASSED",
+        "message": "Consulta CNPJ funcionando corretamente",
+        "data": {
+          "success": true,
+          "data": {
+            "cnpj": "11.222.333/0001-81",
+            "razao_social": "CAIXA ESCOLAR DA ESCOLA ESTADUAL DE ENSINO FUNDAMENTAL JOSEFINA JACQUES NORONHA",
+            "nome_fantasia": "CAIXA ESCOLA DA ESCOLA ESTADUAL DE ENSINO FUNDAMENTAL J",
+            "situacao": "ATIVA",
+            "data_situacao": "02/09/2009",
+            "tipo": "MATRIZ",
+            "porte": "DEMAIS",
+            "natureza_juridica": "399-9 - Associação Privada",
+            "atividade_principal": {
+              "codigo": "85.50-3-01",
+              "descricao": "Administração de caixas escolares"
+            },
+            "atividades_secundarias": [
+              {
+                "codigo": "00.00-0-00",
+                "descricao": "Não informada"
+              }
+            ],
+            "endereco": {
+              "logradouro": "R GARIBALDI",
+              "numero": "070",
+              "bairro": "VILA RICA",
+              "cep": "95.760-000",
+              "municipio": "SAO SEBASTIAO DO CAI",
+              "uf": "RS"
+            },
+            "telefones": [
+              "(51) 3635-4333/ (51) 3635-1603"
+            ],
+            "email": "josefinanoronha@hotmail.com",
+            "capital_social": 0,
+            "data_abertura": "02/09/2009"
+          },
+          "cached": false
+        }
+      },
+      {
+        "functionName": "calculate-das-service",
+        "status": "FAILED",
+        "message": "Cálculo DAS falhou: Campos obrigatórios: empresa_id, competencia, faturamento_12_meses, faturamento_mes",
+        "error": "Error: Cálculo DAS falhou: Campos obrigatórios: empresa_id, competencia, faturamento_12_meses, faturamento_mes\n    at CalculateDASTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:193:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runSingleTest (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:324:20)\n    at async runAllTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:362:5)"
+      },
+      {
+        "functionName": "intelligent-document-processor",
+        "status": "PASSED",
+        "message": "Processamento de documentos funcionando",
+        "data": {
+          "success": true,
+          "documentId": "test-doc-123",
+          "fileName": "Documento de Teste.pdf",
+          "extractedData": {
+            "tipo_documento": "Documento",
+            "confidence": 0.8,
+            "method": "simplified"
+          }
+        }
+      },
+      {
+        "functionName": "analytics-service",
+        "status": "FAILED",
+        "message": "Analytics service falhou: 503",
+        "error": "Error: Analytics service falhou: 503\n    at AnalyticsServiceTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:260:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runSingleTest (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:324:20)\n    at async runAllTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:362:5)"
+      },
+      {
+        "functionName": "notification-service",
+        "status": "FAILED",
+        "message": "Notification service falhou: 503",
+        "error": "Error: Notification service falhou: 503\n    at NotificationServiceTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:292:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runSingleTest (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:324:20)\n    at async runAllTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:362:5)"
+      }
+    ]
+  },
+  "results": [
+    {
+      "functionName": "health-service",
+      "status": "FAILED",
+      "message": "Health check falhou: 503",
+      "error": "Error: Health check falhou: 503\n    at HealthServiceTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:130:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runSingleTest (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:324:20)\n    at async runAllTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:362:5)"
+    },
+    {
+      "functionName": "consultar-cnpj",
+      "status": "PASSED",
+      "message": "Consulta CNPJ funcionando corretamente",
+      "data": {
+        "success": true,
+        "data": {
+          "cnpj": "11.222.333/0001-81",
+          "razao_social": "CAIXA ESCOLAR DA ESCOLA ESTADUAL DE ENSINO FUNDAMENTAL JOSEFINA JACQUES NORONHA",
+          "nome_fantasia": "CAIXA ESCOLA DA ESCOLA ESTADUAL DE ENSINO FUNDAMENTAL J",
+          "situacao": "ATIVA",
+          "data_situacao": "02/09/2009",
+          "tipo": "MATRIZ",
+          "porte": "DEMAIS",
+          "natureza_juridica": "399-9 - Associação Privada",
+          "atividade_principal": {
+            "codigo": "85.50-3-01",
+            "descricao": "Administração de caixas escolares"
+          },
+          "atividades_secundarias": [
+            {
+              "codigo": "00.00-0-00",
+              "descricao": "Não informada"
+            }
+          ],
+          "endereco": {
+            "logradouro": "R GARIBALDI",
+            "numero": "070",
+            "bairro": "VILA RICA",
+            "cep": "95.760-000",
+            "municipio": "SAO SEBASTIAO DO CAI",
+            "uf": "RS"
+          },
+          "telefones": [
+            "(51) 3635-4333/ (51) 3635-1603"
+          ],
+          "email": "josefinanoronha@hotmail.com",
+          "capital_social": 0,
+          "data_abertura": "02/09/2009"
+        },
+        "cached": false
+      }
+    },
+    {
+      "functionName": "calculate-das-service",
+      "status": "FAILED",
+      "message": "Cálculo DAS falhou: Campos obrigatórios: empresa_id, competencia, faturamento_12_meses, faturamento_mes",
+      "error": "Error: Cálculo DAS falhou: Campos obrigatórios: empresa_id, competencia, faturamento_12_meses, faturamento_mes\n    at CalculateDASTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:193:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runSingleTest (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:324:20)\n    at async runAllTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:362:5)"
+    },
+    {
+      "functionName": "intelligent-document-processor",
+      "status": "PASSED",
+      "message": "Processamento de documentos funcionando",
+      "data": {
+        "success": true,
+        "documentId": "test-doc-123",
+        "fileName": "Documento de Teste.pdf",
+        "extractedData": {
+          "tipo_documento": "Documento",
+          "confidence": 0.8,
+          "method": "simplified"
+        }
+      }
+    },
+    {
+      "functionName": "analytics-service",
+      "status": "FAILED",
+      "message": "Analytics service falhou: 503",
+      "error": "Error: Analytics service falhou: 503\n    at AnalyticsServiceTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:260:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runSingleTest (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:324:20)\n    at async runAllTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:362:5)"
+    },
+    {
+      "functionName": "notification-service",
+      "status": "FAILED",
+      "message": "Notification service falhou: 503",
+      "error": "Error: Notification service falhou: 503\n    at NotificationServiceTest.run (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:292:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runSingleTest (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:324:20)\n    at async runAllTests (C:\\Users\\feoli\\Desktop\\ContabilidadePRO\\tests\\edge-functions\\test-runner.js:362:5)"
+    }
+  ]
+}

@@ -31,7 +31,7 @@ export interface Documento {
   serie?: string
   data_emissao?: string
   valor_total?: number
-  dados_extraidos?: any
+  dados_extraidos?: DadosExtraidos
   status_processamento: StatusProcessamento
   data_processamento?: string
   observacoes?: string
@@ -219,6 +219,24 @@ export const detectarTipoDocumento = (nomeArquivo: string): TipoDocumento => {
   return 'Outro'
 }
 
+// Interface base para dados extraídos (propriedades comuns)
+export interface DadosExtraidosBase {
+  confidence?: number;
+  numero_documento?: string;
+  valor_total?: number;
+  data_emissao?: string;
+  empresa_emitente?: string;
+  cnpj_emitente?: string;
+  descricao?: string;
+  extraction_method?: string;
+  extraction_confidence?: number;
+  text_quality?: number;
+  processingTime?: number;
+  ocr_method?: string;
+  ocr_confidence?: number;
+  text_extraction_quality?: number;
+}
+
 // Interface para dados extraídos de NFe
 export interface DadosNFe {
   chaveAcesso: string
@@ -303,3 +321,12 @@ export interface DadosExtrato {
     tipo: 'credito' | 'debito'
   }>
 }
+
+// Union type para todos os tipos de dados extraídos
+export type DadosExtraidos =
+  | (DadosNFe & DadosExtraidosBase)
+  | (DadosNFSe & DadosExtraidosBase)
+  | (DadosRecibo & DadosExtraidosBase)
+  | (DadosBoleto & DadosExtraidosBase)
+  | (DadosExtrato & DadosExtraidosBase)
+  | (DadosExtraidosBase & Record<string, unknown>);

@@ -39,12 +39,9 @@ import {
   MoreHorizontal,
   Building2,
   Calendar,
-  DollarSign,
-  AlertCircle,
   CheckCircle2,
   Clock,
   XCircle,
-  RefreshCw,
   Shield
 } from 'lucide-react'
 import { useDocumentos, useDocumentosStats, useDownloadDocumento } from '@/hooks/use-documentos'
@@ -60,7 +57,6 @@ import {
   StatusProcessamento,
   TIPOS_DOCUMENTO_LABELS,
   STATUS_PROCESSAMENTO_LABELS,
-  STATUS_PROCESSAMENTO_COLORS,
   TIPOS_DOCUMENTO_COLORS
 } from '@/types/documento'
 import { useDebounce } from 'use-debounce'
@@ -97,20 +93,6 @@ const getFileIcon = (mimeType: string) => {
   return <FileText className="h-4 w-4 text-muted-foreground" />
 }
 
-const getStatusIcon = (status: StatusProcessamento) => {
-  switch (status) {
-    case 'processado':
-      return <CheckCircle2 className="h-4 w-4" />
-    case 'processando':
-      return <RefreshCw className="h-4 w-4 animate-spin" />
-    case 'erro':
-      return <XCircle className="h-4 w-4" />
-    case 'rejeitado':
-      return <AlertCircle className="h-4 w-4" />
-    default:
-      return <Clock className="h-4 w-4" />
-  }
-}
 
 export default function DocumentosPage() {
   const searchParams = useSearchParams()

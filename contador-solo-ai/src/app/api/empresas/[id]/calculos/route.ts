@@ -1,11 +1,11 @@
 /**
- * Route Handler para cálculos de uma empresa específica
- * Otimização Next.js: Route Handlers com cache nativo
+ * Route Handler para cálculos de uma empresa específica - Fase 2 Simplificada
+ * Usando simple-cache em vez de server-cache complexo
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase'
-import { cachedCalculosByEmpresa } from '@/lib/server-cache'
+import { cacheUtils } from '@/lib/simple-cache'
 import { revalidateTag } from 'next/cache'
 
 // ============================================
@@ -18,7 +18,7 @@ export async function GET(
 ) {
   try {
     const { id: empresaId } = await params
-    
+
     if (!empresaId) {
       return NextResponse.json(
         { error: 'ID da empresa é obrigatório' },
@@ -26,20 +26,61 @@ export async function GET(
       )
     }
 
-    // Buscar cálculos usando cache
-    const calculos = await cachedCalculosByEmpresa(empresaId)
+    // Verificar cache primeiro
+    const cacheKey = `calculos:${empresaId}`
+    const cached = cacheUtils.getRelatorio('system', cacheKey)
 
-    return NextResponse.json(calculos, {
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+          'X-Cache': 'HIT',
+          'X-Cache-Tags': `calculos,empresa-${empresaId}`,
+        }
+      })
+    }
+
+    // Buscar no banco se não estiver em cache
+    const supabase = createClient()
+    const { data: calculos, error } = await supabase
+      .from('calculos_fiscais')
+      .select(`
+        id,
+        tipo_calculo,
+        competencia,
+        valor_total,
+        status,
+        data_vencimento,
+        created_at,
+        updated_at,
+        detalhes_calculo
+      `)
+      .eq('empresa_id', empresaId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Erro ao buscar cálculos:', error)
+      return NextResponse.json(
+        { error: 'Erro ao buscar cálculos' },
+        { status: 500 }
+      )
+    }
+
+    // Armazenar no cache por 10 minutos
+    cacheUtils.setRelatorio('system', cacheKey, calculos || [])
+
+    return NextResponse.json(calculos || [], {
       headers: {
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'X-Cache': 'MISS',
         'X-Cache-Tags': `calculos,empresa-${empresaId}`,
       }
     })
 
   } catch (error) {
-
+    console.error('Erro interno:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Erro interno do servidor',
         message: error instanceof Error ? error.message : 'Erro desconhecido'
       },
@@ -96,7 +137,7 @@ export async function POST(
       .single()
 
     if (error) {
-
+      console.error('Erro ao criar cálculo:', error)
       return NextResponse.json(
         { error: 'Erro ao criar cálculo', details: error.message },
         { status: 500 }
@@ -104,15 +145,16 @@ export async function POST(
     }
 
     // Invalidar cache
+    cacheUtils.invalidateUser('system')
     revalidateTag('calculos')
     revalidateTag(`empresa-${empresaId}`)
 
     return NextResponse.json(data, { status: 201 })
 
   } catch (error) {
-
+    console.error('Erro interno:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Erro interno do servidor',
         message: error instanceof Error ? error.message : 'Erro desconhecido'
       },
@@ -166,7 +208,7 @@ export async function DELETE(
       .eq('id', calculoId)
 
     if (deleteError) {
-
+      console.error('Erro ao excluir cálculo:', deleteError)
       return NextResponse.json(
         { error: 'Erro ao excluir cálculo', details: deleteError.message },
         { status: 500 }
@@ -174,15 +216,16 @@ export async function DELETE(
     }
 
     // Invalidar cache
+    cacheUtils.invalidateUser('system')
     revalidateTag('calculos')
     revalidateTag(`empresa-${empresaId}`)
 
     return NextResponse.json({ success: true })
 
   } catch (error) {
-
+    console.error('Erro interno:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Erro interno do servidor',
         message: error instanceof Error ? error.message : 'Erro desconhecido'
       },
@@ -256,7 +299,7 @@ export async function PATCH(
       .single()
 
     if (updateError) {
-
+      console.error('Erro ao atualizar cálculo:', updateError)
       return NextResponse.json(
         { error: 'Erro ao atualizar cálculo', details: updateError.message },
         { status: 500 }
@@ -264,15 +307,16 @@ export async function PATCH(
     }
 
     // Invalidar cache
+    cacheUtils.invalidateUser('system')
     revalidateTag('calculos')
     revalidateTag(`empresa-${empresaId}`)
 
     return NextResponse.json(data)
 
   } catch (error) {
-
+    console.error('Erro interno:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Erro interno do servidor',
         message: error instanceof Error ? error.message : 'Erro desconhecido'
       },

@@ -200,11 +200,11 @@ if (result.success) {
   console.log('📈 Projeções:', result.data.projections)
 }
 
-// 4. Executar automação fiscal
-const automation = await aiContext.executeFullFiscalAutomation(
-  'empresa-456',
-  '2024-01',
-  'user-123'
+// 4. Processar documentos com OCR
+const ocrResult = await aiContext.processDocumentWithOCR(
+  fileBuffer,
+  'documento.pdf',
+  'empresa-456'
 )
 ```
 

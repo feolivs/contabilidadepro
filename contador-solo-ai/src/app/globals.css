@@ -117,7 +117,195 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    /* Smooth theme transitions */
+    transition: color-scheme 0.3s ease-in-out;
+  }
+
   body {
     @apply bg-background text-foreground;
+    /* Smooth color transitions */
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  }
+
+  /* Enhanced theme transition for all elements */
+  *,
+  *::before,
+  *::after {
+    transition:
+      background-color 0.3s ease-in-out,
+      border-color 0.3s ease-in-out,
+      color 0.3s ease-in-out,
+      fill 0.3s ease-in-out,
+      stroke 0.3s ease-in-out,
+      box-shadow 0.3s ease-in-out;
+  }
+
+  /* Respect user's motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  /* Custom scrollbar for dark mode */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-md;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ring;
+  }
+
+  /* High contrast mode */
+  .high-contrast {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0 0 0);
+    --primary: oklch(0 0 0);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.9 0 0);
+    --secondary-foreground: oklch(0 0 0);
+    --muted: oklch(0.9 0 0);
+    --muted-foreground: oklch(0.2 0 0);
+    --accent: oklch(0.9 0 0);
+    --accent-foreground: oklch(0 0 0);
+    --destructive: oklch(0.7 0.3 0);
+    --destructive-foreground: oklch(1 0 0);
+    --border: oklch(0 0 0);
+    --input: oklch(0.9 0 0);
+    --ring: oklch(0 0 0);
+  }
+
+  .high-contrast.dark {
+    --background: oklch(0 0 0);
+    --foreground: oklch(1 0 0);
+    --card: oklch(0 0 0);
+    --card-foreground: oklch(1 0 0);
+    --popover: oklch(0 0 0);
+    --popover-foreground: oklch(1 0 0);
+    --primary: oklch(1 0 0);
+    --primary-foreground: oklch(0 0 0);
+    --secondary: oklch(0.1 0 0);
+    --secondary-foreground: oklch(1 0 0);
+    --muted: oklch(0.1 0 0);
+    --muted-foreground: oklch(0.8 0 0);
+    --accent: oklch(0.1 0 0);
+    --accent-foreground: oklch(1 0 0);
+    --destructive: oklch(0.7 0.3 0);
+    --destructive-foreground: oklch(1 0 0);
+    --border: oklch(1 0 0);
+    --input: oklch(0.1 0 0);
+    --ring: oklch(1 0 0);
+  }
+
+  /* Reduced motion mode */
+  .reduce-motion *,
+  .reduce-motion *::before,
+  .reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Theme toggle animations */
+  .theme-toggle-bounce {
+    animation: theme-bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .theme-sparkle {
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  @keyframes theme-bounce {
+    0% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(0.95) rotate(-5deg); }
+    50% { transform: scale(1.05) rotate(5deg); }
+    75% { transform: scale(0.98) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  @keyframes sparkle {
+    0%, 100% {
+      opacity: 0;
+      transform: scale(0) rotate(0deg);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1) rotate(180deg);
+    }
+  }
+
+  /* Smooth backdrop blur for dropdowns */
+  .dropdown-backdrop {
+    backdrop-filter: blur(12px) saturate(180%);
+    background: hsl(var(--background) / 0.8);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  /* Gradient text animation */
+  .gradient-text {
+    background: linear-gradient(45deg, #3b82f6, #8b5cf6, #06b6d4, #10b981);
+    background-size: 300% 300%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Ripple effect */
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ripple::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.3;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .ripple:active::before {
+    width: 300px;
+    height: 300px;
   }
 }

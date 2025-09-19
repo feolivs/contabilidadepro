@@ -12,10 +12,8 @@ interface ErrorProps {
 
 export default function Error({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Log do erro para monitoramento
-
-    // Aqui você pode integrar com serviços de monitoramento como Sentry
-    // Sentry.captureException(error)
+    // Log simples do erro
+    console.error('Error boundary caught:', error)
   }, [error])
 
   // Detectar tipos específicos de erro contábil

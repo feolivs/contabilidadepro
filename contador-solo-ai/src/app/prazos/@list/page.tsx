@@ -36,7 +36,7 @@ function ListContent() {
     prazos,
     isLoading,
     error,
-    total
+    total: _total
   } = usePrazos({
     filtros: {
       status: filtroStatus === 'todos' ? undefined : [filtroStatus as any],

@@ -3,14 +3,37 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import { toast } from 'react-hot-toast'
-import { 
-  Documento, 
-  DocumentoUpload, 
-  DocumentoStats, 
+import {
+  Documento,
+  DocumentoUpload,
+  DocumentoStats,
   DocumentoFilter,
   TipoDocumento,
-  StatusProcessamento 
+  StatusProcessamento
 } from '@/types/documento'
+
+// Função para mapear tipos do OCR para tipos da tabela
+function mapOCRTypeToDocumentType(ocrType: string): TipoDocumento | null {
+  const mapping: Record<string, TipoDocumento> = {
+    'nota_fiscal': 'NFe',
+    'nota_fiscal_entrada': 'NFe',
+    'nota_fiscal_saida': 'NFe',
+    'nfe': 'NFe',
+    'nfce': 'NFCe',
+    'nfse': 'NFSe',
+    'cte': 'CTe',
+    'das': 'Outro', // DAS não está na enum, usar 'Outro'
+    'boleto': 'Boleto',
+    'boleto_bancario': 'Boleto',
+    'recibo': 'Recibo',
+    'recibo_pagamento': 'Recibo',
+    'contrato': 'Contrato',
+    'extrato': 'Extrato',
+    'extrato_bancario': 'Extrato'
+  }
+
+  return mapping[ocrType.toLowerCase()] || null
+}
 
 // Hook para buscar documentos com filtros
 export function useDocumentos(filter?: DocumentoFilter) {
@@ -110,7 +133,7 @@ export function useUploadDocumento() {
       // 1. Upload do arquivo para o Storage
       const fileExt = arquivo.name.split('.').pop()
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-      const filePath = `documentos/${fileName}`
+      const filePath = fileName // Não incluir 'documentos/' pois já estamos no bucket 'documentos'
 
       const { error: uploadError } = await supabase.storage
         .from('documentos')
@@ -180,22 +203,97 @@ export function useUploadDocumento() {
           empresaId: data.empresa_id
         })
 
-        const { data: processData, error: processError } = await supabase.functions.invoke('intelligent-document-processor', {
+        // Processar documento com OCR real usando pdf-ocr-service
+        const { data: processData, error: processError } = await supabase.functions.invoke('pdf-ocr-service', {
           body: {
             documentId: documento.id,
             filePath: filePath,
             fileName: arquivo.name,
-            fileType: arquivo.type,
-            empresaId: data.empresa_id
+            options: {
+              language: 'por',
+              quality: 'high',
+              forceOCR: true,
+              enableCache: false
+            }
           }
         })
 
-        console.log('Resposta do processamento:', { processData, processError })
+        console.log('Resposta do processamento OCR:', { processData, processError })
 
         if (processError) {
-          console.error('Processing error:', processError)
-          // Não falhar o upload, apenas logar o erro
-          // O documento ficará com status 'processando' e pode ser reprocessado depois
+          console.error('Erro no processamento OCR:', processError)
+          // Atualizar status para erro
+          await supabase
+            .from('documentos')
+            .update({
+              status_processamento: 'erro',
+              observacoes: `Erro no OCR: ${processError.message}`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', documento.id)
+        } else if (processData && processData.success) {
+          // Processar resultado do OCR
+          const ocrResult = processData
+
+          // Atualizar documento com dados extraídos
+          const updateData: any = {
+            status_processamento: 'processado',
+            dados_extraidos: ocrResult.structuredData || {},
+            data_processamento: new Date().toISOString(),
+            observacoes: `OCR processado com ${ocrResult.method} - Confiança: ${Math.round(ocrResult.confidence * 100)}%`,
+            updated_at: new Date().toISOString()
+          }
+
+          // Adicionar dados estruturados se disponíveis
+          if (ocrResult.structuredData) {
+            updateData.dados_extraidos = ocrResult.structuredData
+            updateData.data_processamento = new Date().toISOString()
+
+            // Atualizar campos específicos se detectados nos dados estruturados
+            if (ocrResult.structuredData.cnpj) {
+              // Não temos campo cnpj_emitente na tabela, vamos manter nos dados_extraidos
+              console.log('CNPJ detectado:', ocrResult.structuredData.cnpj)
+            }
+
+            if (ocrResult.structuredData.valores && ocrResult.structuredData.valores.length > 0) {
+              // Pegar o maior valor como valor total (heurística)
+              const maiorValor = Math.max(...ocrResult.structuredData.valores.map((v: any) => v.valor))
+              updateData.valor_total = maiorValor
+              console.log('Valor total detectado:', maiorValor)
+            }
+
+            if (ocrResult.structuredData.numeroDocumento) {
+              updateData.numero_documento = ocrResult.structuredData.numeroDocumento
+              console.log('Número do documento detectado:', ocrResult.structuredData.numeroDocumento)
+            }
+
+            // Atualizar tipo de documento se detectado e for válido
+            if (ocrResult.structuredData.documentType && ocrResult.structuredData.documentType !== 'unknown') {
+              // Mapear tipos do OCR para tipos da tabela
+              const tipoMapeado = mapOCRTypeToDocumentType(ocrResult.structuredData.documentType)
+              if (tipoMapeado) {
+                updateData.tipo_documento = tipoMapeado
+                console.log('Tipo de documento detectado:', tipoMapeado)
+              }
+            }
+          }
+
+          await supabase
+            .from('documentos')
+            .update(updateData)
+            .eq('id', documento.id)
+
+          console.log('Documento atualizado com dados do OCR:', updateData)
+        } else {
+          // OCR falhou mas não deu erro
+          await supabase
+            .from('documentos')
+            .update({
+              status_processamento: 'erro',
+              observacoes: 'Falha no processamento OCR - nenhum dado extraído',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', documento.id)
         }
       } catch (processError) {
         console.error('Processing error:', processError)

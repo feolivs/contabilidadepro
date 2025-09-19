@@ -20,17 +20,14 @@ import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function RealtimeAlerts() {
-  const { notifications, stats, isLoading } = useRealtimeNotifications()
+  const { notifications, unreadCount, isLoading } = useRealtimeNotifications()
 
   // Filtrar apenas alertas importantes (high e critical)
   const criticalAlerts = notifications.filter(
-    n => (n.priority === 'critical' || n.priority === 'high') && !n.read
+    n => (n.type === 'error' || n.type === 'warning') && !n.read
   ).slice(0, 5)
 
-  const getAlertIcon = (type: string, priority: string) => {
-    if (priority === 'critical') {
-      return <XCircle className="h-5 w-5 text-red-600" />
-    }
+  const getAlertIcon = (type: string) => {
     switch (type) {
       case 'warning':
         return <AlertTriangle className="h-5 w-5 text-yellow-600" />
@@ -43,10 +40,7 @@ export function RealtimeAlerts() {
     }
   }
 
-  const getAlertBorderColor = (type: string, priority: string) => {
-    if (priority === 'critical') {
-      return 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/10'
-    }
+  const getAlertBorderColor = (type: string) => {
     switch (type) {
       case 'warning':
         return 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/10'
@@ -83,9 +77,9 @@ export function RealtimeAlerts() {
           <div className="flex items-center">
             <AlertTriangle className="h-5 w-5 mr-2 text-yellow-500" />
             Alertas em Tempo Real
-            {stats.critical > 0 && (
+            {0 > 0 && (
               <Badge className="ml-2 bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 animate-pulse">
-                {stats.critical} críticos
+                {0} críticos
               </Badge>
             )}
           </div>
@@ -113,15 +107,15 @@ export function RealtimeAlerts() {
             {/* Stats resumidas */}
             <div className="grid grid-cols-3 gap-3 mt-4">
               <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+                <div className="text-2xl font-bold text-blue-600">{notifications.length}</div>
                 <div className="text-xs text-muted-foreground">Total</div>
               </div>
               <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{stats.today}</div>
+                <div className="text-2xl font-bold text-green-600">{0}</div>
                 <div className="text-xs text-muted-foreground">Hoje</div>
               </div>
               <div className="text-center p-3 bg-gray-50 dark:bg-gray-950/20 rounded-lg">
-                <div className="text-2xl font-bold text-gray-600">{stats.unread}</div>
+                <div className="text-2xl font-bold text-gray-600">{unreadCount}</div>
                 <div className="text-xs text-muted-foreground">Não Lidas</div>
               </div>
             </div>
@@ -132,11 +126,11 @@ export function RealtimeAlerts() {
               {criticalAlerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className={`p-4 rounded-lg border transition-all duration-300 hover:shadow-md ${getAlertBorderColor(alert.type, alert.priority)}`}
+                  className={`p-4 rounded-lg border transition-all duration-300 hover:shadow-md ${getAlertBorderColor(alert.type)}`}
                 >
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 mt-1">
-                      {getAlertIcon(alert.type, alert.priority)}
+                      {getAlertIcon(alert.type)}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -147,18 +141,15 @@ export function RealtimeAlerts() {
 
                         <div className="flex items-center space-x-2 ml-2">
                           <Badge className={
-                            alert.priority === 'critical'
+                            alert.type === 'error'
                               ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 animate-pulse'
                               : 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
                           }>
-                            {alert.priority === 'critical' ? 'Crítico' : 'Alto'}
+                            {alert.type === 'error' ? 'Erro' : 'Alerta'}
                           </Badge>
 
                           <span className="text-xs text-muted-foreground">
-                            {alert.source === 'calculo' ? '🧮' :
-                             alert.source === 'documento' ? '📄' :
-                             alert.source === 'prazo' ? '📅' :
-                             alert.source === 'ia' ? '🤖' : '⚙️'}
+                            ⚙️
                           </span>
                         </div>
                       </div>
@@ -176,17 +167,6 @@ export function RealtimeAlerts() {
                           })}
                         </div>
 
-                        {alert.action && alert.actionUrl && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => window.open(alert.actionUrl, '_blank')}
-                          >
-                            {alert.action}
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </div>

@@ -1,0 +1,230 @@
+{
+  "name": "Sistema de Alertas Proativos Inteligentes",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyDay",
+              "hour": 8,
+              "minute": 0
+            }
+          ]
+        }
+      },
+      "id": "cron-alertas",
+      "name": "Trigger Alertas Diários",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [100, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT fo.*, e.nome as empresa_nome, e.cnpj, e.regime_tributario FROM fiscal_obligations fo JOIN empresas e ON fo.empresa_id = e.id WHERE fo.due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days' AND fo.status = 'pending' AND fo.alert_sent = false ORDER BY fo.due_date, fo.priority DESC"
+      },
+      "id": "postgres-prazos",
+      "name": "Buscar Prazos Próximos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [300, 200]
+    },
+    {
+      "id": "classificar-urgencia",
+      "name": "Classificar por Urgência",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 200],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst hoje = new Date();\nconst alertasClassificados = [];\n\nfor (const item of items) {\n  const dataVencimento = new Date(item.json.due_date);\n  const diasRestantes = Math.ceil((dataVencimento - hoje) / (1000 * 60 * 60 * 24));\n  \n  let urgencia = 'baixa';\n  let canais = ['in_app'];\n  \n  // Classificar urgência baseada nos dias restantes\n  if (diasRestantes <= 1) {\n    urgencia = 'critica';\n    canais = ['email', 'slack', 'whatsapp'];\n  } else if (diasRestantes <= 3) {\n    urgencia = 'alta';\n    canais = ['email', 'slack'];\n  } else if (diasRestantes <= 7) {\n    urgencia = 'media';\n    canais = ['email'];\n  }\n  \n  // Criar mensagem personalizada\n  const mensagem = {\n    titulo: `${urgencia === 'critica' ? '🚨 URGENTE' : urgencia === 'alta' ? '⚠️ IMPORTANTE' : '📅 LEMBRETE'}: ${item.json.name}`,\n    corpo: `A obrigação fiscal \"${item.json.name}\" da empresa ${item.json.empresa_nome} (CNPJ: ${item.json.cnpj}) vence em ${diasRestantes} dia(s).\\n\\nValor estimado: R$ ${(item.json.estimated_amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}\\nTipo: ${item.json.obligation_type}`,\n    empresa: item.json.empresa_nome,\n    cnpj: item.json.cnpj,\n    diasRestantes\n  };\n  \n  alertasClassificados.push({\n    ...item.json,\n    urgencia,\n    canais,\n    mensagem,\n    diasRestantes\n  });\n}\n\nreturn alertasClassificados.map(item => ({ json: item }));"
+      }
+    },
+    {
+      "id": "switch-canais",
+      "name": "Distribuir por Canal",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [700, 200],
+      "parameters": {
+        "options": {
+          "allMatchingOutputs": true
+        },
+        "conditions": {
+          "options": [
+            {
+              "conditions": {
+                "options": [
+                  {
+                    "leftValue": "={{ $json.canais }}",
+                    "rightValue": "email",
+                    "operator": {
+                      "operation": "contains",
+                      "type": "array"
+                    }
+                  }
+                ]
+              },
+              "combineOperation": "any"
+            },
+            {
+              "conditions": {
+                "options": [
+                  {
+                    "leftValue": "={{ $json.canais }}",
+                    "rightValue": "slack",
+                    "operator": {
+                      "operation": "contains",
+                      "type": "array"
+                    }
+                  }
+                ]
+              },
+              "combineOperation": "any"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "enviar-email",
+      "name": "Enviar Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [900, 100],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "contador@contabilidadepro.com",
+        "subject": "={{ $json.mensagem.titulo }}",
+        "emailType": "html",
+        "message": "<h2>{{ $json.mensagem.titulo }}</h2><p>{{ $json.mensagem.corpo.replace('\\n', '<br>') }}</p><hr><p><strong>Empresa:</strong> {{ $json.mensagem.empresa }}<br><strong>CNPJ:</strong> {{ $json.mensagem.cnpj }}<br><strong>Dias restantes:</strong> {{ $json.diasRestantes }}</p><p><em>Este é um alerta automático do ContabilidadePRO</em></p>"
+      }
+    },
+    {
+      "id": "enviar-slack",
+      "name": "Enviar Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [900, 200],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#alertas-fiscais",
+        "text": "{{ $json.mensagem.titulo }}\\n\\n{{ $json.mensagem.corpo }}\\n\\n*Empresa:* {{ $json.mensagem.empresa }}\\n*CNPJ:* {{ $json.mensagem.cnpj }}\\n*Dias restantes:* {{ $json.diasRestantes }}"
+      }
+    },
+    {
+      "id": "marcar-enviado",
+      "name": "Marcar como Enviado",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1100, 200],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE fiscal_obligations SET alert_sent = true, alert_sent_at = NOW() WHERE id = '{{ $json.id }}'"
+      }
+    },
+    {
+      "id": "log-alertas",
+      "name": "Log de Alertas",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1300, 200],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO system_alerts (user_id, type, severity, title, message, metadata, resolved, created_at) VALUES ('{{ $json.user_id }}', 'fiscal_deadline', '{{ $json.urgencia }}', '{{ $json.mensagem.titulo }}', '{{ $json.mensagem.corpo }}', '{\"obligation_id\": \"{{ $json.id }}\", \"dias_restantes\": {{ $json.diasRestantes }}}', false, NOW())"
+      }
+    }
+  ],
+  "connections": {
+    "Trigger Alertas Diários": {
+      "main": [
+        [
+          {
+            "node": "Buscar Prazos Próximos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Prazos Próximos": {
+      "main": [
+        [
+          {
+            "node": "Classificar por Urgência",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classificar por Urgência": {
+      "main": [
+        [
+          {
+            "node": "Distribuir por Canal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Distribuir por Canal": {
+      "main": [
+        [
+          {
+            "node": "Enviar Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Email": {
+      "main": [
+        [
+          {
+            "node": "Marcar como Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Slack": {
+      "main": [
+        [
+          {
+            "node": "Marcar como Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar como Enviado": {
+      "main": [
+        [
+          {
+            "node": "Log de Alertas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "name": "Relatórios Mensais Automatizados v1",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyMonth",
+              "day": 1,
+              "hour": 9,
+              "minute": 0
+            }
+          ]
+        }
+      },
+      "id": "trigger-mensal",
+      "name": "Trigger Mensal Dia 1",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  e.id,\n  e.nome,\n  e.cnpj,\n  e.regime_tributario,\n  e.email_contato,\n  e.telefone,\n  u.email as contador_email,\n  u.raw_user_meta_data->>'full_name' as contador_nome\nFROM empresas e \nJOIN auth.users u ON e.user_id = u.id \nWHERE e.status = 'ativa' \nORDER BY e.nome\nLIMIT 100"
+      },
+      "id": "buscar-empresas",
+      "name": "Buscar Empresas Ativas",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gerar dados do relatório mensal\nconst items = $input.all();\nconst mesPassado = new Date();\nmesPassado.setMonth(mesPassado.getMonth() - 1);\nconst mesReferencia = mesPassado.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long' });\nconst anoMes = mesPassado.toISOString().slice(0, 7); // YYYY-MM\n\nconst relatoriosGerados = [];\n\nfor (const item of items) {\n  const empresa = item.json;\n  \n  // Simular dados do relatório (em produção, viria do banco)\n  const faturamentoMes = Math.random() * 50000 + 10000; // Entre 10k e 60k\n  const dasValor = faturamentoMes * 0.06; // ~6% para Simples Nacional\n  const aliquotaEfetiva = 6.0 + (Math.random() * 2); // Entre 6% e 8%\n  \n  // Personalizar por regime tributário\n  let dadosEspecificos = {};\n  let proximosVencimentos = [];\n  \n  switch(empresa.regime_tributario) {\n    case 'Simples Nacional':\n      dadosEspecificos = {\n        faturamento_mes: faturamentoMes,\n        das_valor: dasValor,\n        aliquota_efetiva: aliquotaEfetiva,\n        anexo_simples: 'Anexo I',\n        faturamento_acumulado: faturamentoMes * 12 * 0.8 // Simular acumulado\n      };\n      proximosVencimentos = [\n        { tipo: 'DAS', vencimento: '20/02/2025', valor: dasValor },\n        { tipo: 'DEFIS', vencimento: '31/03/2025', valor: 0 }\n      ];\n      break;\n      \n    case 'Lucro Presumido':\n      const receitaTrimestre = faturamentoMes * 3;\n      const irpj = receitaTrimestre * 0.08 * 0.15; // 8% presunção * 15% IRPJ\n      const csll = receitaTrimestre * 0.08 * 0.09; // 8% presunção * 9% CSLL\n      \n      dadosEspecificos = {\n        receita_trimestre: receitaTrimestre,\n        irpj: irpj,\n        csll: csll,\n        total_tributos: irpj + csll,\n        percentual_presuncao: 8.0\n      };\n      proximosVencimentos = [\n        { tipo: 'IRPJ', vencimento: '31/01/2025', valor: irpj },\n        { tipo: 'CSLL', vencimento: '31/01/2025', valor: csll }\n      ];\n      break;\n      \n    default:\n      dadosEspecificos = {\n        faturamento_mes: faturamentoMes,\n        observacao: `Relatório personalizado para ${empresa.regime_tributario} em desenvolvimento`\n      };\n      proximosVencimentos = [\n        { tipo: 'Consultar', vencimento: 'A definir', valor: 0 }\n      ];\n  }\n  \n  relatoriosGerados.push({\n    json: {\n      ...empresa,\n      relatorio: {\n        mes_referencia: mesReferencia,\n        ano_mes: anoMes,\n        ...dadosEspecificos,\n        proximos_vencimentos: proximosVencimentos,\n        gerado_em: new Date().toISOString(),\n        observacoes: [\n          'Relatório gerado automaticamente',\n          'Valores sujeitos a confirmação',\n          'Entre em contato para esclarecimentos'\n        ]\n      }\n    }\n  });\n}\n\nreturn relatoriosGerados;"
+      },
+      "id": "gerar-relatorio",
+      "name": "Gerar Dados do Relatório",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Personalizar email por regime tributário\nconst item = $input.first().json;\nconst empresa = item;\nconst relatorio = item.relatorio;\n\n// Definir destinatário (priorizar email da empresa, senão do contador)\nconst destinatario = empresa.email_contato || empresa.contador_email;\n\n// Personalizar conteúdo por regime\nlet assunto = '';\nlet conteudoPrincipal = '';\nlet corTema = '#2563eb';\n\nswitch(empresa.regime_tributario) {\n  case 'Simples Nacional':\n    assunto = `📊 Relatório Mensal - ${empresa.nome} - Simples Nacional`;\n    corTema = '#059669'; // verde\n    conteudoPrincipal = `\n      <div style=\"background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;\">\n        <h3 style=\"color: #059669; margin-top: 0;\">📈 Resumo Fiscal - Simples Nacional</h3>\n        <div style=\"display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;\">\n          <div>\n            <p><strong>Faturamento do Mês:</strong><br>R$ ${relatorio.faturamento_mes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>\n            <p><strong>DAS Calculado:</strong><br>R$ ${relatorio.das_valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>\n          </div>\n          <div>\n            <p><strong>Alíquota Efetiva:</strong><br>${relatorio.aliquota_efetiva.toFixed(2)}%</p>\n            <p><strong>Anexo:</strong><br>${relatorio.anexo_simples}</p>\n          </div>\n        </div>\n      </div>\n    `;\n    break;\n    \n  case 'Lucro Presumido':\n    assunto = `📊 Relatório Mensal - ${empresa.nome} - Lucro Presumido`;\n    corTema = '#dc2626'; // vermelho\n    conteudoPrincipal = `\n      <div style=\"background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;\">\n        <h3 style=\"color: #dc2626; margin-top: 0;\">📈 Resumo Fiscal - Lucro Presumido</h3>\n        <div style=\"display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;\">\n          <div>\n            <p><strong>Receita Trimestral:</strong><br>R$ ${relatorio.receita_trimestre.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>\n            <p><strong>IRPJ:</strong><br>R$ ${relatorio.irpj.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>\n          </div>\n          <div>\n            <p><strong>CSLL:</strong><br>R$ ${relatorio.csll.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>\n            <p><strong>Total Tributos:</strong><br>R$ ${relatorio.total_tributos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>\n          </div>\n        </div>\n      </div>\n    `;\n    break;\n    \n  default:\n    assunto = `📊 Relatório Mensal - ${empresa.nome}`;\n    corTema = '#6366f1'; // índigo\n    conteudoPrincipal = `\n      <div style=\"background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #6366f1;\">\n        <h3 style=\"color: #6366f1; margin-top: 0;\">📈 Resumo Fiscal</h3>\n        <p>Relatório personalizado para o regime <strong>${empresa.regime_tributario}</strong> em desenvolvimento.</p>\n        <p><strong>Faturamento do Mês:</strong> R$ ${relatorio.faturamento_mes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>\n      </div>\n    `;\n}\n\n// Gerar lista de próximos vencimentos\nconst vencimentosHtml = relatorio.proximos_vencimentos.map(v => \n  `<tr>\n    <td style=\"padding: 8px; border-bottom: 1px solid #e5e7eb;\">${v.tipo}</td>\n    <td style=\"padding: 8px; border-bottom: 1px solid #e5e7eb;\">${v.vencimento}</td>\n    <td style=\"padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;\">R$ ${v.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>\n  </tr>`\n).join('');\n\n// Template HTML completo\nconst emailHtml = `\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>${assunto}</title>\n</head>\n<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;\">\n  <div style=\"max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\">\n    \n    <!-- Header -->\n    <div style=\"background: ${corTema}; color: white; padding: 30px 20px; text-align: center;\">\n      <h1 style=\"margin: 0; font-size: 24px; font-weight: 600;\">ContabilidadePRO</h1>\n      <p style=\"margin: 5px 0 0 0; opacity: 0.9;\">Relatório Automático Mensal</p>\n    </div>\n    \n    <!-- Content -->\n    <div style=\"padding: 30px 20px;\">\n      <h2 style=\"color: #1f2937; margin-top: 0;\">Olá!</h2>\n      <p>Aqui está o resumo fiscal da <strong>${empresa.nome}</strong> referente a <strong>${relatorio.mes_referencia}</strong>.</p>\n      \n      ${conteudoPrincipal}\n      \n      <!-- Próximos Vencimentos -->\n      <div style=\"margin: 30px 0;\">\n        <h3 style=\"color: #1f2937; margin-bottom: 15px;\">📅 Próximos Vencimentos</h3>\n        <table style=\"width: 100%; border-collapse: collapse; background: #f9fafb; border-radius: 6px; overflow: hidden;\">\n          <thead>\n            <tr style=\"background: #e5e7eb;\">\n              <th style=\"padding: 12px 8px; text-align: left; font-weight: 600; color: #374151;\">Tipo</th>\n              <th style=\"padding: 12px 8px; text-align: left; font-weight: 600; color: #374151;\">Vencimento</th>\n              <th style=\"padding: 12px 8px; text-align: right; font-weight: 600; color: #374151;\">Valor</th>\n            </tr>\n          </thead>\n          <tbody>\n            ${vencimentosHtml}\n          </tbody>\n        </table>\n      </div>\n      \n      <!-- Ações Recomendadas -->\n      <div style=\"background: #fffbeb; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0;\">\n        <h4 style=\"color: #92400e; margin-top: 0;\">🎯 Próximas Ações Recomendadas:</h4>\n        <ul style=\"margin: 10px 0; padding-left: 20px; color: #92400e;\">\n          <li>Verificar documentos pendentes de entrega</li>\n          <li>Preparar pagamento dos tributos em aberto</li>\n          <li>Revisar lançamentos contábeis do mês</li>\n          <li>Organizar documentação para o próximo período</li>\n        </ul>\n      </div>\n      \n      <p><strong>Dúvidas ou esclarecimentos?</strong><br>\nResponda este email ou entre em contato conosco. Estamos aqui para ajudar!</p>\n      \n      <p style=\"margin-top: 30px;\">Atenciosamente,<br>\n      <strong>${empresa.contador_nome || 'Equipe ContabilidadePRO'}</strong></p>\n    </div>\n    \n    <!-- Footer -->\n    <div style=\"background: #f3f4f6; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;\">\n      <p style=\"margin: 0; font-size: 12px; color: #6b7280;\">\n        Este é um relatório automático gerado pelo ContabilidadePRO<br>\n        Sistema de Inteligência Fiscal Autônoma\n      </p>\n      <p style=\"margin: 10px 0 0 0; font-size: 11px; color: #9ca3af;\">\n        Gerado em ${new Date(relatorio.gerado_em).toLocaleString('pt-BR')}\n      </p>\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    ...item,\n    email: {\n      destinatario,\n      assunto,\n      conteudo: emailHtml\n    }\n  }\n}];"
+      },
+      "id": "personalizar-email",
+      "name": "Personalizar Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "relatorios@contabilidadepro.com",
+        "toEmail": "={{ $json.email.destinatario }}",
+        "subject": "={{ $json.email.assunto }}",
+        "html": "={{ $json.email.conteudo }}",
+        "options": {}
+      },
+      "id": "enviar-relatorio",
+      "name": "Enviar Relatório",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO communication_log (\n  empresa_id, \n  tipo, \n  canal, \n  destinatario, \n  assunto, \n  status, \n  enviado_em,\n  metadata\n) VALUES (\n  '{{ $json.id }}', \n  'relatorio_mensal', \n  'email', \n  '{{ $json.email.destinatario }}', \n  '{{ $json.email.assunto }}', \n  'enviado', \n  NOW(),\n  '{\"mes_referencia\": \"{{ $json.relatorio.ano_mes }}\", \"regime\": \"{{ $json.regime_tributario }}\"}'\n)"
+      },
+      "id": "log-envio",
+      "name": "Log de Envio",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Trigger Mensal Dia 1": {
+      "main": [
+        [
+          {
+            "node": "Buscar Empresas Ativas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Empresas Ativas": {
+      "main": [
+        [
+          {
+            "node": "Gerar Dados do Relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Dados do Relatório": {
+      "main": [
+        [
+          {
+            "node": "Personalizar Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Personalizar Email": {
+      "main": [
+        [
+          {
+            "node": "Enviar Relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Relatório": {
+      "main": [
+        [
+          {
+            "node": "Log de Envio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-19T13:46:00.000Z",
+  "versionId": "1"
+}

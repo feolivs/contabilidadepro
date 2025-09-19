@@ -1,0 +1,161 @@
+{
+  "name": "Central de Comunicação Automatizada",
+  "nodes": [
+    {
+      "id": "cron-relatorios",
+      "name": "Trigger Relatórios Mensais",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [100, 200],
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyMonth",
+              "day": 1,
+              "hour": 9,
+              "minute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "buscar-empresas",
+      "name": "Buscar Empresas Ativas",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [300, 200],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT e.*, u.email as contador_email, u.nome as contador_nome FROM empresas e JOIN auth.users u ON e.user_id = u.id WHERE e.status = 'ativa' ORDER BY e.nome"
+      }
+    },
+    {
+      "id": "gerar-relatorio",
+      "name": "Gerar Relatório Mensal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "{{ $env.SUPABASE_URL }}/functions/v1/generate-monthly-report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "empresa_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "mes_referencia",
+              "value": "={{ $now.minus({months: 1}).toFormat('yyyy-MM') }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "personalizar-email",
+      "name": "Personalizar Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 200],
+      "parameters": {
+        "jsCode": "const empresa = $input.first().json;\nconst relatorio = $input.last().json;\n\n// Personalizar conteúdo do email baseado no regime tributário\nlet assunto = '';\nlet saudacao = '';\nlet conteudoPrincipal = '';\n\nswitch(empresa.regime_tributario) {\n  case 'Simples Nacional':\n    assunto = `📊 Relatório Mensal - ${empresa.nome} - Simples Nacional`;\n    saudacao = `Olá! Aqui está o resumo fiscal da ${empresa.nome} referente ao mês passado.`;\n    conteudoPrincipal = `\n      <h3>📈 Resumo Fiscal - Simples Nacional</h3>\n      <ul>\n        <li><strong>Faturamento:</strong> R$ ${(relatorio.faturamento_mes || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</li>\n        <li><strong>DAS Calculado:</strong> R$ ${(relatorio.das_valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</li>\n        <li><strong>Alíquota Efetiva:</strong> ${(relatorio.aliquota_efetiva || 0).toFixed(2)}%</li>\n        <li><strong>Próximo Vencimento:</strong> ${relatorio.proximo_vencimento || 'A calcular'}</li>\n      </ul>\n    `;\n    break;\n  case 'Lucro Presumido':\n    assunto = `📊 Relatório Mensal - ${empresa.nome} - Lucro Presumido`;\n    saudacao = `Olá! Segue o resumo fiscal da ${empresa.nome} no regime de Lucro Presumido.`;\n    conteudoPrincipal = `\n      <h3>📈 Resumo Fiscal - Lucro Presumido</h3>\n      <ul>\n        <li><strong>Receita Trimestral:</strong> R$ ${(relatorio.receita_trimestre || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</li>\n        <li><strong>IRPJ:</strong> R$ ${(relatorio.irpj || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</li>\n        <li><strong>CSLL:</strong> R$ ${(relatorio.csll || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</li>\n        <li><strong>Total Tributos:</strong> R$ ${(relatorio.total_tributos || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</li>\n      </ul>\n    `;\n    break;\n  default:\n    assunto = `📊 Relatório Mensal - ${empresa.nome}`;\n    saudacao = `Olá! Aqui está o resumo fiscal da ${empresa.nome}.`;\n    conteudoPrincipal = `\n      <h3>📈 Resumo Fiscal</h3>\n      <p>Relatório personalizado em desenvolvimento para o regime ${empresa.regime_tributario}.</p>\n    `;\n}\n\nconst emailHTML = `\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n  <title>${assunto}</title>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .header { background: #2563eb; color: white; padding: 20px; text-align: center; }\n    .content { padding: 20px; }\n    .footer { background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; }\n    .highlight { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; }\n    ul { background: #f8f9fa; padding: 15px; border-radius: 5px; }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>ContabilidadePRO</h1>\n    <p>Relatório Automático Mensal</p>\n  </div>\n  \n  <div class=\"content\">\n    <h2>Olá!</h2>\n    <p>${saudacao}</p>\n    \n    ${conteudoPrincipal}\n    \n    <div class=\"highlight\">\n      <h4>🎯 Próximas Ações Recomendadas:</h4>\n      <ul>\n        <li>Verificar documentos pendentes</li>\n        <li>Preparar pagamento dos tributos</li>\n        <li>Revisar lançamentos contábeis</li>\n      </ul>\n    </div>\n    \n    <p><strong>Dúvidas?</strong> Responda este email ou entre em contato conosco.</p>\n  </div>\n  \n  <div class=\"footer\">\n    <p>Este é um relatório automático gerado pelo ContabilidadePRO</p>\n    <p>© 2025 ContabilidadePRO - Inteligência Fiscal Autônoma</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    ...empresa,\n    relatorio,\n    email: {\n      assunto,\n      conteudo: emailHTML,\n      destinatario: empresa.email_contato || empresa.contador_email\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "enviar-relatorio",
+      "name": "Enviar Relatório por Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [900, 200],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.email.destinatario }}",
+        "subject": "={{ $json.email.assunto }}",
+        "emailType": "html",
+        "message": "={{ $json.email.conteudo }}"
+      }
+    },
+    {
+      "id": "log-envio",
+      "name": "Log de Envio",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1100, 200],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO communication_log (empresa_id, tipo, canal, destinatario, assunto, status, enviado_em) VALUES ('{{ $json.id }}', 'relatorio_mensal', 'email', '{{ $json.email.destinatario }}', '{{ $json.email.assunto }}', 'enviado', NOW())"
+      }
+    }
+  ],
+  "connections": {
+    "Trigger Relatórios Mensais": {
+      "main": [
+        [
+          {
+            "node": "Buscar Empresas Ativas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Empresas Ativas": {
+      "main": [
+        [
+          {
+            "node": "Gerar Relatório Mensal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Relatório Mensal": {
+      "main": [
+        [
+          {
+            "node": "Personalizar Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Personalizar Email": {
+      "main": [
+        [
+          {
+            "node": "Enviar Relatório por Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Relatório por Email": {
+      "main": [
+        [
+          {
+            "node": "Log de Envio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

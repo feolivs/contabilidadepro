@@ -15,7 +15,7 @@ Este diretório contém todos os Architecture Decision Records (ADRs) do Contabi
 ### **Fase 2 - Performance & Optimization**
 | ADR | Título | Status | Data | Fase |
 |-----|--------|--------|------|------|
-| [ADR-003](./ADR-003-parallel-query-engine.md) | Implementação de Parallel Query Engine para Performance Crítica | ✅ Aceito | 2024-03-15 | Fase 2 |
+| ~~ADR-003~~ | ~~Parallel Query Engine~~ | ❌ Removido | 2024-03-15 | ~~Fase 2~~ |
 
 ### **Fase 3 - Advanced Intelligence**
 | ADR | Título | Status | Data | Fase |
@@ -63,14 +63,14 @@ Para criar novos ADRs, use o seguinte template:
 ## 📊 Estatísticas dos ADRs
 
 ### **Por Status**
-- ✅ **Aceitos**: 4 ADRs
+- ✅ **Aceitos**: 3 ADRs
 - 🔄 **Em Planejamento**: 2 ADRs
 - 📋 **Propostos**: 2 ADRs
-- ❌ **Rejeitados**: 0 ADRs
+- ❌ **Removidos**: 1 ADR (Simplificação)
 
 ### **Por Fase de Implementação**
 - **Fase 1**: 2 ADRs (Singleton, Result Pattern)
-- **Fase 2**: 1 ADR (Parallel Queries)
+- **Fase 2**: 0 ADRs (Simplificado)
 - **Fase 3**: 1 ADR (OpenAI Integration)
 - **Fase 4**: 2 ADRs (Workflow, Gov APIs)
 - **Fase 5**: 2 ADRs (Microservices, Multi-tenant)
@@ -80,7 +80,7 @@ Para criar novos ADRs, use o seguinte template:
 |-----|---------|-------------------|--------------|
 | ADR-001 | 🟢 Alto | Resource Management | 🟡 Média |
 | ADR-002 | 🟢 Alto | Error Handling | 🟡 Média |
-| ADR-003 | 🔴 Crítico | Performance 3x | 🔴 Alta |
+| ~~ADR-003~~ | ~~Crítico~~ | ~~Performance 3x~~ | ❌ Removido |
 | ADR-004 | 🔴 Crítico | AI Intelligence | 🔴 Alta |
 
 ## 🔄 Processo de ADRs

@@ -30,16 +30,17 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Calculator, Building2, Calendar, DollarSign, Percent, FileText } from 'lucide-react';
 import { useEmpresas } from '@/hooks/use-empresas';
-import { useCalcularDAS, useCalcularIRPJ } from '@/hooks/use-calculos';
+import { useCalcularDAS, useCalcularIRPJ, useCalcularMEI } from '@/hooks/use-calculos';
 import type { TipoCalculo, AnexoSimples } from '@/types/calculo';
 
 const novoCalculoSchema = z.object({
-  tipo_calculo: z.enum(['DAS', 'IRPJ', 'CSLL', 'PIS', 'COFINS', 'ICMS', 'ISS', 'CPP', 'IPI']),
+  tipo_calculo: z.enum(['DAS', 'IRPJ', 'MEI', 'CSLL', 'PIS', 'COFINS', 'ICMS', 'ISS', 'CPP', 'IPI']),
   empresa_id: z.string().min(1, 'Selecione uma empresa'),
   competencia: z.string().min(1, 'Informe a competência'),
   faturamento_bruto: z.string().min(1, 'Informe o faturamento bruto'),
   faturamento_12_meses: z.string().optional(),
   anexo_simples: z.enum(['I', 'II', 'III', 'IV', 'V']).optional(),
+  atividade_mei: z.enum(['comercio', 'servicos', 'comercio_servicos']).optional(),
   deducoes: z.string().optional(),
   atividade_principal: z.string().optional(),
   observacoes: z.string().optional(),
@@ -58,6 +59,7 @@ export function NovoCalculoModal({ open, onOpenChange }: NovoCalculoModalProps) 
   const { data: empresas = [] } = useEmpresas();
   const calcularDAS = useCalcularDAS();
   const calcularIRPJ = useCalcularIRPJ();
+  const calcularMEI = useCalcularMEI();
 
   const form = useForm<NovoCalculoForm>({
     resolver: zodResolver(novoCalculoSchema),
@@ -96,6 +98,18 @@ export function NovoCalculoModal({ open, onOpenChange }: NovoCalculoModalProps) 
           anexo_simples: data.anexo_simples,
           deducoes,
         });
+      } else if (data.tipo_calculo === 'MEI') {
+        if (!data.atividade_mei) {
+          form.setError('atividade_mei', { message: 'Selecione a atividade do MEI' });
+          return;
+        }
+
+        await calcularMEI.mutateAsync({
+          empresa_id: data.empresa_id,
+          competencia: data.competencia,
+          atividade_mei: data.atividade_mei,
+          receita_bruta_mensal: faturamentoBruto,
+        });
       } else if (data.tipo_calculo === 'IRPJ') {
         await calcularIRPJ.mutateAsync({
           empresa_id: data.empresa_id,
@@ -125,10 +139,11 @@ export function NovoCalculoModal({ open, onOpenChange }: NovoCalculoModalProps) 
   const handleTipoChange = (tipo: TipoCalculo) => {
     setTipoSelecionado(tipo);
     form.setValue('tipo_calculo', tipo);
-    
+
     // Limpar campos específicos quando mudar o tipo
     form.setValue('anexo_simples', undefined);
     form.setValue('atividade_principal', '');
+    form.setValue('atividade_mei', undefined);
   };
 
   return (
@@ -164,6 +179,7 @@ export function NovoCalculoModal({ open, onOpenChange }: NovoCalculoModalProps) 
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="DAS">DAS - Simples Nacional</SelectItem>
+                      <SelectItem value="MEI">MEI - Microempreendedor Individual</SelectItem>
                       <SelectItem value="IRPJ">IRPJ - Lucro Presumido</SelectItem>
                       <SelectItem value="CSLL">CSLL - Lucro Presumido</SelectItem>
                       <SelectItem value="PIS">PIS</SelectItem>
@@ -237,7 +253,8 @@ export function NovoCalculoModal({ open, onOpenChange }: NovoCalculoModalProps) 
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
-                      {tipoSelecionado === 'DAS' ? 'Faturamento do Mês' : 'Receita Bruta'}
+                      {tipoSelecionado === 'DAS' ? 'Faturamento do Mês' :
+                       tipoSelecionado === 'MEI' ? 'Receita Bruta Mensal' : 'Receita Bruta'}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -310,11 +327,45 @@ export function NovoCalculoModal({ open, onOpenChange }: NovoCalculoModalProps) 
               </div>
             )}
 
+            {/* Campos específicos para MEI */}
+            {tipoSelecionado === 'MEI' && (
+              <div className="space-y-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <h3 className="font-medium text-orange-900">Dados do MEI</h3>
+
+                <FormField
+                  control={form.control}
+                  name="atividade_mei"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Atividade do MEI</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a atividade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="comercio">Comércio - R$ 66,60</SelectItem>
+                          <SelectItem value="servicos">Serviços - R$ 70,60</SelectItem>
+                          <SelectItem value="comercio_servicos">Comércio e Serviços - R$ 71,60</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="text-sm text-orange-700 bg-orange-100 p-3 rounded">
+                  <strong>Limite MEI 2025:</strong> R$ 81.000,00 anuais (R$ 6.750,00 mensais)
+                </div>
+              </div>
+            )}
+
             {/* Campos específicos para IRPJ */}
             {tipoSelecionado === 'IRPJ' && (
               <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
                 <h3 className="font-medium text-green-900">Dados do Lucro Presumido</h3>
-                
+
                 <FormField
                   control={form.control}
                   name="atividade_principal"
@@ -389,10 +440,10 @@ export function NovoCalculoModal({ open, onOpenChange }: NovoCalculoModalProps) 
               </Button>
               <Button
                 type="submit"
-                disabled={calcularDAS.isPending || calcularIRPJ.isPending}
+                disabled={calcularDAS.isPending || calcularIRPJ.isPending || calcularMEI.isPending}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {calcularDAS.isPending || calcularIRPJ.isPending ? (
+                {calcularDAS.isPending || calcularIRPJ.isPending || calcularMEI.isPending ? (
                   <>
                     <Calculator className="mr-2 h-4 w-4 animate-spin" />
                     Calculando...

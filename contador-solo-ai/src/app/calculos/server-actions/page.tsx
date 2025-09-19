@@ -8,16 +8,18 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CalculoDASForm } from '@/components/calculos/calculo-das-form'
 import { CalculoIRPJForm } from '@/components/calculos/calculo-irpj-form'
+import { CalculoMEIForm } from '@/components/calculos/calculo-mei-form'
 import { CalculosListServer } from '@/components/calculos/calculos-list-server'
 import { PerformanceComparison } from '@/components/calculos/performance-comparison'
-import { 
-  Calculator, 
-  Building2, 
-  TrendingUp, 
+import {
+  Calculator,
+  Building2,
+  TrendingUp,
   Clock,
   CheckCircle,
   AlertTriangle,
-  Zap
+  Zap,
+  Users
 } from 'lucide-react'
 import type { CalculoFiscal } from '@/types/calculo'
 
@@ -78,7 +80,7 @@ async function EstatisticasContent() {
             <Calculator className="h-4 w-4 text-blue-500" />
             <div>
               <p className="text-sm font-medium">Total</p>
-              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-2xl font-bold">{stats.total_calculos}</p>
             </div>
           </div>
         </CardContent>
@@ -90,7 +92,7 @@ async function EstatisticasContent() {
             <Clock className="h-4 w-4 text-yellow-500" />
             <div>
               <p className="text-sm font-medium">Calculados</p>
-              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-2xl font-bold">{stats.calculos_pendentes}</p>
             </div>
           </div>
         </CardContent>
@@ -102,7 +104,7 @@ async function EstatisticasContent() {
             <CheckCircle className="h-4 w-4 text-green-500" />
             <div>
               <p className="text-sm font-medium">Pagos</p>
-              <p className="text-2xl font-bold">{stats.pagos}</p>
+              <p className="text-2xl font-bold">{stats.valor_total_periodo}</p>
             </div>
           </div>
         </CardContent>
@@ -114,7 +116,7 @@ async function EstatisticasContent() {
             <AlertTriangle className="h-4 w-4 text-red-500" />
             <div>
               <p className="text-sm font-medium">Vencidos</p>
-              <p className="text-2xl font-bold">{stats.pendentes}</p>
+              <p className="text-2xl font-bold">{stats.calculos_pendentes}</p>
             </div>
           </div>
         </CardContent>
@@ -130,7 +132,7 @@ async function EstatisticasContent() {
                 {new Intl.NumberFormat('pt-BR', {
                   style: 'currency',
                   currency: 'BRL'
-                }).format(stats.valorTotal)}
+                }).format(stats.valor_total_periodo)}
               </p>
             </div>
           </div>
@@ -239,7 +241,7 @@ export default async function CalculosServerActionsPage() {
 
       {/* Tabs Principal */}
       <Tabs defaultValue="calculos" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="calculos" className="flex items-center gap-2">
             <Calculator className="h-4 w-4" />
             Cálculos
@@ -247,6 +249,10 @@ export default async function CalculosServerActionsPage() {
           <TabsTrigger value="das" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             Novo DAS
+          </TabsTrigger>
+          <TabsTrigger value="mei" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            MEI
           </TabsTrigger>
           <TabsTrigger value="irpj" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
@@ -286,6 +292,25 @@ export default async function CalculosServerActionsPage() {
                 <h3 className="text-lg font-semibold mb-2">Nenhuma empresa encontrada</h3>
                 <p className="text-muted-foreground">
                   Cadastre uma empresa primeiro para realizar cálculos fiscais.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Formulário MEI */}
+        <TabsContent value="mei">
+          {empresaPadrao ? (
+            <CalculoMEIForm
+              empresaId={empresaPadrao}
+            />
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhuma empresa encontrada</h3>
+                <p className="text-muted-foreground">
+                  Cadastre uma empresa primeiro para realizar cálculos MEI.
                 </p>
               </CardContent>
             </Card>

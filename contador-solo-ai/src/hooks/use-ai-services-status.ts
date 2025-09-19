@@ -13,8 +13,6 @@ export interface ServiceStatus {
 export interface AIServicesStatus {
   openai: ServiceStatus
   contextEngine: ServiceStatus
-  predictiveCache: ServiceStatus
-  governmentAPIs: ServiceStatus
   overallStatus: 'healthy' | 'degraded' | 'unhealthy'
   lastUpdate: Date
 }
@@ -33,18 +31,6 @@ export function useAIServicesStatus() {
       responseTime: 120,
       lastCheck: new Date()
     },
-    predictiveCache: {
-      name: 'Cache Preditivo',
-      status: 'online',
-      responseTime: 45,
-      lastCheck: new Date()
-    },
-    governmentAPIs: {
-      name: 'APIs Gov',
-      status: 'online',
-      responseTime: 2300,
-      lastCheck: new Date()
-    },
     overallStatus: 'healthy',
     lastUpdate: new Date()
   })
@@ -56,12 +42,10 @@ export function useAIServicesStatus() {
 
     setLoading(true)
     try {
-      // Simular verificação de saúde dos serviços
+      // Simular verificação de saúde dos serviços essenciais
       const healthChecks = await Promise.allSettled([
         checkOpenAIStatus(),
-        checkContextEngineStatus(),
-        checkCacheStatus(),
-        checkGovernmentAPIsStatus()
+        checkContextEngineStatus()
       ])
 
       const newStatus: AIServicesStatus = {
@@ -77,24 +61,12 @@ export function useAIServicesStatus() {
           lastCheck: new Date(),
           errorMessage: 'Service unavailable'
         },
-        predictiveCache: healthChecks[2].status === 'fulfilled' ? healthChecks[2].value : {
-          name: 'Cache Preditivo',
-          status: 'offline',
-          lastCheck: new Date(),
-          errorMessage: 'Cache error'
-        },
-        governmentAPIs: healthChecks[3].status === 'fulfilled' ? healthChecks[3].value : {
-          name: 'APIs Gov',
-          status: 'offline',
-          lastCheck: new Date(),
-          errorMessage: 'API timeout'
-        },
         overallStatus: 'healthy',
         lastUpdate: new Date()
       }
 
       // Calcular status geral
-      const services = [newStatus.openai, newStatus.contextEngine, newStatus.predictiveCache, newStatus.governmentAPIs]
+      const services = [newStatus.openai, newStatus.contextEngine]
       const onlineCount = services.filter(s => s.status === 'online').length
       const degradedCount = services.filter(s => s.status === 'degraded').length
 
@@ -188,56 +160,7 @@ async function checkContextEngineStatus(): Promise<ServiceStatus> {
   }
 }
 
-async function checkCacheStatus(): Promise<ServiceStatus> {
-  const start = Date.now()
 
-  try {
-    // Verificar cache (Redis/Memory)
-    const responseTime = Date.now() - start + Math.random() * 50 + 20
-
-    return {
-      name: 'Cache Preditivo',
-      status: 'online',
-      responseTime: Math.round(responseTime),
-      lastCheck: new Date()
-    }
-  } catch (error) {
-    return {
-      name: 'Cache Preditivo',
-      status: 'offline',
-      lastCheck: new Date(),
-      errorMessage: 'Cache error'
-    }
-  }
-}
-
-async function checkGovernmentAPIsStatus(): Promise<ServiceStatus> {
-  const start = Date.now()
-
-  try {
-    // Verificar APIs governamentais
-    // Simular latência típica de APIs gov (mais lentas)
-    const responseTime = Date.now() - start + Math.random() * 2000 + 1500
-
-    // APIs gov podem estar degradadas com frequência
-    const isDegraded = Math.random() < 0.15 // 15% chance de estar degradada
-
-    return {
-      name: 'APIs Gov',
-      status: isDegraded ? 'degraded' : 'online',
-      responseTime: Math.round(responseTime),
-      lastCheck: new Date(),
-      errorMessage: isDegraded ? 'High latency detected' : undefined
-    }
-  } catch (error) {
-    return {
-      name: 'APIs Gov',
-      status: 'offline',
-      lastCheck: new Date(),
-      errorMessage: 'API timeout'
-    }
-  }
-}
 
 // Hook para verificar status de uma empresa específica
 export function useCompanyContext(empresaId?: string) {

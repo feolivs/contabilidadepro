@@ -22,7 +22,7 @@ export default function Home() {
         } else {
           router.push('/login')
         }
-      } catch (error) {
+      } catch (_error) {
 
         router.push('/login')
       } finally {

@@ -6,6 +6,7 @@ import { ToastProvider } from "@/providers/toast-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { baseMetadata } from "@/lib/metadata";
+import { ServiceWorkerProvider } from "@/providers/service-worker-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,16 +45,20 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
+          enableColorScheme
+          storageKey="contador-solo-theme"
+          themes={['light', 'dark', 'system']}
         >
-          <QueryProvider>
-            <AuthProvider>
-              {children}
-              <ToastProvider />
-            </AuthProvider>
-          </QueryProvider>
+          <ServiceWorkerProvider>
+            <QueryProvider>
+              <AuthProvider>
+                {children}
+                <ToastProvider />
+              </AuthProvider>
+            </QueryProvider>
+          </ServiceWorkerProvider>
         </ThemeProvider>
       </body>
     </html>

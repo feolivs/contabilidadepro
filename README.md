@@ -4,7 +4,13 @@
 [![Powered by Supabase](https://img.shields.io/badge/Powered%20by-Supabase-green)](https://supabase.com)
 [![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-black)](https://nextjs.org)
 
-Sistema completo de contabilidade brasileira com IA integrada, desenvolvido especificamente para contadores e empresas brasileiras.
+Sistema **simplificado** de contabilidade brasileira com IA integrada, otimizado para **contadores solo**.
+
+## ✨ **SISTEMA RECÉM SIMPLIFICADO**
+- 🎯 **Arquitetura 80% mais simples** (31 → 6 funções)
+- ⚡ **Deploy 5x mais rápido**
+- 🔧 **Manutenção 10x mais fácil**
+- 🎪 **Foco total em contabilidade**
 
 ## 🚀 Funcionalidades Principais
 
@@ -15,18 +21,56 @@ Sistema completo de contabilidade brasileira com IA integrada, desenvolvido espe
 - [x] **Prazos Fiscais** - Calendário automático de obrigações
 - [x] **Relatórios Gerenciais** - Dashboards e análises financeiras
 - [x] **Integração APIs** - Receita Federal, SEFAZ e outros órgãos
+- [x] **🤖 Automação n8n** - Workflows inteligentes com IA integrada
 
-## 🛠️ Tecnologias
+## 🤖 Automação Avançada com n8n
 
+### Workflows Ativos (v5 - Gmail Nativo)
+- **📊 Relatórios IA Pro** - Relatórios mensais automatizados com análise de IA
+- **🚨 Alertas Fiscais IA** - Monitoramento diário de prazos com urgência inteligente
+- **📊 Relatórios Estratégicos** - Insights executivos e análise de performance
+
+### Tecnologias de Automação
+- **n8n**: Orquestração de workflows
+- **OpenAI GPT-4o**: Análise inteligente especializada em contabilidade BR
+- **Gmail API**: Envio nativo de emails profissionais
+- **Supabase**: Integração completa com banco de dados
+
+## 🏗️ Arquitetura Simplificada
+
+### 6 Serviços Principais
+- 🤖 **assistente-contabil-ia** - IA conversacional + análises
+- 🏢 **company-service** - Empresas + consulta CNPJ
+- 📄 **document-service** - Upload + OCR + classificação
+- 💰 **fiscal-service** - DAS + obrigações + simulador
+- 📊 **reports-service** - Relatórios + guias PDF
+- 📈 **analytics-service** - Métricas + dashboard
+
+### Tecnologias
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
-- **IA**: OpenAI GPT-4, Azure Document Intelligence
-- **Deploy**: Vercel (Frontend) + Supabase Cloud (Backend)
-- **Monitoramento**: Sentry, Vercel Analytics
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **IA**: OpenAI GPT-4o
+- **Automação**: n8n (Docker) + Gmail API + Workflows inteligentes
+- **Deploy**: Vercel + Supabase Cloud
 
 ## 🚀 Deploy Rápido
 
-### 1. Deploy Automático via Vercel
+### 1. Configuração da OpenAI (OBRIGATÓRIO para IA)
+
+```bash
+# 1. Configure sua chave OpenAI no .env.local
+echo "OPENAI_API_KEY=sk-sua-chave-aqui" >> contador-solo-ai/.env.local
+
+# 2. Execute o script de configuração automática
+node scripts/setup-openai.js
+
+# 3. Teste a configuração
+npm run dev
+```
+
+**⚠️ IMPORTANTE**: Sem a chave OpenAI, as funcionalidades de IA não funcionarão!
+
+### 2. Deploy Automático via Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/feolivs/contabilidadepro)
 
@@ -88,6 +132,10 @@ ContabilidadePRO/
 │   ├── functions/           # Edge Functions
 │   ├── migrations/          # Migrações do banco
 │   └── config.toml         # Configuração local
+├── n8n/                     # 🤖 Workflows de Automação
+│   ├── workflows/           # Configurações dos workflows v5
+│   ├── docs/               # Documentação técnica
+│   └── README.md           # Guia de automação
 └── scripts/                 # Scripts de automação
 ```
 

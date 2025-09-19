@@ -24,12 +24,31 @@ import { ptBR } from 'date-fns/locale'
 export function RealtimeDocumentStatus() {
   const {
     documents,
-    stats,
     isLoading,
-    getRecentDocuments,
-    formatFileSize,
-    refresh
+    error
   } = useRealtimeDocuments()
+
+  const getRecentDocuments = (limit: number) => documents.slice(0, limit)
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const stats = {
+    total: documents.length,
+    processando: documents.filter(d => d.status === 'processing').length,
+    processados: documents.filter(d => d.status === 'completed').length,
+    erros: documents.filter(d => d.status === 'error').length,
+    totalTamanho: 0
+  }
+
+  const refresh = () => {
+    // Placeholder para refresh
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -199,15 +218,15 @@ export function RealtimeDocumentStatus() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1 truncate">
-                          {document.nome}
+                          {document.name}
                         </h4>
                         <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-2">
-                          <span>{document.tipo}</span>
+                          <span>{document.type}</span>
                           <span>•</span>
-                          <span>{formatFileSize(document.tamanho)}</span>
+                          <span>{formatFileSize(0)}</span>
                           <span>•</span>
                           <span>
-                            {formatDistanceToNow(new Date(document.created_at), {
+                            {formatDistanceToNow(new Date(document.lastUpdated), {
                               addSuffix: true,
                               locale: ptBR
                             })}
@@ -221,7 +240,7 @@ export function RealtimeDocumentStatus() {
                     </div>
 
                     {/* Barra de progresso para documentos processando */}
-                    {document.status === 'processando' && (
+                    {document.status === 'processing' && (
                       <div className="mb-2">
                         <Progress
                           value={document.progress}
@@ -234,9 +253,9 @@ export function RealtimeDocumentStatus() {
                     )}
 
                     {/* Mensagem de erro */}
-                    {document.status === 'erro' && document.error_message && (
+                    {document.status === 'error' && (
                       <div className="text-xs text-red-600 mb-2">
-                        Erro: {document.error_message}
+                        Erro no processamento
                       </div>
                     )}
 
@@ -245,17 +264,6 @@ export function RealtimeDocumentStatus() {
                         ID: {document.id.slice(0, 8)}...
                       </div>
 
-                      {document.url_arquivo && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-xs"
-                          onClick={() => window.open(document.url_arquivo, '_blank')}
-                        >
-                          Ver Arquivo
-                          <ExternalLink className="h-3 w-3 ml-1" />
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </div>

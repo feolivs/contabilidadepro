@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAIQuery } from '@/hooks/use-supabase'
+import { useAuthStore } from '@/store/auth-store'
 import { Send, Bot, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -28,6 +29,7 @@ export function AIChat() {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const aiQuery = useAIQuery()
+  const { user } = useAuthStore()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -39,6 +41,18 @@ export function AIChat() {
 
   const handleSend = async () => {
     if (!input.trim() || aiQuery.isPending) return
+
+    // Verificar se o usuário está autenticado
+    if (!user?.id) {
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: 'Você precisa estar logado para usar o assistente IA.',
+        role: 'assistant',
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+      return
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -54,6 +68,7 @@ export function AIChat() {
       const response = await aiQuery.mutateAsync({
         question: input,
         context: 'contador-solo',
+        userId: user.id,
       })
 
       const assistantMessage: Message = {
@@ -64,10 +79,10 @@ export function AIChat() {
       }
 
       setMessages((prev) => [...prev, assistantMessage])
-    } catch {
+    } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
+        content: error instanceof Error ? error.message : 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
         role: 'assistant',
         timestamp: new Date(),
       }

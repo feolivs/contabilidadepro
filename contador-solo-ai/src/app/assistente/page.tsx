@@ -9,18 +9,18 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { useAIQuery, useSupabase } from '@/hooks/use-supabase'
-import { useEnhancedAIQuery, useEmpresaAIQuery, useAIQueryStats, type EnhancedAIQueryResponse } from '@/hooks/use-enhanced-ai-query'
-import type { ContextualData } from '@/services/ai-context-service'
+// Removido: Enhanced AI Query hooks - Fase 2 simplificação
+// import { useEnhancedAIQuery, useEmpresaAIQuery, useAIQueryStats, type EnhancedAIQueryResponse } from '@/hooks/use-enhanced-ai-query'
+// import type { ContextualData } from '@/services/ai-context-service'
 import { EstatisticasIA } from '@/components/assistente/estatisticas-ia'
 import { HistoricoConversas } from '@/components/assistente/historico-conversas'
-import { ContextInfoPanel } from '@/components/assistente/context-info-panel'
 import { ChatMessage } from '@/components/assistente/chat-message'
 import { VoiceInput } from '@/components/assistente/voice-input'
 import { TypingIndicator } from '@/components/assistente/typing-indicator'
-import { ConversationContextService, type ConversationMessage } from '@/services/conversation-context'
+// Removido: ConversationContextService - Fase 2 simplificação
+// import { ConversationContextService, type ConversationMessage } from '@/services/conversation-context'
 import { useAuthStore } from '@/store/auth-store'
 import {
   Bot,
@@ -36,8 +36,19 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+// Interfaces simplificadas para Fase 2
+interface ConversationMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
 interface Message extends ConversationMessage {
-  response_time?: number
+  response_time?: number;
+  type?: 'text' | 'calculation' | 'analysis' | 'suggestion';
+  tokens_used?: number;
+  model?: string;
 }
 
 interface QuickAction {
@@ -97,30 +108,6 @@ const quickActions: QuickAction[] = [
     icon: CheckCircle,
     prompt: 'Verifique se há alguma obrigação fiscal pendente ou em atraso',
     category: 'compliance'
-  },
-  {
-    id: 'regime-comparison',
-    title: 'Comparar Regimes',
-    description: 'Compare regimes tributários',
-    icon: TrendingUp,
-    prompt: 'Compare os regimes tributários (Simples Nacional, Lucro Presumido e Lucro Real) para uma empresa com faturamento anual de R$ 2 milhões',
-    category: 'analysis'
-  },
-  {
-    id: 'sped-obligations',
-    title: 'Obrigações SPED',
-    description: 'Consulte obrigações do SPED',
-    icon: FileText,
-    prompt: 'Quais são as principais obrigações do SPED (ECD, ECF, EFD-Contribuições) e seus prazos?',
-    category: 'compliance'
-  },
-  {
-    id: 'mei-guidance',
-    title: 'Orientações MEI',
-    description: 'Dúvidas sobre MEI',
-    icon: Lightbulb,
-    prompt: 'Explique as regras do MEI, limites de faturamento e obrigações para 2024',
-    category: 'general'
   }
 ]
 
@@ -129,7 +116,7 @@ export default function AssistentePage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: 'Olá! Sou seu assistente contábil inteligente especializado em contabilidade brasileira com acesso completo aos seus dados. Posso analisar suas empresas, cálculos fiscais, obrigações pendentes e fornecer insights personalizados. Como posso ajudá-la hoje?',
+      content: 'Olá! Sou seu assistente contábil especializado em contabilidade brasileira. Posso ajudar com cálculos fiscais, orientações tributárias e análises básicas. Como posso ajudá-la hoje?',
       role: 'assistant',
       timestamp: new Date(),
       type: 'text'
@@ -138,25 +125,15 @@ export default function AssistentePage() {
   const [input, setInput] = useState('')
   const [activeTab, setActiveTab] = useState('chat')
   const [selectedEmpresa, setSelectedEmpresa] = useState<string | null>(null)
-  const [useEnhancedMode, setUseEnhancedMode] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Hooks para diferentes tipos de consulta
+  // Hook básico para consulta AI (simplificado)
   const aiQuery = useAIQuery()
-  const enhancedQuery = useEnhancedAIQuery()
-  const empresaQuery = useEmpresaAIQuery()
-  const aiStats = useAIQueryStats()
   const supabase = useSupabase()
-
-  // Estado para dados contextuais da última consulta
-  const [lastContextData, setLastContextData] = useState<ContextualData | null>(null)
 
   // Estado para empresas do usuário
   const [empresas, setEmpresas] = useState<Array<{id: string, nome: string}>>([])
   const [loadingEmpresas, setLoadingEmpresas] = useState(false)
-
-  // Estado para contexto de conversa
-  const [contextTokenCount, setContextTokenCount] = useState<number>(0)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -199,12 +176,10 @@ export default function AssistentePage() {
   }, [user?.id, carregarEmpresas])
 
   const handleRegenerateMessage = async (messageId: string) => {
-    // Find the user message that triggered this assistant response
     const messageIndex = messages.findIndex(m => m.id === messageId)
     if (messageIndex > 0) {
       const userMessage = messages[messageIndex - 1]
       if (userMessage && userMessage.role === 'user') {
-        // Remove the assistant message and regenerate
         setMessages(prev => prev.slice(0, messageIndex))
         await handleSend(userMessage.content)
       }
@@ -212,7 +187,6 @@ export default function AssistentePage() {
   }
 
   const handleMessageFeedback = async (messageId: string, isPositive: boolean) => {
-    // TODO: Implement feedback storage
     console.log('Feedback:', messageId, isPositive)
     toast.success(isPositive ? 'Obrigado pelo feedback positivo!' : 'Obrigado pelo feedback. Vamos melhorar!')
   }
@@ -223,7 +197,7 @@ export default function AssistentePage() {
 
   const handleSend = async (customPrompt?: string) => {
     const messageText = customPrompt || input
-    const isQueryPending = aiQuery.isPending || enhancedQuery.isPending || empresaQuery.isPending
+    const isQueryPending = aiQuery.isPending
 
     if (!messageText.trim() || isQueryPending) return
 
@@ -239,52 +213,17 @@ export default function AssistentePage() {
     setMessages(updatedMessages)
     if (!customPrompt) setInput('')
 
-    // Preparar contexto de conversa
-    const conversationData = ConversationContextService.prepareConversationContext(
-      updatedMessages,
-      true
-    )
-
-    setContextTokenCount(conversationData.totalEstimatedTokens)
-
     try {
-      let response: EnhancedAIQueryResponse
-
-      // Verificar se usuário está autenticado
       if (!user?.id) {
         throw new Error('Usuário não autenticado')
       }
 
-      // Escolher o tipo de consulta baseado no contexto
-      if (useEnhancedMode && selectedEmpresa) {
-        // Consulta específica de empresa com contexto rico
-        response = await empresaQuery.mutateAsync({
-          question: messageText,
-          userId: user.id,
-          empresaId: selectedEmpresa,
-          includeFullContext: true
-        })
-      } else if (useEnhancedMode) {
-        // Consulta geral com contexto rico
-        response = await enhancedQuery.mutateAsync({
-          question: messageText,
-          context: 'assistente-contabil',
-          enhancedContext: {
-            userId: user.id,
-            includeFinancialData: true,
-            includeObligations: true,
-            includeDocuments: false,
-            timeRange: 'last_3_months'
-          },
-          useCache: true
-        })
-      } else {
-        // Consulta tradicional (fallback)
-        response = await aiQuery.mutateAsync({
-          question: messageText,
-          context: 'assistente-contabil'
-        })
-      }
+      // Consulta básica simplificada (Fase 2)
+      const response = await aiQuery.mutateAsync({
+        question: messageText,
+        context: 'assistente-contabil',
+        userId: user.id
+      })
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -293,21 +232,10 @@ export default function AssistentePage() {
         timestamp: new Date(),
         type: determineMessageType(messageText),
         tokens_used: response.tokens_usados,
-        response_time: Date.now() - Date.now(), // Will be calculated properly
-        model: response.modelo
+        model: response.modelo || 'GPT-4o'
       }
 
       setMessages((prev) => [...prev, assistantMessage])
-
-      // Salvar dados contextuais da última consulta
-      if (response.contexto_usado) {
-        setLastContextData(response.contexto_usado)
-      }
-
-      // Log de sucesso com métricas
-      if (response.insights_gerados && response.insights_gerados.length > 0) {
-
-      }
 
     } catch (error) {
       console.error('Erro ao processar mensagem:', error)
@@ -351,7 +279,6 @@ export default function AssistentePage() {
     }
   }
 
-
   const getCategoryColor = (category: QuickAction['category']) => {
     switch (category) {
       case 'calculation':
@@ -368,7 +295,6 @@ export default function AssistentePage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -376,39 +302,26 @@ export default function AssistentePage() {
               Assistente IA
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              Seu assistente contábil inteligente especializado em contabilidade brasileira
+              Seu assistente contábil especializado em contabilidade brasileira
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="flex items-center gap-1">
               <Bot className="h-3 w-3" />
-              {useEnhancedMode ? 'GPT-4o Enhanced' : 'GPT-4o'}
+              GPT-4o Básico
             </Badge>
-            {useEnhancedMode && (
-              <Badge variant="outline" className="text-xs">
-                Contexto Rico
-              </Badge>
-            )}
           </div>
         </div>
 
-        {/* Controles de Configuração */}
         <Card className="p-4">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <div className="flex items-center space-x-2">
-              <Switch
-                id="enhanced-mode"
-                checked={useEnhancedMode}
-                onCheckedChange={setUseEnhancedMode}
-              />
-              <Label htmlFor="enhanced-mode" className="text-sm font-medium">
-                Modo Contexto Rico
+              <Label htmlFor="basic-mode" className="text-sm font-medium">
+                Modo Básico Ativo
               </Label>
-              {useEnhancedMode && (
-                <Badge variant="secondary" className="text-xs">
-                  IA Avançada
-                </Badge>
-              )}
+              <Badge variant="secondary" className="text-xs">
+                Simplificado
+              </Badge>
             </div>
 
             <div className="flex-1 max-w-sm">
@@ -436,26 +349,18 @@ export default function AssistentePage() {
             </div>
 
             <div className="text-xs text-muted-foreground">
-              {useEnhancedMode ? (
-                <div className="flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  Análise contextual ativa
-                </div>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <Bot className="h-3 w-3" />
-                  Modo tradicional
-                </div>
-              )}
+              <div className="flex items-center gap-1">
+                <Bot className="h-3 w-3" />
+                Modo básico ativo
+              </div>
             </div>
           </div>
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="chat">Chat Inteligente</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="actions">Ações Rápidas</TabsTrigger>
-            <TabsTrigger value="context">Contexto IA</TabsTrigger>
             <TabsTrigger value="statistics">Estatísticas</TabsTrigger>
             <TabsTrigger value="history">Histórico</TabsTrigger>
           </TabsList>
@@ -467,41 +372,17 @@ export default function AssistentePage() {
                   <div className="flex items-center gap-2">
                     <Bot className="h-5 w-5 text-primary" />
                     Conversa com IA
-                    {(aiQuery.isPending || enhancedQuery.isPending || empresaQuery.isPending) && (
+                    {aiQuery.isPending && (
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Clock className="h-3 w-3 animate-spin" />
-                        {useEnhancedMode ? 'Analisando contexto...' : 'Processando...'}
+                        Processando...
                       </div>
-                    )}
-                  </div>
-
-                  {/* Indicador de Contexto */}
-                  <div className="flex items-center gap-2 text-xs">
-                    {messages.length > 1 && (
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1 cursor-help"
-                        title={`O assistente considera as últimas ${Math.min(messages.length - 1, 10)} mensagens da conversa para fornecer respostas contextualizadas. Total estimado: ~${contextTokenCount} tokens.`}
-                      >
-                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                        {Math.min(messages.length - 1, 10)} msg no contexto
-                      </Badge>
-                    )}
-                    {contextTokenCount > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs cursor-help"
-                        title="Estimativa de tokens utilizados para o contexto da conversa"
-                      >
-                        ~{contextTokenCount} tokens
-                      </Badge>
                     )}
                   </div>
                 </CardTitle>
               </CardHeader>
-              
+
               <CardContent className="flex-1 flex flex-col p-0">
-                {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 chat-scroll">
                   {messages.map((message) => (
                     <ChatMessage
@@ -511,56 +392,36 @@ export default function AssistentePage() {
                       onFeedback={handleMessageFeedback}
                     />
                   ))}
-                  
-                  {(aiQuery.isPending || enhancedQuery.isPending || empresaQuery.isPending) && (
+
+                  {aiQuery.isPending && (
                     <TypingIndicator
-                      isEnhanced={useEnhancedMode}
-                      message={useEnhancedMode ? 'Analisando contexto empresarial...' : 'Processando sua pergunta...'}
-                      contextMessageCount={Math.min(messages.length - 1, 10)}
-                      contextTokenCount={contextTokenCount}
+                      isEnhanced={false}
+                      message="Processando sua pergunta..."
+                      contextMessageCount={0}
+                      contextTokenCount={0}
                     />
                   )}
-                  
+
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input */}
                 <div className="border-t border-border p-4">
-                  {/* Context Status Bar */}
-                  {messages.length > 1 && (
-                    <div className="mb-3 p-2 bg-muted/30 rounded-md flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span>
-                          Contexto ativo: {Math.min(messages.length - 1, 10)} mensagem(s) •
-                          ~{contextTokenCount} tokens estimados
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs">Modo:</span>
-                        <Badge variant="secondary" className="text-xs px-1 py-0">
-                          {useEnhancedMode ? 'Enhanced' : 'Básico'}
-                        </Badge>
-                      </div>
-                    </div>
-                  )}
-
                   <div className="flex gap-2">
                     <Input
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      placeholder="Digite ou fale sua pergunta sobre contabilidade..."
-                      disabled={aiQuery.isPending || enhancedQuery.isPending || empresaQuery.isPending}
+                      placeholder="Digite sua pergunta sobre contabilidade..."
+                      disabled={aiQuery.isPending}
                       className="flex-1"
                     />
                     <VoiceInput
                       onTranscript={handleVoiceTranscript}
-                      disabled={aiQuery.isPending || enhancedQuery.isPending || empresaQuery.isPending}
+                      disabled={aiQuery.isPending}
                     />
                     <Button
                       onClick={() => handleSend()}
-                      disabled={!input.trim() || aiQuery.isPending || enhancedQuery.isPending || empresaQuery.isPending}
+                      disabled={!input.trim() || aiQuery.isPending}
                       size="sm"
                     >
                       <Send className="h-4 w-4" />
@@ -569,16 +430,6 @@ export default function AssistentePage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="context" className="space-y-4">
-            <ContextInfoPanel
-              isEnhanced={useEnhancedMode}
-              selectedEmpresa={selectedEmpresa}
-              contextData={lastContextData as Record<string, unknown> | null}
-              onClearCache={aiStats.clearCache}
-              cacheStats={aiStats.getCacheStats()}
-            />
           </TabsContent>
 
           <TabsContent value="actions" className="space-y-4">
@@ -624,7 +475,6 @@ export default function AssistentePage() {
           <TabsContent value="history" className="space-y-4">
             <HistoricoConversas
               onSelectConversa={(conversa) => {
-                // Adicionar conversa selecionada ao chat
                 const userMessage: Message = {
                   id: `history-${Date.now()}`,
                   content: conversa.pergunta,

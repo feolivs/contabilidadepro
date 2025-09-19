@@ -63,8 +63,14 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Rotas protegidas
-  const protectedRoutes = ['/dashboard', '/clientes', '/documentos', '/relatorios', '/assistente']
+  const protectedRoutes = ['/dashboard', '/clientes', '/documentos', '/relatorios', '/assistente', '/seguranca']
   const isProtectedRoute = protectedRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route)
+  )
+
+  // Rotas que requerem MFA (operações sensíveis)
+  const mfaRequiredRoutes = ['/calculos', '/novo-calculo', '/seguranca']
+  const requiresMFA = mfaRequiredRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   )
 
@@ -77,6 +83,11 @@ export async function middleware(request: NextRequest) {
   if (user && request.nextUrl.pathname === '/login') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
+
+  // TODO: Implementar verificação MFA para rotas sensíveis
+  // if (requiresMFA && user && !mfaVerified) {
+  //   return NextResponse.redirect(new URL('/mfa-verify', request.url))
+  // }
 
   return response
 }

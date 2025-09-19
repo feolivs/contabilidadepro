@@ -26,19 +26,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { useRealtimeNotifications, type RealtimeNotification } from '@/hooks/use-realtime-notifications'
+import { useRealtimeNotifications, type NotificationData } from '@/hooks/use-realtime-notifications'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function NotificationCenter() {
   const {
     notifications,
-    stats,
+    unreadCount,
     isLoading,
     markAsRead,
-    markAllAsRead,
-    removeNotification,
-    clearAll
+    markAllAsRead
   } = useRealtimeNotifications()
 
   const [filter, setFilter] = useState<'all' | 'unread' | 'critical'>('all')
@@ -49,13 +47,13 @@ export function NotificationCenter() {
       case 'unread':
         return !notification.read
       case 'critical':
-        return notification.priority === 'critical' || notification.priority === 'high'
+        return notification.type === 'error' || notification.type === 'warning'
       default:
         return true
     }
   })
 
-  const getNotificationIcon = (notification: RealtimeNotification) => {
+  const getNotificationIcon = (notification: NotificationData) => {
     switch (notification.type) {
       case 'success':
         return <CheckCircle className="h-4 w-4 text-green-600" />
@@ -68,32 +66,23 @@ export function NotificationCenter() {
     }
   }
 
-  const getPriorityColor = (priority: RealtimeNotification['priority']) => {
-    switch (priority) {
-      case 'critical':
+  const getPriorityColor = (type: NotificationData['type']) => {
+    switch (type) {
+      case 'error':
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-      case 'high':
+      case 'warning':
         return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
-      case 'medium':
+      case 'success':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+      case 'info':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
     }
   }
 
-  const getSourceIcon = (source: RealtimeNotification['source']) => {
-    switch (source) {
-      case 'calculo':
-        return '🧮'
-      case 'documento':
-        return '📄'
-      case 'prazo':
-        return '📅'
-      case 'ia':
-        return '🤖'
-      default:
-        return '⚙️'
-    }
+  const getSourceIcon = () => {
+    return '⚙️'
   }
 
   if (isLoading) {
@@ -108,14 +97,14 @@ export function NotificationCenter() {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
-          {stats.unread > 0 ? (
+          {unreadCount > 0 ? (
             <BellRing className="h-4 w-4" />
           ) : (
             <Bell className="h-4 w-4" />
           )}
-          {stats.unread > 0 && (
+          {unreadCount > 0 && (
             <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-red-500 text-white">
-              {stats.unread > 99 ? '99+' : stats.unread}
+              {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
           )}
         </Button>
@@ -127,14 +116,14 @@ export function NotificationCenter() {
               <CardTitle className="text-lg flex items-center">
                 <BellRing className="h-5 w-5 mr-2" />
                 Notificações
-                {stats.unread > 0 && (
+                {unreadCount > 0 && (
                   <Badge className="ml-2 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                    {stats.unread} novas
+                    {unreadCount} novas
                   </Badge>
                 )}
               </CardTitle>
               <div className="flex items-center space-x-1">
-                {stats.unread > 0 && (
+                {unreadCount > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -147,7 +136,7 @@ export function NotificationCenter() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={clearAll}
+                  onClick={() => {}}
                   title="Limpar todas"
                   disabled={notifications.length === 0}
                 >
@@ -159,15 +148,15 @@ export function NotificationCenter() {
             {/* Stats rápidas */}
             <div className="grid grid-cols-3 gap-2 mt-2">
               <div className="text-center p-2 bg-blue-50 dark:bg-blue-950/20 rounded">
-                <div className="text-lg font-bold text-blue-600">{stats.total}</div>
+                <div className="text-lg font-bold text-blue-600">{notifications.length}</div>
                 <div className="text-xs text-muted-foreground">Total</div>
               </div>
               <div className="text-center p-2 bg-red-50 dark:bg-red-950/20 rounded">
-                <div className="text-lg font-bold text-red-600">{stats.critical}</div>
+                <div className="text-lg font-bold text-red-600">{0}</div>
                 <div className="text-xs text-muted-foreground">Críticas</div>
               </div>
               <div className="text-center p-2 bg-green-50 dark:bg-green-950/20 rounded">
-                <div className="text-lg font-bold text-green-600">{stats.today}</div>
+                <div className="text-lg font-bold text-green-600">{0}</div>
                 <div className="text-xs text-muted-foreground">Hoje</div>
               </div>
             </div>
@@ -176,8 +165,8 @@ export function NotificationCenter() {
             <div className="flex space-x-1 mt-3">
               {[
                 { key: 'all', label: 'Todas', count: notifications.length },
-                { key: 'unread', label: 'Não lidas', count: stats.unread },
-                { key: 'critical', label: 'Importantes', count: stats.critical }
+                { key: 'unread', label: 'Não lidas', count: unreadCount },
+                { key: 'critical', label: 'Importantes', count: 0 }
               ].map(filterOption => (
                 <Button
                   key={filterOption.key}
@@ -231,7 +220,7 @@ export function NotificationCenter() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center space-x-2">
-                              <span className="text-sm">{getSourceIcon(notification.source)}</span>
+                              <span className="text-sm">{getSourceIcon()}</span>
                               <h4 className="text-sm font-medium truncate">
                                 {notification.title}
                               </h4>
@@ -241,17 +230,17 @@ export function NotificationCenter() {
                             </div>
 
                             <div className="flex items-center space-x-1 ml-2">
-                              <Badge className={`text-xs ${getPriorityColor(notification.priority)}`}>
-                                {notification.priority === 'critical' ? 'Crítica' :
-                                 notification.priority === 'high' ? 'Alta' :
-                                 notification.priority === 'medium' ? 'Média' : 'Baixa'}
+                              <Badge className={`text-xs ${getPriorityColor(notification.type)}`}>
+                                {notification.type === 'error' ? 'Erro' :
+                                 notification.type === 'warning' ? 'Alerta' :
+                                 notification.type === 'success' ? 'Sucesso' : 'Info'}
                               </Badge>
 
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0"
-                                onClick={() => removeNotification(notification.id)}
+                                onClick={() => () => {}}
                                 title="Remover notificação"
                               >
                                 <X className="h-3 w-3" />
@@ -287,20 +276,6 @@ export function NotificationCenter() {
                                 </Button>
                               )}
 
-                              {notification.action && notification.actionUrl && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 text-xs"
-                                  onClick={() => {
-                                    window.open(notification.actionUrl, '_blank')
-                                    markAsRead(notification.id)
-                                  }}
-                                >
-                                  {notification.action}
-                                  <ExternalLink className="h-3 w-3 ml-1" />
-                                </Button>
-                              )}
                             </div>
                           </div>
                         </div>

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { relatoriosService, RelatorioFiltros, RelatorioOpcoes } from '@/services/relatorios-service';
+import { relatoriosService, type FiltrosRelatorio } from '@/services/simple-relatorios';
 
 interface GuiaPDFInput {
   calculo_id: string;
@@ -45,7 +45,6 @@ export function useGerarGuiaPDF() {
       queryClient.invalidateQueries({ queryKey: ['relatorios'] });
     },
     onError: (error: Error) => {
-
       toast.error('Erro na geração do PDF', {
         description: error.message || 'Não foi possível gerar o PDF da guia'
       });
@@ -64,21 +63,20 @@ export function useDownloadPDF() {
 
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
-        
+
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         window.URL.revokeObjectURL(downloadUrl);
-        
+
         toast.success('Download concluído!', {
           description: `Arquivo ${filename} baixado com sucesso`
         });
       } catch (error) {
-
         toast.error('Erro no download', {
           description: 'Não foi possível baixar o arquivo'
         });
@@ -97,16 +95,16 @@ export function useRelatoriosHistorico(user_id: string, empresa_id?: string) {
     queryFn: async () => {
       if (empresa_id) {
         // Buscar histórico de cálculos específicos da empresa
-        const filtros: RelatorioFiltros = {
+        const filtros: FiltrosRelatorio = {
           empresa_id: empresa_id || '',
           data_inicio: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 90 dias atrás
           data_fim: new Date().toISOString().split('T')[0]
         };
 
-        return await relatoriosService.getDadosRelatorioConsolidado(filtros);
+        return await relatoriosService.getDadosConsolidado(filtros);
       } else {
         // Buscar histórico de relatórios gerados
-        return await relatoriosService.getHistoricoRelatorios(user_id);
+        return await relatoriosService.getHistorico(user_id);
       }
     },
     enabled: !!user_id,
@@ -127,55 +125,50 @@ export function useGerarRelatorioConsolidado() {
       formato: 'PDF' | 'EXCEL';
       user_id: string;
     }) => {
-      const filtros: RelatorioFiltros = {
+      const filtros: FiltrosRelatorio = {
         empresa_id: params.empresa_id,
         data_inicio: params.data_inicio,
         data_fim: params.data_fim,
-        tipos_calculo: params.tipos_calculo
+        status: params.tipos_calculo
       };
 
-      const opcoes: RelatorioOpcoes = {
-        formato: params.formato,
-        incluir_graficos: true,
-        incluir_detalhamento: true,
-        agrupar_por: 'empresa',
-        ordenar_por: 'data',
-        ordem: 'desc'
-      };
-
-      if (params.formato === 'PDF') {
-        // Gerar PDF via Edge Function
-        const template_id = params.template_id || 'consolidado-trimestral';
-        return await relatoriosService.gerarRelatorioPDF(
-          template_id,
-          filtros,
-          opcoes,
-          params.user_id
-        );
-      } else {
+      if (params.formato === 'EXCEL') {
         // Buscar dados e exportar
-        const dados = await relatoriosService.getDadosRelatorioConsolidado(filtros);
+        const dados = await relatoriosService.getDadosConsolidado(filtros);
         const nomeArquivo = `relatorio-consolidado-${params.data_inicio}-${params.data_fim}`;
-        const exportResult = await relatoriosService.exportarDados(dados, params.formato, nomeArquivo);
+        const exportResult = relatoriosService.exportarCSV(dados, nomeArquivo);
 
         return {
-          download_url: exportResult.download_url,
+          csv: exportResult.csv,
+          filename: exportResult.filename,
+          dados,
+          total_registros: dados.length
+        };
+      } else {
+        // Para PDF, usar dados consolidados básicos
+        const dados = await relatoriosService.getDadosConsolidado(filtros);
+        return {
           dados,
           total_registros: dados.length
         };
       }
     },
     onSuccess: (data, variables) => {
-      const isPDF = variables.formato === 'PDF';
+      const isExcel = variables.formato === 'EXCEL';
       toast.success('Relatório gerado com sucesso!', {
-        description: isPDF ? 'PDF pronto para download' : 'Arquivo Excel/CSV gerado',
-        action: {
+        description: isExcel ? 'Arquivo CSV gerado' : 'Dados consolidados prontos',
+        action: isExcel ? {
           label: 'Baixar',
           onClick: () => {
-            const url = isPDF ? (data as any).pdf_url : (data as any).download_url;
-            window.open(url, '_blank');
+            const blob = new Blob([(data as any).csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = (data as any).filename;
+            link.click();
+            window.URL.revokeObjectURL(url);
           }
-        }
+        } : undefined
       });
 
       // Invalidar cache de relatórios
@@ -193,45 +186,30 @@ export function useExportarDados() {
   return {
     exportarCSV: (dados: any[], filename: string) => {
       try {
-        // Converter dados para CSV
         if (!dados || dados.length === 0) {
           toast.error('Nenhum dado para exportar');
           return;
         }
 
-        const headers = Object.keys(dados[0]);
-        const csvContent = [
-          headers.join(','),
-          ...dados.map(row => 
-            headers.map(header => {
-              const value = row[header];
-              // Escapar valores que contêm vírgula ou aspas
-              if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-                return `"${value.replace(/"/g, '""')}"`;
-              }
-              return value;
-            }).join(',')
-          )
-        ].join('\n');
+        const result = relatoriosService.exportarCSV(dados, filename);
 
         // Criar e baixar arquivo
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
-        
+
         link.setAttribute('href', url);
-        link.setAttribute('download', `${filename}.csv`);
+        link.setAttribute('download', result.filename);
         link.style.visibility = 'hidden';
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
         toast.success('Dados exportados com sucesso!', {
-          description: `Arquivo ${filename}.csv baixado`
+          description: `Arquivo ${result.filename} baixado`
         });
       } catch (error) {
-
         toast.error('Erro na exportação', {
           description: 'Não foi possível exportar os dados'
         });
@@ -244,11 +222,11 @@ export function useExportarDados() {
         const blob = new Blob([jsonContent], { type: 'application/json' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
-        
+
         link.setAttribute('href', url);
         link.setAttribute('download', `${filename}.json`);
         link.style.visibility = 'hidden';
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -257,7 +235,6 @@ export function useExportarDados() {
           description: `Arquivo ${filename}.json baixado`
         });
       } catch (error) {
-
         toast.error('Erro na exportação', {
           description: 'Não foi possível exportar os dados'
         });
@@ -270,8 +247,18 @@ export function useTemplatesRelatorio() {
   return useQuery({
     queryKey: ['templates-relatorio'],
     queryFn: async () => {
-      return await relatoriosService.getTemplatesRelatorio();
+      return relatoriosService.getTemplates();
     },
     staleTime: 60 * 60 * 1000, // 1 hora
+  });
+}
+
+// Hook simplificado para dashboard stats
+export function useDashboardStats(user_id: string) {
+  return useQuery({
+    queryKey: ['dashboard-stats', user_id],
+    queryFn: () => relatoriosService.getDashboardStats(user_id),
+    enabled: !!user_id,
+    staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }

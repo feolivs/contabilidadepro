@@ -1,6 +1,7 @@
 // Tipos para cálculos fiscais brasileiros
-export type TipoCalculo = 
+export type TipoCalculo =
   | 'DAS' // Documento de Arrecadação do Simples Nacional
+  | 'MEI' // Microempreendedor Individual
   | 'IRPJ' // Imposto de Renda Pessoa Jurídica
   | 'CSLL' // Contribuição Social sobre o Lucro Líquido
   | 'PIS' // Programa de Integração Social
@@ -87,6 +88,14 @@ export interface DadosCalculoIRPJ {
   atividade_principal: string;
   deducoes?: number;
   incentivos_fiscais?: number;
+}
+
+// Interface para entrada de dados do cálculo MEI
+export interface DadosCalculoMEI {
+  empresa_id: string;
+  competencia: string;
+  atividade_mei: 'comercio' | 'servicos' | 'comercio_servicos';
+  receita_bruta_mensal: number;
 }
 
 // Interface para resultado do cálculo

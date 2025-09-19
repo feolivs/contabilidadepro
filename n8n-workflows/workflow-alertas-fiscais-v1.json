@@ -1,0 +1,280 @@
+{
+  "name": "Alertas Fiscais Inteligentes v2",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyDay",
+              "hour": 8,
+              "minute": 0
+            }
+          ]
+        }
+      },
+      "id": "trigger-diario",
+      "name": "Trigger Diário 8h",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  fo.id,\n  fo.name,\n  fo.due_date,\n  fo.estimated_amount,\n  fo.obligation_type,\n  fo.priority,\n  fo.user_id,\n  e.nome as empresa_nome,\n  e.cnpj,\n  e.regime_tributario\nFROM fiscal_obligations fo \nJOIN empresas e ON fo.empresa_id = e.id \nWHERE fo.due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days' \n  AND fo.status = 'pending' \n  AND fo.alert_sent = false \nORDER BY fo.due_date ASC, fo.priority DESC\nLIMIT 50"
+      },
+      "id": "buscar-prazos",
+      "name": "Buscar Prazos Próximos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Processar alertas fiscais\nconst items = $input.all();\nconst hoje = new Date();\nconst alertasProcessados = [];\n\nfor (const item of items) {\n  const prazo = item.json;\n  const dataVencimento = new Date(prazo.due_date);\n  const diasRestantes = Math.ceil((dataVencimento - hoje) / (1000 * 60 * 60 * 24));\n  \n  // Classificar urgência\n  let urgencia = 'baixa';\n  let emoji = '📅';\n  let cor = '#28a745'; // verde\n  \n  if (diasRestantes <= 1) {\n    urgencia = 'critica';\n    emoji = '🚨';\n    cor = '#dc3545'; // vermelho\n  } else if (diasRestantes <= 3) {\n    urgencia = 'alta';\n    emoji = '⚠️';\n    cor = '#fd7e14'; // laranja\n  } else if (diasRestantes <= 7) {\n    urgencia = 'media';\n    emoji = '📋';\n    cor = '#ffc107'; // amarelo\n  }\n  \n  // Criar mensagem personalizada\n  const titulo = `${emoji} ${urgencia.toUpperCase()}: ${prazo.name}`;\n  const corpo = `Empresa: ${prazo.empresa_nome} (${prazo.cnpj})\\nVencimento: ${dataVencimento.toLocaleDateString('pt-BR')} (${diasRestantes} dias)\\nValor: R$ ${(prazo.estimated_amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}\\nTipo: ${prazo.obligation_type}`;\n  \n  alertasProcessados.push({\n    json: {\n      ...prazo,\n      urgencia,\n      diasRestantes,\n      titulo,\n      corpo,\n      cor,\n      emoji,\n      dataFormatada: dataVencimento.toLocaleDateString('pt-BR'),\n      valorFormatado: (prazo.estimated_amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})\n    }\n  });\n}\n\nreturn alertasProcessados;"
+      },
+      "id": "processar-alertas",
+      "name": "Processar Alertas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": [
+            {
+              "conditions": {
+                "options": [
+                  {
+                    "leftValue": "={{ $json.urgencia }}",
+                    "rightValue": "critica",
+                    "operator": {
+                      "operation": "equal"
+                    }
+                  }
+                ]
+              },
+              "combineOperation": "any"
+            },
+            {
+              "conditions": {
+                "options": [
+                  {
+                    "leftValue": "={{ $json.urgencia }}",
+                    "rightValue": "alta",
+                    "operator": {
+                      "operation": "equal"
+                    }
+                  }
+                ]
+              },
+              "combineOperation": "any"
+            },
+            {
+              "conditions": {
+                "options": [
+                  {
+                    "leftValue": "={{ $json.urgencia }}",
+                    "rightValue": "media",
+                    "operator": {
+                      "operation": "equal"
+                    }
+                  }
+                ]
+              },
+              "combineOperation": "any"
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "id": "switch-urgencia",
+      "name": "Switch por Urgência",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "sistema@contabilidadepro.com",
+        "toEmail": "contador@contabilidadepro.com",
+        "subject": "={{ $json.titulo }}",
+        "html": "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;\">\n  <div style=\"background: {{ $json.cor }}; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;\">\n    <h2 style=\"margin: 0;\">{{ $json.titulo }}</h2>\n  </div>\n  \n  <div style=\"background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px;\">\n    <h3 style=\"color: #333; margin-top: 0;\">Detalhes da Obrigação:</h3>\n    <p><strong>Empresa:</strong> {{ $json.empresa_nome }}</p>\n    <p><strong>CNPJ:</strong> {{ $json.cnpj }}</p>\n    <p><strong>Regime:</strong> {{ $json.regime_tributario }}</p>\n    <p><strong>Vencimento:</strong> {{ $json.dataFormatada }} ({{ $json.diasRestantes }} dias)</p>\n    <p><strong>Valor Estimado:</strong> R$ {{ $json.valorFormatado }}</p>\n    <p><strong>Tipo:</strong> {{ $json.obligation_type }}</p>\n  </div>\n  \n  <div style=\"background: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196f3;\">\n    <h4 style=\"color: #1976d2; margin-top: 0;\">🎯 Ação Recomendada:</h4>\n    <p>Verifique os documentos necessários e prepare o pagamento desta obrigação fiscal.</p>\n  </div>\n  \n  <hr style=\"margin: 20px 0; border: none; border-top: 1px solid #eee;\">\n  <p style=\"font-size: 12px; color: #666; text-align: center;\">\n    Este é um alerta automático do ContabilidadePRO<br>\n    Sistema de Inteligência Fiscal Autônoma\n  </p>\n</div>",
+        "options": {}
+      },
+      "id": "email-critico",
+      "name": "Email Crítico",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1120, 180]
+    },
+    {
+      "parameters": {
+        "fromEmail": "sistema@contabilidadepro.com",
+        "toEmail": "contador@contabilidadepro.com",
+        "subject": "={{ $json.titulo }}",
+        "html": "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;\">\n  <div style=\"background: {{ $json.cor }}; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;\">\n    <h2 style=\"margin: 0;\">{{ $json.titulo }}</h2>\n  </div>\n  \n  <div style=\"background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px;\">\n    <p><strong>Empresa:</strong> {{ $json.empresa_nome }} ({{ $json.cnpj }})</p>\n    <p><strong>Vencimento:</strong> {{ $json.dataFormatada }} ({{ $json.diasRestantes }} dias)</p>\n    <p><strong>Valor:</strong> R$ {{ $json.valorFormatado }}</p>\n  </div>\n  \n  <p style=\"font-size: 12px; color: #666; text-align: center;\">\n    Alerta automático do ContabilidadePRO\n  </p>\n</div>",
+        "options": {}
+      },
+      "id": "email-normal",
+      "name": "Email Normal",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "sistema@contabilidadepro.com",
+        "toEmail": "contador@contabilidadepro.com",
+        "subject": "={{ $json.titulo }}",
+        "text": "{{ $json.corpo }}",
+        "options": {}
+      },
+      "id": "email-lembrete",
+      "name": "Email Lembrete",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1120, 420]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE fiscal_obligations \nSET alert_sent = true, alert_sent_at = NOW() \nWHERE id = '{{ $json.id }}'"
+      },
+      "id": "marcar-enviado",
+      "name": "Marcar como Enviado",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO system_alerts (\n  user_id, \n  type, \n  severity, \n  title, \n  message, \n  metadata, \n  resolved, \n  created_at\n) VALUES (\n  '{{ $json.user_id }}', \n  'fiscal_deadline', \n  '{{ $json.urgencia }}', \n  '{{ $json.titulo }}', \n  '{{ $json.corpo }}', \n  '{\"obligation_id\": \"{{ $json.id }}\", \"dias_restantes\": {{ $json.diasRestantes }}, \"valor\": {{ $json.estimated_amount || 0 }}}', \n  false, \n  NOW()\n)"
+      },
+      "id": "log-alerta",
+      "name": "Log do Alerta",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "Trigger Diário 8h": {
+      "main": [
+        [
+          {
+            "node": "Buscar Prazos Próximos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Prazos Próximos": {
+      "main": [
+        [
+          {
+            "node": "Processar Alertas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar Alertas": {
+      "main": [
+        [
+          {
+            "node": "Switch por Urgência",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch por Urgência": {
+      "main": [
+        [
+          {
+            "node": "Email Crítico",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email Normal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email Lembrete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Crítico": {
+      "main": [
+        [
+          {
+            "node": "Marcar como Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Normal": {
+      "main": [
+        [
+          {
+            "node": "Marcar como Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Lembrete": {
+      "main": [
+        [
+          {
+            "node": "Marcar como Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar como Enviado": {
+      "main": [
+        [
+          {
+            "node": "Log do Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-19T13:46:00.000Z",
+  "versionId": "1"
+}

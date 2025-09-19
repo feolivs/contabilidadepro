@@ -48,7 +48,6 @@ import { useCalculos, useEstatisticasCalculos, useMarcarComoPago, useExcluirCalc
 import { useEmpresas } from '@/hooks/use-empresas';
 import { NovoCalculoModal } from '@/components/calculos/novo-calculo-modal';
 import { CalculoAutomaticoModal } from '@/components/calculos/calculo-automatico-modal';
-import { useDebounce } from 'use-debounce';
 import type { FiltroCalculos, TipoCalculo, StatusCalculo } from '@/types/calculo';
 
 export default function CalculosPage() {
@@ -57,7 +56,6 @@ export default function CalculosPage() {
   const [novoCalculoOpen, setNovoCalculoOpen] = useState(false);
   const [calculoAutomaticoOpen, setCalculoAutomaticoOpen] = useState(false);
   
-  const [buscaDebounced] = useDebounce(busca, 300);
   
   const { data: empresas = [] } = useEmpresas();
   const { data: calculos = [], isLoading } = useCalculos(filtros);
@@ -79,19 +77,43 @@ export default function CalculosPage() {
 
   const getStatusBadge = (status: StatusCalculo | string) => {
     const variants = {
-      calculado: { variant: 'secondary' as const, icon: Clock, text: 'Calculado' },
-      aprovado: { variant: 'default' as const, icon: CheckCircle, text: 'Aprovado' },
-      pago: { variant: 'default' as const, icon: CheckCircle, text: 'Pago' },
-      vencido: { variant: 'destructive' as const, icon: AlertTriangle, text: 'Vencido' },
-      cancelado: { variant: 'outline' as const, icon: Trash2, text: 'Cancelado' },
-      pendente: { variant: 'secondary' as const, icon: Clock, text: 'Pendente' },
+      calculado: {
+        className: '!bg-blue-100 !text-blue-800 dark:!bg-blue-900 dark:!text-blue-200',
+        icon: Clock,
+        text: 'Calculado'
+      },
+      aprovado: {
+        className: '!bg-green-100 !text-green-800 dark:!bg-green-900 dark:!text-green-200',
+        icon: CheckCircle,
+        text: 'Aprovado'
+      },
+      pago: {
+        className: '!bg-emerald-100 !text-emerald-800 dark:!bg-emerald-900 dark:!text-emerald-200',
+        icon: CheckCircle,
+        text: 'Pago'
+      },
+      vencido: {
+        className: '!bg-red-100 !text-red-800 dark:!bg-red-900 dark:!text-red-200',
+        icon: AlertTriangle,
+        text: 'Vencido'
+      },
+      cancelado: {
+        className: '!bg-gray-100 !text-gray-800 dark:!bg-gray-900 dark:!text-gray-200',
+        icon: Trash2,
+        text: 'Cancelado'
+      },
+      pendente: {
+        className: '!bg-yellow-100 !text-yellow-800 dark:!bg-yellow-900 dark:!text-yellow-200',
+        icon: Clock,
+        text: 'Pendente'
+      },
     };
 
     const config = variants[status as keyof typeof variants] || variants.pendente;
     const Icon = config.icon;
 
     return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
+      <Badge variant="outline" className={`flex items-center gap-1 !border-0 ${config.className}`}>
         <Icon className="h-3 w-3" />
         {config.text}
       </Badge>
@@ -100,19 +122,20 @@ export default function CalculosPage() {
 
   const getTipoCalculoBadge = (tipo: TipoCalculo) => {
     const cores = {
-      DAS: 'bg-primary/10 text-primary',
-      IRPJ: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-      CSLL: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-      PIS: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
-      COFINS: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
-      ICMS: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
-      ISS: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-      CPP: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
-      IPI: 'bg-muted text-muted-foreground',
+      DAS: '!bg-blue-100 !text-blue-800 dark:!bg-blue-900 dark:!text-blue-200',
+      MEI: '!bg-orange-100 !text-orange-800 dark:!bg-orange-900 dark:!text-orange-200',
+      IRPJ: '!bg-green-100 !text-green-800 dark:!bg-green-900 dark:!text-green-200',
+      CSLL: '!bg-emerald-100 !text-emerald-800 dark:!bg-emerald-900 dark:!text-emerald-200',
+      PIS: '!bg-purple-100 !text-purple-800 dark:!bg-purple-900 dark:!text-purple-200',
+      COFINS: '!bg-violet-100 !text-violet-800 dark:!bg-violet-900 dark:!text-violet-200',
+      ICMS: '!bg-amber-100 !text-amber-800 dark:!bg-amber-900 dark:!text-amber-200',
+      ISS: '!bg-yellow-100 !text-yellow-800 dark:!bg-yellow-900 dark:!text-yellow-200',
+      CPP: '!bg-red-100 !text-red-800 dark:!bg-red-900 dark:!text-red-200',
+      IPI: '!bg-gray-100 !text-gray-800 dark:!bg-gray-900 dark:!text-gray-200',
     };
 
     return (
-      <Badge className={cores[tipo] || 'bg-muted text-muted-foreground'}>
+      <Badge variant="outline" className={`!border-0 ${cores[tipo] || '!bg-gray-100 !text-gray-800 dark:!bg-gray-900 dark:!text-gray-200'}`}>
         {tipo}
       </Badge>
     );
@@ -261,6 +284,7 @@ export default function CalculosPage() {
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="DAS">DAS</SelectItem>
+                <SelectItem value="MEI">MEI</SelectItem>
                 <SelectItem value="IRPJ">IRPJ</SelectItem>
                 <SelectItem value="CSLL">CSLL</SelectItem>
                 <SelectItem value="PIS">PIS</SelectItem>

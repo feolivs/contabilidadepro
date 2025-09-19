@@ -7,19 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Calculator, 
-  Building2, 
-  FileText, 
+import {
+  Calculator,
+  Building2,
+  FileText,
   TrendingUp,
   ArrowLeft,
   Zap,
   CheckCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Users
 } from 'lucide-react'
 import { CalculoDASForm } from '@/components/calculos/calculo-das-form'
 import { CalculoIRPJForm } from '@/components/calculos/calculo-irpj-form'
+import { CalculoMEIForm } from '@/components/calculos/calculo-mei-form'
 
 // Página completa para novo cálculo
 export default function NovoCalculoFullPage() {
@@ -46,6 +48,16 @@ export default function NovoCalculoFullPage() {
       popular: false,
       status: 'available',
       features: ['Cálculo trimestral', 'Múltiplas atividades', 'Relatórios detalhados']
+    },
+    {
+      id: 'mei',
+      name: 'MEI - Microempreendedor Individual',
+      description: 'Cálculo da DAS-MEI para microempreendedores individuais com valores 2025',
+      icon: Users,
+      color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
+      popular: true,
+      status: 'available',
+      features: ['Valores 2025', 'Limite automático', 'Vencimento dia 20']
     },
     {
       id: 'icms',
@@ -199,10 +211,14 @@ export default function NovoCalculoFullPage() {
 
         {/* Formulários de Cálculo */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="das" className="flex items-center">
               <FileText className="h-4 w-4 mr-2" />
               DAS
+            </TabsTrigger>
+            <TabsTrigger value="mei" className="flex items-center">
+              <Users className="h-4 w-4 mr-2" />
+              MEI
             </TabsTrigger>
             <TabsTrigger value="irpj" className="flex items-center">
               <TrendingUp className="h-4 w-4 mr-2" />
@@ -224,6 +240,20 @@ export default function NovoCalculoFullPage() {
               </CardHeader>
               <CardContent>
                 <CalculoDASForm />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="mei" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="h-6 w-6 mr-3" />
+                  Cálculo MEI - Microempreendedor Individual
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CalculoMEIForm />
               </CardContent>
             </Card>
           </TabsContent>

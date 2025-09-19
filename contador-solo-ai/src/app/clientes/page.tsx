@@ -64,7 +64,7 @@ async function getEmpresas(): Promise<Empresa[]> {
     }
 
     return data || []
-  } catch (error) {
+  } catch (_error) {
 
     return []
   }

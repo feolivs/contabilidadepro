@@ -9,6 +9,34 @@ interface CachedUrl {
 const urlCache = new Map<string, CachedUrl>()
 
 /**
+ * Limpa o cache de URLs assinadas
+ * @param bucket - Nome do bucket (opcional, limpa tudo se não especificado)
+ * @param path - Caminho do arquivo (opcional, limpa tudo do bucket se não especificado)
+ */
+export function clearUrlCache(bucket?: string, path?: string) {
+  if (!bucket) {
+    urlCache.clear()
+    console.log('Cache de URLs limpo completamente')
+    return
+  }
+
+  if (!path) {
+    // Limpar todas as URLs do bucket
+    for (const key of urlCache.keys()) {
+      if (key.startsWith(`${bucket}/`)) {
+        urlCache.delete(key)
+      }
+    }
+    console.log(`Cache de URLs limpo para bucket: ${bucket}`)
+    return
+  }
+
+  const cacheKey = `${bucket}/${path}`
+  urlCache.delete(cacheKey)
+  console.log(`Cache de URL limpo para: ${cacheKey}`)
+}
+
+/**
  * Gera uma URL assinada para um arquivo no storage do Supabase
  * @param bucket - Nome do bucket
  * @param path - Caminho do arquivo no bucket

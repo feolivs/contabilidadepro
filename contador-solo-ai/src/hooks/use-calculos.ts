@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { fiscalCache } from '@/lib/cache';
+import { fiscalCache } from '@/lib/simple-cache';
 import { toast } from 'react-hot-toast';
-import type { 
-  CalculoFiscal, 
-  FiltroCalculos, 
+import { logger } from '@/lib/simple-logger';
+import type {
+  CalculoFiscal,
+  FiltroCalculos,
   EstatisticasCalculos,
   DadosCalculoDAS,
   DadosCalculoIRPJ,
+  DadosCalculoMEI,
   ResultadoCalculo,
   TipoCalculo
 } from '@/types/calculo';
@@ -47,7 +49,7 @@ export function useCalculos(filtros?: FiltroCalculos) {
       const { data, error } = await query;
 
       if (error) {
-
+        logger.error('Erro ao carregar cálculos', { error, filtros });
         throw new Error('Erro ao carregar cálculos');
       }
 
@@ -77,7 +79,7 @@ export function useEstatisticasCalculos(filtros?: { empresa_id?: string; periodo
       const { data, error } = await query;
 
       if (error) {
-
+        logger.error('Erro ao carregar estatísticas', { error, filtros });
         throw new Error('Erro ao carregar estatísticas');
       }
 
@@ -168,7 +170,7 @@ export function useCalcularDAS() {
         .single();
 
       if (error) {
-
+        logger.error('Erro ao salvar cálculo DAS', { error, dados });
         throw new Error('Erro ao salvar cálculo');
       }
 
@@ -179,7 +181,8 @@ export function useCalcularDAS() {
       queryClient.invalidateQueries({ queryKey: ['estatisticas-calculos'] });
       toast.success('Cálculo DAS realizado com sucesso!');
     },
-    onError: (_error) => {
+    onError: (error) => {
+      logger.error('Erro ao calcular DAS', { error });
       toast.error('Erro ao calcular DAS. Tente novamente.');
     },
   });
@@ -193,7 +196,7 @@ export function useCalcularIRPJ() {
     mutationFn: async (dados: DadosCalculoIRPJ): Promise<ResultadoCalculo> => {
       // Simular cálculo IRPJ/CSLL (em produção, seria uma Edge Function)
       const resultado = await calcularIRPJ(dados);
-      
+
       // Salvar o cálculo no banco
       const { data, error } = await supabase
         .from('calculos_fiscais')
@@ -219,7 +222,7 @@ export function useCalcularIRPJ() {
         .single();
 
       if (error) {
-
+        logger.error('Erro ao salvar cálculo IRPJ', { error, dados });
         throw new Error('Erro ao salvar cálculo');
       }
 
@@ -231,8 +234,57 @@ export function useCalcularIRPJ() {
       toast.success('Cálculo IRPJ/CSLL realizado com sucesso!');
     },
     onError: (error) => {
-
+      logger.error('Erro ao calcular IRPJ/CSLL', { error });
       toast.error('Erro ao calcular IRPJ/CSLL. Tente novamente.');
+    },
+  });
+}
+
+// Hook para calcular MEI
+export function useCalcularMEI() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (dados: DadosCalculoMEI): Promise<ResultadoCalculo> => {
+      // Calcular MEI com valores 2025
+      const resultado = await calcularMEI(dados);
+
+      // Salvar o cálculo no banco
+      const { data, error } = await supabase
+        .from('calculos_fiscais')
+        .insert({
+          empresa_id: dados.empresa_id,
+          tipo_calculo: 'MEI',
+          competencia: dados.competencia,
+          regime_tributario: 'MEI',
+          faturamento_bruto: dados.receita_bruta_mensal,
+          base_calculo: resultado.base_calculo,
+          aliquota_nominal: resultado.aliquota_nominal,
+          aliquota_efetiva: resultado.aliquota_efetiva,
+          valor_imposto: resultado.valor_imposto,
+          valor_total: resultado.valor_total,
+          data_vencimento: resultado.data_vencimento,
+          status: 'calculado',
+          calculado_automaticamente: true,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        logger.error('Erro ao salvar cálculo MEI', { error, dados });
+        throw new Error('Erro ao salvar cálculo');
+      }
+
+      return resultado;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calculos'] });
+      queryClient.invalidateQueries({ queryKey: ['estatisticas-calculos'] });
+      toast.success('Cálculo MEI realizado com sucesso!');
+    },
+    onError: (error) => {
+      logger.error('Erro ao calcular MEI', { error });
+      toast.error('Erro ao calcular MEI. Tente novamente.');
     },
   });
 }
@@ -255,7 +307,7 @@ export function useMarcarComoPago() {
         .single();
 
       if (error) {
-
+        logger.error('Erro ao marcar como pago', { error, id, data_pagamento });
         throw new Error('Erro ao marcar como pago');
       }
 
@@ -267,7 +319,7 @@ export function useMarcarComoPago() {
       toast.success('Cálculo marcado como pago!');
     },
     onError: (error) => {
-
+      logger.error('Erro ao marcar cálculo como pago', { error });
       toast.error('Erro ao marcar como pago. Tente novamente.');
     },
   });
@@ -285,7 +337,7 @@ export function useExcluirCalculo() {
         .eq('id', id);
 
       if (error) {
-
+        logger.error('Erro ao excluir cálculo', { error, id });
         throw new Error('Erro ao excluir cálculo');
       }
     },
@@ -295,7 +347,7 @@ export function useExcluirCalculo() {
       toast.success('Cálculo excluído com sucesso!');
     },
     onError: (error) => {
-
+      logger.error('Erro ao excluir cálculo', { error });
       toast.error('Erro ao excluir cálculo. Tente novamente.');
     },
   });
@@ -350,7 +402,7 @@ async function calcularIRPJ(dados: DadosCalculoIRPJ): Promise<ResultadoCalculo> 
   // Percentuais de presunção simplificados
   const percentualPresuncao = 8.0; // 8% para atividades em geral
   const base_calculo = dados.receita_bruta * percentualPresuncao / 100;
-  
+
   const irpj = base_calculo * 0.15; // 15% sobre a base
   const adicional_irpj = Math.max(0, (base_calculo - 20000) * 0.10); // 10% sobre o que exceder R$ 20.000
   const csll = base_calculo * 0.09; // 9% sobre a base
@@ -373,5 +425,41 @@ async function calcularIRPJ(dados: DadosCalculoIRPJ): Promise<ResultadoCalculo> 
       irpj: irpj + adicional_irpj,
       csll,
     },
+  };
+}
+
+async function calcularMEI(dados: DadosCalculoMEI): Promise<ResultadoCalculo> {
+  // Valores MEI 2025
+  const MEI_VALUES_2025 = {
+    comercio: 66.60,        // INSS + ICMS
+    servicos: 70.60,        // INSS + ISS
+    comercio_servicos: 71.60 // INSS + ICMS + ISS
+  };
+
+  // Limite de receita anual MEI 2025: R$ 81.000,00
+  const LIMITE_ANUAL_MEI = 81000;
+  const LIMITE_MENSAL_MEI = LIMITE_ANUAL_MEI / 12; // R$ 6.750,00
+
+  // Verificar se está dentro do limite
+  if (dados.receita_bruta_mensal > LIMITE_MENSAL_MEI) {
+    throw new Error(`Receita mensal acima do limite MEI (R$ ${LIMITE_MENSAL_MEI.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`);
+  }
+
+  // Valor fixo baseado na atividade
+  const valor_total = MEI_VALUES_2025[dados.atividade_mei];
+
+  // Data de vencimento: dia 20 do mês seguinte
+  const [ano, mes] = dados.competencia.split('-');
+  const proximoMes = new Date(parseInt(ano || '2025'), parseInt(mes || '1'), 20);
+  const data_vencimento = proximoMes.toISOString().split('T')[0]!;
+
+  return {
+    base_calculo: valor_total,
+    aliquota_nominal: 100, // Valor fixo
+    aliquota_efetiva: (valor_total / dados.receita_bruta_mensal) * 100,
+    valor_imposto: valor_total,
+    valor_total,
+    data_vencimento,
+    detalhamento: {},
   };
 }

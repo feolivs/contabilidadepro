@@ -1,9 +1,15 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createBrowserClient } from '@supabase/ssr'
 
-// Configuração direta para evitar problemas de inicialização
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://selnwgpyjctpjzdrfrey.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlbG53Z3B5amN0cGp6ZHJmcmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDE5NzEsImV4cCI6MjA2NDcxNzk3MX0.x2GdGtvLbslKMBE2u3EWuwMijDg0_CAxp6McwjUei6k'
+// 🔒 SEGURANÇA: Variáveis de ambiente obrigatórias
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    '🚨 CONFIGURAÇÃO FALTANDO: Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no arquivo .env.local'
+  )
+}
 
 // Cliente para uso no browser (compatibilidade)
 export const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey)

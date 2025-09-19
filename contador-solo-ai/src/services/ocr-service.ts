@@ -128,7 +128,7 @@ export class OCRService {
       // Verificar se OpenAI está configurado
       if (!this.isOpenAIConfigured()) {
         console.warn('⚠️ OpenAI não configurado, usando mock');
-        return this.createMockResult(fileBuffer, filename, startTime, documentType);
+        return this.createMockResult(fileBuffer, filename, startTime, documentType || 'unknown');
       }
 
       // Verificar tamanho do arquivo
@@ -141,7 +141,7 @@ export class OCRService {
 
       if (!visionResult.success) {
         console.warn('⚠️ OpenAI Vision falhou, usando fallback');
-        return this.createMockResult(fileBuffer, filename, startTime, documentType);
+        return this.createMockResult(fileBuffer, filename, startTime, documentType || 'unknown');
       }
 
       // Criar resultado final
@@ -169,8 +169,8 @@ export class OCRService {
     } catch (error) {
       console.error('❌ Erro no processamento OCR:', error);
 
-      // Fallback para mock em caso de erro
-      return this.createMockResult(fileBuffer, filename, startTime, documentType, error instanceof Error ? error.message : String(error));
+      // Retornar erro real em vez de mock
+      throw new Error(`Falha no processamento OCR: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -196,7 +196,7 @@ export class OCRService {
       const response = await fetch(this.OPENAI_API_URL, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${openAIConfig.apiKey}`,
+          'Authorization': `Bearer ${openAIConfig.getApiKey()}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -266,56 +266,75 @@ export class OCRService {
 
   /**
    * Extrai dados estruturados baseado no tipo de documento
-   * SIMULAÇÃO para desenvolvimento futuro
+   * Versão real usando análise de texto
    */
-  private mockExtractStructuredData(documentType?: string): DocumentoEstruturado | undefined {
-    if (!documentType) return undefined;
+  private extractRealStructuredData(text: string, documentType?: string): DocumentoEstruturado | undefined {
+    if (!text || text.length < 10) return undefined;
 
-    // Simular extração baseada no tipo
-    switch (documentType.toLowerCase()) {
-      case 'nfe':
-      case 'nfce':
-        return {
-          tipo_fiscal: 'NFe',
-          campos_identificados: [
-            { campo: 'numero_nota', valor: '12345', confianca: 0.98 },
-            { campo: 'cnpj_emitente', valor: '12.345.678/0001-90', confianca: 0.95 },
-            { campo: 'razao_social', valor: 'Empresa Exemplo LTDA', confianca: 0.97 }
-          ],
-          valores_monetarios: [
-            { descricao: 'valor_total', valor: 1250.00 },
-            { descricao: 'icms', valor: 125.00 },
-            { descricao: 'ipi', valor: 50.00 }
-          ],
-          datas_importantes: [
-            { tipo: 'emissao', data: '2024-01-15' },
-            { tipo: 'vencimento', data: '2024-02-15' }
-          ]
-        };
+    const estruturado: DocumentoEstruturado = {
+      tipo_fiscal: (documentType || 'Documento') as TipoDocumentoFiscal,
+      campos_identificados: [],
+      valores_monetarios: [],
+      datas_importantes: []
+    };
 
-      case 'das':
-        return {
-          tipo_fiscal: 'DAS',
-          campos_identificados: [
-            { campo: 'competencia', valor: '01/2024', confianca: 0.99 },
-            { campo: 'cnpj', valor: '12.345.678/0001-90', confianca: 0.98 }
-          ],
-          valores_monetarios: [
-            { descricao: 'valor_das', valor: 850.00 }
-          ],
-          datas_importantes: [
-            { tipo: 'competencia', data: '2024-01-01' },
-            { tipo: 'vencimento', data: '2024-02-20' }
-          ]
-        };
-
-      default:
-        return {
-          campos_identificados: [
-            { campo: 'texto_principal', valor: 'Documento fiscal genérico', confianca: 0.80 }
-          ]
-        };
+    // Extrair CNPJ
+    const cnpjMatch = text.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/);
+    if (cnpjMatch) {
+      estruturado.campos_identificados.push({
+        campo: 'cnpj',
+        valor: cnpjMatch[0],
+        confianca: 0.95
+      });
     }
+
+    // Extrair CPF
+    const cpfMatch = text.match(/\d{3}\.\d{3}\.\d{3}-\d{2}/);
+    if (cpfMatch) {
+      estruturado.campos_identificados.push({
+        campo: 'cpf',
+        valor: cpfMatch[0],
+        confianca: 0.95
+      });
+    }
+
+    // Extrair valores monetários
+    const valorRegex = /R\$\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)/g;
+    let match;
+    while ((match = valorRegex.exec(text)) !== null) {
+      const valorStr = match[1]?.replace(/\./g, '').replace(',', '.') || '0';
+      const valor = parseFloat(valorStr);
+      if (!isNaN(valor)) {
+        estruturado.valores_monetarios?.push({
+          descricao: 'valor_detectado',
+          valor
+        });
+      }
+    }
+
+    // Extrair datas
+    const dataRegex = /(\d{2}\/\d{2}\/\d{4})/g;
+    while ((match = dataRegex.exec(text)) !== null) {
+      estruturado.datas_importantes?.push({
+        tipo: 'emissao',
+        data: match[1] || ''
+      });
+    }
+
+    // Extrair razão social (heurística simples)
+    const linhas = text.split('\n');
+    for (const linha of linhas) {
+      if (linha.includes('LTDA') || linha.includes('S.A.') || linha.includes('ME') || linha.includes('EPP')) {
+        estruturado.campos_identificados.push({
+          campo: 'razao_social',
+          valor: linha.trim(),
+          confianca: 0.80
+        });
+        break;
+      }
+    }
+
+    return estruturado;
   }
 
   /**
@@ -387,7 +406,7 @@ FORMATO DE SAÍDA: Texto puro extraído, preservando quebras de linha e estrutur
       const response = await fetch(this.OPENAI_API_URL, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${openAIConfig.apiKey}`,
+          'Authorization': `Bearer ${openAIConfig.getApiKey()}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -727,27 +746,24 @@ FORMATO DE SAÍDA: Texto puro extraído, preservando quebras de linha e estrutur
   }
 
   /**
-   * Cria resultado mock para fallback
+   * Cria resultado de erro quando OCR falha completamente
    */
-  private createMockResult(
+  private createErrorResult(
     fileBuffer: Buffer,
     filename: string,
     startTime: number,
-    documentType?: string,
-    error?: string
+    error: string
   ): OCRResult {
     return {
-      texto_extraido: error
-        ? `[ERRO OCR] ${error}. Usando simulação para desenvolvimento.`
-        : '[SIMULAÇÃO] Conteúdo do documento seria extraído aqui...',
-      confianca: error ? 0.1 : 0.95,
-      dados_estruturados: this.mockExtractStructuredData(documentType),
+      texto_extraido: `[ERRO OCR] ${error}. Configure GOOGLE_API_KEY para OCR real.`,
+      confianca: 0,
+      dados_estruturados: undefined,
       metadados: {
-        paginas: 1,
+        paginas: 0,
         tamanho_arquivo: fileBuffer.length,
-        tipo_documento: documentType || 'desconhecido',
+        tipo_documento: 'erro',
         data_processamento: new Date().toISOString(),
-        provider: error ? 'fallback' : 'mock',
+        provider: 'fallback',
         processing_time_ms: Date.now() - startTime
       }
     };
@@ -928,6 +944,21 @@ FORMATO DE SAÍDA: Texto puro extraído, preservando quebras de linha e estrutur
       campos_identificados: campos,
       valores_monetarios: valoresMonetarios.length > 0 ? valoresMonetarios : undefined,
       datas_importantes: datasImportantes.length > 0 ? datasImportantes : undefined
+    };
+  }
+
+  private createMockResult(fileBuffer: Buffer, filename: string, startTime: number, documentType: string): OCRResult {
+    return {
+      texto_extraido: 'Texto extraído via mock para teste - OpenAI não configurado',
+      confianca: 0.8,
+      metadados: {
+        paginas: 1,
+        tamanho_arquivo: fileBuffer.length,
+        tipo_documento: documentType,
+        data_processamento: new Date().toISOString(),
+        provider: 'mock',
+        processing_time_ms: Date.now() - startTime
+      }
     };
   }
 }

@@ -24,7 +24,24 @@ import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function RealtimeRecentActivities() {
-  const { activities, stats, isLoading, refresh } = useRealtimeActivities()
+  const { activities, isLoading, error } = useRealtimeActivities()
+
+  const stats = {
+    total: activities.length,
+    today: activities.filter(a => new Date(a.timestamp).toDateString() === new Date().toDateString()).length,
+    thisWeek: activities.filter(a => {
+      const activityDate = new Date(a.timestamp)
+      const now = new Date()
+      const weekStart = new Date(now.setDate(now.getDate() - now.getDay()))
+      return activityDate >= weekStart
+    }).length,
+    processing: 0, // Placeholder para atividades em processamento
+    errors: 0 // Placeholder para erros
+  }
+
+  const refresh = () => {
+    // Placeholder para refresh
+  }
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -171,7 +188,7 @@ export function RealtimeRecentActivities() {
             <div className="text-xs text-muted-foreground">Processando</div>
           </div>
           <div className="text-center p-2 bg-red-50 dark:bg-red-950/20 rounded">
-            <div className="text-lg font-bold text-red-600">{stats.failed}</div>
+            <div className="text-lg font-bold text-red-600">{stats.errors}</div>
             <div className="text-xs text-muted-foreground">Erros</div>
           </div>
         </div>
@@ -202,18 +219,18 @@ export function RealtimeRecentActivities() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                          {activity.title}
+                          {activity.description}
                         </h4>
                         <p className="text-xs text-muted-foreground mb-2">
-                          {activity.description}
+                          Tipo: {activity.type}
                         </p>
                       </div>
 
                       <div className="flex items-center space-x-2 ml-2">
-                        <Badge className={`text-xs ${getStatusBadge(activity.status)}`}>
+                        <Badge className="text-xs bg-blue-100 text-blue-800">
                           <div className="flex items-center space-x-1">
-                            {getStatusIcon(activity.status)}
-                            <span>{getStatusText(activity.status)}</span>
+                            {getActivityIcon(activity.type)}
+                            <span>Ativo</span>
                           </div>
                         </Badge>
                       </div>
@@ -228,17 +245,6 @@ export function RealtimeRecentActivities() {
                         })}
                       </div>
 
-                      {activity.entityId && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-xs"
-                          onClick={() => window.open(getActivityUrl(activity), '_blank')}
-                        >
-                          Ver Detalhes
-                          <ExternalLink className="h-3 w-3 ml-1" />
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </div>

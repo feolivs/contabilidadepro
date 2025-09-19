@@ -1,0 +1,82 @@
+DOCUMENTO FISCAL DE TESTE - CONTABILIDADE PRO
+
+═══════════════════════════════════════════════════════════════
+                    NOTA FISCAL ELETRÔNICA
+                         NFe Nº 000.123.456
+═══════════════════════════════════════════════════════════════
+
+DADOS DA EMPRESA EMITENTE
+─────────────────────────────────────────────────────────────
+Razão Social: CONTABILIDADE PRO LTDA
+Nome Fantasia: ContabilidadePRO
+CNPJ: 12.345.678/0001-90
+Inscrição Estadual: 123.456.789.012
+Endereço: Rua das Flores, 123 - Centro
+Cidade: São Paulo - SP
+CEP: 01234-567
+Telefone: (11) 1234-5678
+
+DADOS DO DESTINATÁRIO
+─────────────────────────────────────────────────────────────
+Razão Social: EMPRESA CLIENTE LTDA
+CNPJ: 98.765.432/0001-10
+Endereço: Av. Principal, 456 - Bairro Comercial
+Cidade: Rio de Janeiro - RJ
+CEP: 20123-456
+
+INFORMAÇÕES DO DOCUMENTO
+─────────────────────────────────────────────────────────────
+Número da Nota: 000.123.456
+Série: 001
+Data de Emissão: 18/09/2025
+Data de Saída: 18/09/2025
+Hora de Saída: 14:30:00
+Chave de Acesso: 25091212345678000190550010001234561234567890
+
+DISCRIMINAÇÃO DOS SERVIÇOS/PRODUTOS
+─────────────────────────────────────────────────────────────
+Item 01: Consultoria Contábil Mensal
+Quantidade: 1,00 UN
+Valor Unitário: R$ 1.200,00
+Valor Total: R$ 1.200,00
+
+Item 02: Elaboração de Demonstrações Contábeis
+Quantidade: 1,00 UN
+Valor Unitário: R$ 800,00
+Valor Total: R$ 800,00
+
+CÁLCULO DOS TRIBUTOS
+─────────────────────────────────────────────────────────────
+Base de Cálculo ICMS: R$ 2.000,00
+Valor do ICMS: R$ 240,00
+Alíquota ICMS: 12,00%
+
+Base de Cálculo PIS: R$ 2.000,00
+Valor do PIS: R$ 13,00
+Alíquota PIS: 0,65%
+
+Base de Cálculo COFINS: R$ 2.000,00
+Valor do COFINS: R$ 60,00
+Alíquota COFINS: 3,00%
+
+TOTAIS DA NOTA FISCAL
+─────────────────────────────────────────────────────────────
+Valor Total dos Produtos/Serviços: R$ 2.000,00
+Valor Total dos Tributos: R$ 313,00
+Valor Total da Nota: R$ 2.000,00
+
+INFORMAÇÕES COMPLEMENTARES
+─────────────────────────────────────────────────────────────
+Regime Tributário: Simples Nacional
+Competência: 09/2025
+Vencimento: 20/10/2025
+
+Observações:
+- Documento emitido nos termos da Lei 12.741/2012
+- Valor aproximado dos tributos: R$ 313,00 (15,65%)
+- Esta nota fiscal foi emitida em ambiente de teste
+
+═══════════════════════════════════════════════════════════════
+           DOCUMENTO GERADO AUTOMATICAMENTE
+        Sistema ContabilidadePRO - Versão 2.0
+═══════════════════════════════════════════════════════════════

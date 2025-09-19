@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react'
-import { AlertTriangle, Calendar, CheckCircle, Clock, DollarSign } from 'lucide-react'
+import { AlertTriangle, Calendar, Clock, DollarSign } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useEstatisticasPrazos } from '@/hooks/use-prazos-fiscais'

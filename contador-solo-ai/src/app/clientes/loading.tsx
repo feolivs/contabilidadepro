@@ -1,4 +1,4 @@
-import { Users, Search, Plus } from 'lucide-react'
+import { Users, Search } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 

@@ -364,7 +364,7 @@ export function CacheMigrationDemo() {
                 <div className="space-y-2">
                   <h4 className="font-semibold">Estatísticas</h4>
                   <p className="text-sm text-muted-foreground">
-                    {statsLoading ? 'Carregando...' : `${stats?.total || 0} cálculos`}
+                    {statsLoading ? 'Carregando...' : `${stats?.total_calculos || 0} cálculos`}
                   </p>
                 </div>
               </div>

@@ -3,7 +3,7 @@
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth-store'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 export function useSupabase() {
   const [supabase] = useState(() => createBrowserSupabaseClient())
@@ -57,26 +57,45 @@ export function useDashboard(userId: string, startDate: string, endDate: string)
   })
 }
 
-// Hook para consulta IA
+// Hook para consulta IA (CORRIGIDO)
 export function useAIQuery() {
   const supabase = useSupabase()
 
   return useMutation({
-    mutationFn: async ({ question, context }: { question: string; context?: string }) => {
+    mutationFn: async ({
+      question,
+      context,
+      userId
+    }: {
+      question: string;
+      context?: string;
+      userId?: string;
+    }) => {
+      // ✅ VALIDAÇÃO: user_id é obrigatório
+      if (!userId) {
+        throw new Error('Usuário não identificado')
+      }
+
       const { data, error } = await supabase.functions.invoke('assistente-contabil-ia', {
         body: {
           pergunta: question,
-          contexto: context || 'contador-solo',
+          user_id: userId,
+          timestamp: new Date().toISOString()
         },
       })
 
       if (error) throw error
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Resposta inválida do assistente')
+      }
+
       return data
     },
   })
 }
 
-// Hook para assistente contábil IA (GPT-4o)
+// Hook para assistente contábil IA (GPT-4o) - SEGURO
 export function useAssistenteContabilIA() {
   const supabase = useSupabase()
 
@@ -92,18 +111,46 @@ export function useAssistenteContabilIA() {
       empresaId?: string;
       userId?: string;
     }) => {
+      // ✅ VALIDAÇÃO NO FRONTEND
+      if (!question?.trim()) {
+        throw new Error('Pergunta é obrigatória')
+      }
+
+      if (!userId) {
+        throw new Error('Usuário não identificado')
+      }
+
+      // 🔒 CHAMADA SEGURA PARA EDGE FUNCTION
       const { data, error } = await supabase.functions.invoke('assistente-contabil-ia', {
         body: {
-          pergunta: question,
-          contexto: context || 'assistente-contabil',
+          pergunta: question.trim(),
           empresa_id: empresaId,
           user_id: userId,
+          conversationHistory: [], // Pode ser expandido futuramente
+          timestamp: new Date().toISOString()
         },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Erro na chamada do assistente IA:', error)
+        throw new Error(error.message || 'Erro ao processar pergunta')
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Resposta inválida do assistente')
+      }
+
       return data
     },
+    onError: (error) => {
+      console.error('Erro no assistente contábil:', error)
+    },
+    onSuccess: (data) => {
+      console.log('✅ Resposta do assistente recebida:', {
+        hasResponse: !!data?.resposta,
+        tokens: data?.usage?.total_tokens || 0
+      })
+    }
   })
 }
 
@@ -146,6 +193,109 @@ export function useAssistenteContabilIAEnhanced() {
       return data
     },
   })
+}
+
+/**
+ * 🌊 Hook para Streaming do Assistente Contábil IA
+ * Usa Server-Sent Events para respostas em tempo real
+ */
+export const useAssistenteContabilIAStreaming = () => {
+  const { user } = useAuthStore()
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [streamedResponse, setStreamedResponse] = useState('')
+  const [isCached, setIsCached] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const streamQuery = useCallback(async (pergunta: string, onChunk?: (chunk: string) => void) => {
+    if (!user?.id) {
+      throw new Error('Usuário não autenticado')
+    }
+
+    setIsStreaming(true)
+    setStreamedResponse('')
+    setIsCached(false)
+    setError(null)
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/assistente-contabil-ia`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream'
+          },
+          body: JSON.stringify({
+            pergunta,
+            user_id: user.id
+          })
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('No response body reader available')
+      }
+
+      let fullResponse = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = new TextDecoder().decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+
+              if (data.type === 'start') {
+                setIsCached(data.cached)
+              } else if (data.type === 'chunk') {
+                fullResponse += data.content
+                setStreamedResponse(fullResponse)
+                onChunk?.(data.content)
+              } else if (data.type === 'done') {
+                setIsStreaming(false)
+              } else if (data.type === 'error') {
+                throw new Error(data.message)
+              }
+            } catch (e) {
+              console.warn('Erro ao parsear chunk SSE:', e)
+            }
+          }
+        }
+      }
+
+      return fullResponse
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido'
+      setError(errorMessage)
+      setIsStreaming(false)
+      throw err
+    }
+  }, [user?.id])
+
+  return {
+    streamQuery,
+    isStreaming,
+    streamedResponse,
+    isCached,
+    error,
+    reset: () => {
+      setStreamedResponse('')
+      setError(null)
+      setIsCached(false)
+      setIsStreaming(false)
+    }
+  }
 }
 
 // Hook para processamento de documentos

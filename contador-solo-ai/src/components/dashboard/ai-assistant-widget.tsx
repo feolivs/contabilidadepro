@@ -85,18 +85,6 @@ export function AIAssistantWidget({ className }: AIAssistantWidgetProps) {
       status: status.contextEngine.status,
       responseTime: status.contextEngine.responseTime,
       errorMessage: status.contextEngine.errorMessage
-    },
-    {
-      name: status.predictiveCache.name,
-      status: status.predictiveCache.status,
-      responseTime: status.predictiveCache.responseTime,
-      errorMessage: status.predictiveCache.errorMessage
-    },
-    {
-      name: status.governmentAPIs.name,
-      status: status.governmentAPIs.status,
-      responseTime: status.governmentAPIs.responseTime,
-      errorMessage: status.governmentAPIs.errorMessage
     }
   ]
 

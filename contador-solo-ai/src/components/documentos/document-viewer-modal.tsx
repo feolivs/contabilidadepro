@@ -134,7 +134,7 @@ export function DocumentViewerModal({ documento, isOpen, onClose }: DocumentView
                 <PDFViewer
                   url={signedUrl || documento.arquivo_url}
                   fileName={documento.arquivo_nome}
-                  filePath={documento.arquivo_url}
+                  filePath={documento.arquivo_path}
                 />
               ) : (
                 <div className="text-center p-8 flex flex-col items-center justify-center h-full">

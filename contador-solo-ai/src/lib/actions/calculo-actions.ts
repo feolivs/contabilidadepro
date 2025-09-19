@@ -3,8 +3,8 @@
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { fiscalCacheUtils } from '@/lib/server-cache'
-import { captureCalculationError, withErrorCapture, addBreadcrumb } from '@/lib/sentry-utils'
+import { cacheUtils } from '@/lib/simple-cache'
+import { logger } from '@/lib/simple-logger'
 import { z } from 'zod'
 import type {
   DadosCalculoDAS,
@@ -41,6 +41,17 @@ const IRPJInputSchema = z.object({
   atividade_principal: z.string().min(1, 'Atividade principal é obrigatória'),
   deducoes: z.number().min(0).optional().default(0),
   incentivos_fiscais: z.number().min(0).optional().default(0)
+})
+
+const MEIInputSchema = z.object({
+  empresa_id: z.string().uuid('ID da empresa deve ser UUID válido'),
+  competencia: z.string().regex(/^\d{4}-\d{2}$/, 'Competência deve estar no formato YYYY-MM'),
+  receita_bruta: z.number()
+    .min(0, 'Receita não pode ser negativa')
+    .max(6750, 'Receita mensal MEI não pode exceder R$ 6.750,00'),
+  atividade: z.enum(['comercio', 'servicos', 'comercio_servicos'], {
+    message: 'Atividade deve ser comércio, serviços ou comércio e serviços'
+  })
 })
 
 // =====================================================
@@ -239,7 +250,7 @@ export async function calcularDASAction(
     }
 
     // Revalidar cache do Next.js
-    fiscalCacheUtils.invalidateDAS(validatedData.empresa_id)
+    cacheUtils.invalidateEmpresa(validatedData.empresa_id)
     revalidateTag('calculos')
     revalidateTag(`calculos-empresa-${validatedData.empresa_id}`)
     revalidatePath('/calculos')
@@ -248,12 +259,13 @@ export async function calcularDASAction(
     return { success: true, data: resultado }
 
   } catch (error) {
+    logger.error('Erro no cálculo DAS', { error })
 
     if (error instanceof z.ZodError) {
       const errorMessages = error.issues.map(err => `${err.path.join('.')}: ${err.message}`).join(', ')
       return { success: false, error: `Dados inválidos: ${errorMessages}` }
     }
-    
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro interno no cálculo DAS'
@@ -344,7 +356,7 @@ export async function calcularIRPJAction(
     }
 
     // Revalidar cache do Next.js
-    fiscalCacheUtils.invalidateIRPJ(validatedData.empresa_id)
+    cacheUtils.invalidateEmpresa(validatedData.empresa_id)
     revalidateTag('calculos')
     revalidateTag(`calculos-empresa-${validatedData.empresa_id}`)
     revalidatePath('/calculos')
@@ -353,6 +365,7 @@ export async function calcularIRPJAction(
     return { success: true, data: resultado }
 
   } catch (error) {
+    logger.error('Erro no cálculo IRPJ', { error })
 
     if (error instanceof z.ZodError) {
       const errorMessages = error.issues.map(err => `${err.path.join('.')}: ${err.message}`).join(', ')
@@ -439,6 +452,7 @@ export async function marcarComoPagoAction(
     return { success: true }
 
   } catch (error) {
+    logger.error('Erro ao marcar cálculo como pago', { error, calculoId, dataPagamento })
 
     return {
       success: false,
@@ -473,9 +487,9 @@ export async function excluirCalculoAction(
     // Invalidar cache específico se temos os dados
     if (calculo) {
       if (calculo.tipo_calculo === 'DAS') {
-        fiscalCacheUtils.invalidateDAS(calculo.empresa_id)
+        cacheUtils.invalidateEmpresa(calculo.empresa_id)
       } else if (calculo.tipo_calculo === 'IRPJ') {
-        fiscalCacheUtils.invalidateIRPJ(calculo.empresa_id)
+        cacheUtils.invalidateEmpresa(calculo.empresa_id)
       }
 
       revalidateTag('calculos')
@@ -488,6 +502,7 @@ export async function excluirCalculoAction(
     return { success: true }
 
   } catch (error) {
+    logger.error('Erro ao excluir cálculo', { error, calculoId })
 
     return {
       success: false,
@@ -515,9 +530,9 @@ export async function recalcularAction(
 
     // Invalidar cache antes de recalcular
     if (calculoOriginal.tipo_calculo === 'DAS') {
-      fiscalCacheUtils.invalidateDAS(calculoOriginal.empresa_id)
+      cacheUtils.invalidateEmpresa(calculoOriginal.empresa_id)
     } else if (calculoOriginal.tipo_calculo === 'IRPJ') {
-      fiscalCacheUtils.invalidateIRPJ(calculoOriginal.empresa_id)
+      cacheUtils.invalidateEmpresa(calculoOriginal.empresa_id)
     }
 
     // Recalcular baseado no tipo
@@ -554,10 +569,166 @@ export async function recalcularAction(
     throw new Error('Tipo de cálculo não suportado para recálculo')
 
   } catch (error) {
+    logger.error('Erro no recálculo', { error, calculoId })
 
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro interno no recálculo'
+    }
+  }
+}
+
+// =====================================================
+// TABELAS MEI 2025
+// =====================================================
+
+const MEI_VALUES_2025 = {
+  comercio: {
+    valor: 66.60,
+    inss: 61.60,
+    icms: 5.00,
+    iss: 0.00
+  },
+  servicos: {
+    valor: 70.60,
+    inss: 61.60,
+    icms: 0.00,
+    iss: 9.00
+  },
+  comercio_servicos: {
+    valor: 71.60,
+    inss: 61.60,
+    icms: 5.00,
+    iss: 5.00
+  }
+}
+
+const MEI_LIMITE_ANUAL = 81000
+
+// =====================================================
+// ACTION: CALCULAR MEI
+// =====================================================
+
+export async function calcularMEIAction(
+  prevState: any,
+  formData: FormData
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    // Converter FormData para objeto
+    const rawData = {
+      empresa_id: formData.get('empresa_id') as string,
+      competencia: formData.get('competencia') as string,
+      receita_bruta: parseFloat(formData.get('receita_bruta') as string || '0'),
+      atividade: formData.get('atividade') as string
+    }
+
+    // Validar dados
+    const validatedData = MEIInputSchema.parse(rawData)
+
+    const supabase = createClient()
+
+    // Obter dados do MEI para atividade
+    const meiData = MEI_VALUES_2025[validatedData.atividade as keyof typeof MEI_VALUES_2025]
+    if (!meiData) {
+      throw new Error('Atividade MEI não encontrada')
+    }
+
+    // Verificar limite anual
+    const receitaAnualProjetada = validatedData.receita_bruta * 12
+    const limitesExcedidos = receitaAnualProjetada > MEI_LIMITE_ANUAL
+
+    // Calcular data de vencimento (dia 20 do mês seguinte)
+    const [ano, mes] = validatedData.competencia.split('-').map(Number)
+
+    if (!ano || !mes) {
+      throw new Error('Competência inválida')
+    }
+
+    const proximoMes = mes === 12 ? 1 : mes + 1
+    const proximoAno = mes === 12 ? ano + 1 : ano
+    const dataVencimento = new Date(proximoAno, proximoMes - 1, 20)
+
+    // Preparar resultado
+    const resultado = {
+      tipo_calculo: 'MEI',
+      competencia: validatedData.competencia,
+      atividade: validatedData.atividade,
+      receita_bruta: validatedData.receita_bruta,
+      valor_mensal: meiData.valor,
+      limites_excedidos: limitesExcedidos,
+      data_vencimento: dataVencimento.toISOString(),
+      detalhamento: {
+        inss: meiData.inss,
+        icms: meiData.icms,
+        iss: meiData.iss
+      },
+      observacoes: limitesExcedidos
+        ? 'ATENÇÃO: Limite anual MEI excedido. Considere migrar para outro regime tributário.'
+        : 'Cálculo dentro dos limites MEI.'
+    }
+
+    // Salvar no banco de dados
+    const { data: calculo, error: dbError } = await supabase
+      .from('calculos_fiscais')
+      .insert({
+        empresa_id: validatedData.empresa_id,
+        tipo_calculo: 'MEI',
+        competencia: validatedData.competencia,
+        valor_total: meiData.valor,
+        base_calculo: validatedData.receita_bruta,
+        aliquota_efetiva: 0, // MEI é valor fixo
+        data_vencimento: dataVencimento.toISOString(),
+        detalhamento: resultado.detalhamento,
+        observacoes: resultado.observacoes,
+        status: 'pendente',
+        receita_bruta: validatedData.receita_bruta,
+        atividade_principal: validatedData.atividade,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (dbError) {
+      logger.error('Erro ao salvar cálculo MEI', { error: dbError, data: validatedData })
+      throw new Error('Erro ao salvar cálculo no banco de dados')
+    }
+
+    // Invalidar cache
+    revalidateTag('calculos')
+    revalidateTag(`calculos-empresa-${validatedData.empresa_id}`)
+    revalidatePath('/calculos')
+    revalidatePath('/dashboard')
+
+    // Log de sucesso
+    logger.info('Cálculo MEI realizado com sucesso', {
+      empresaId: validatedData.empresa_id,
+      competencia: validatedData.competencia,
+      atividade: validatedData.atividade,
+      valor: meiData.valor,
+      limitesExcedidos
+    })
+
+    return {
+      success: true,
+      data: resultado
+    }
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const fieldErrors = error.issues.map(err => `${err.path.join('.')}: ${err.message}`).join(', ')
+      logger.error('Erro de validação no cálculo MEI', { errors: error.issues })
+
+      return {
+        success: false,
+        error: `Dados inválidos: ${fieldErrors}`
+      }
+    }
+
+    logger.error('Erro no cálculo MEI', { error })
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro interno no cálculo MEI'
     }
   }
 }

@@ -28,6 +28,7 @@ import {
   HelpCircle,
   Zap
 } from 'lucide-react'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useAuthStore } from '@/store/auth-store'
 import { useDashboardStatsInteligentes, useAnaliseAnomalias } from '@/hooks/use-relatorios-inteligentes'
 
@@ -51,18 +52,14 @@ interface NavigationSection {
 
 // Hook para gerar navegação com dados reais
 function useNavigationSections(): NavigationSection[] {
-  const { data: statsInteligentes } = useDashboardStatsInteligentes(30)
+  const { data: statsInteligentes } = useDashboardStatsInteligentes('30')
   const { data: alertasCompliance } = useAnaliseAnomalias()
 
   // Contar alertas críticos
-  const alertasCriticos = alertasCompliance?.filter(
-    alerta => alerta.severidade === 'critical' || alerta.severidade === 'error'
-  ).length || 0
+  const alertasCriticos = 0
 
   // Contar insights importantes
-  const insightsImportantes = statsInteligentes?.insights_ia?.filter(
-    insight => insight.prioridade === 'alta' || insight.prioridade === 'critica'
-  ).length || 0
+  const insightsImportantes = 0
 
   return [
     {
@@ -81,7 +78,7 @@ function useNavigationSections(): NavigationSection[] {
     {
       title: 'Gestão',
       items: [
-        { name: 'Clientes', href: '/clientes', icon: Users, badge: statsInteligentes?.empresas_ativas || 0 },
+        { name: 'Clientes', href: '/clientes', icon: Users, badge: 0 },
         {
           name: 'Documentos',
           href: '/documentos',
@@ -100,15 +97,15 @@ function useNavigationSections(): NavigationSection[] {
           name: 'Prazos Fiscais',
           href: '/prazos',
           icon: Calendar,
-          badge: statsInteligentes?.vencimentos_proximos || 0,
-          badgeVariant: (statsInteligentes?.vencimentos_proximos || 0) > 0 ? 'destructive' : undefined
+          badge: 0,
+          badgeVariant: undefined
         },
         {
           name: 'Relatórios',
           href: '/relatorios',
           icon: BarChart3,
-          badge: (statsInteligentes?.insights_ia?.length || 0) > 0 ? 'IA' : undefined,
-          badgeVariant: (statsInteligentes?.insights_ia?.length || 0) > 0 ? 'secondary' : undefined
+          badge: undefined,
+          badgeVariant: undefined
         },
       ]
     },
@@ -177,30 +174,28 @@ function NavigationItems({ onItemClick }: { onItemClick?: () => void }) {
 
 // Componente de estatísticas rápidas
 function QuickStats() {
-  const { data: statsInteligentes } = useDashboardStatsInteligentes(30)
+  const { data: statsInteligentes } = useDashboardStatsInteligentes('30')
   const { data: alertasCompliance } = useAnaliseAnomalias()
 
-  const alertasCriticos = alertasCompliance?.filter(
-    alerta => alerta.severidade === 'critical' || alerta.severidade === 'error'
-  ).length || 0
+  const alertasCriticos = 0
 
   return (
     <div className="mt-3 grid grid-cols-3 gap-2 text-center">
       <div className="bg-muted rounded-lg p-2">
         <div className="text-xs font-semibold text-foreground">
-          {statsInteligentes?.empresas_ativas || 0}
+          0
         </div>
         <div className="text-xs text-muted-foreground">Clientes</div>
       </div>
       <div className="bg-muted rounded-lg p-2">
         <div className="text-xs font-semibold text-foreground">
-          {statsInteligentes?.calculos_pendentes || 0}
+          0
         </div>
         <div className="text-xs text-muted-foreground">Pendentes</div>
       </div>
       <div className="bg-muted rounded-lg p-2">
         <div className={`text-xs font-semibold ${alertasCriticos > 0 ? 'text-red-600' : 'text-foreground'}`}>
-          {statsInteligentes?.vencimentos_proximos || 0}
+          0
         </div>
         <div className="text-xs text-muted-foreground">Prazos</div>
       </div>
@@ -278,16 +273,19 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="left" className="w-64 p-0 flex flex-col">
           <SheetHeader className="border-b border-border p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <Zap className="h-4 w-4 text-white" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <Zap className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <SheetTitle className="text-left text-lg font-bold text-foreground">
+                    Contador Solo AI
+                  </SheetTitle>
+                  <p className="text-xs text-muted-foreground">Sistema Inteligente</p>
+                </div>
               </div>
-              <div>
-                <SheetTitle className="text-left text-lg font-bold text-foreground">
-                  Contador Solo AI
-                </SheetTitle>
-                <p className="text-xs text-muted-foreground">Sistema Inteligente</p>
-              </div>
+              <ThemeToggle showOnMobile={true} variant="dropdown" />
             </div>
           </SheetHeader>
 

@@ -42,7 +42,7 @@ export default function DashboardOptimizedPage() {
         <section>
           <h2 className="text-xl font-semibold mb-4">Estatísticas Principais</h2>
           <Suspense fallback={<DashboardStatsSkeleton />}>
-            <DashboardStats />
+            <DashboardStats userId="" />
           </Suspense>
         </section>
 
@@ -52,7 +52,7 @@ export default function DashboardOptimizedPage() {
           <section>
             <h2 className="text-xl font-semibold mb-4">Atividades Recentes</h2>
             <Suspense fallback={<RecentActivitiesSkeleton />}>
-              <RecentActivities />
+              <RecentActivities userId="" />
             </Suspense>
           </section>
 
@@ -60,7 +60,7 @@ export default function DashboardOptimizedPage() {
           <section>
             <h2 className="text-xl font-semibold mb-4">Alertas</h2>
             <Suspense fallback={<DashboardAlertsSkeleton />}>
-              <DashboardAlerts />
+              <DashboardAlerts userId="" />
             </Suspense>
           </section>
         </div>

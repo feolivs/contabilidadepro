@@ -158,7 +158,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         {/* Right side */}
         <div className="flex items-center space-x-2 ml-4">
           {/* Theme toggle */}
-          <ThemeToggle />
+          <ThemeToggle variant="dropdown" />
 
           {/* Notifications Center - Sistema em tempo real */}
           <NotificationCenter />

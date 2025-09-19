@@ -84,7 +84,8 @@ export const baseMetadata: Metadata = {
  */
 export async function generateEmpresaMetadata(empresaId: string): Promise<Metadata> {
   try {
-    const empresa = await cachedEmpresaData(empresaId)
+    const empresas = await cachedEmpresaData(empresaId)
+    const empresa = empresas.find(e => e.id === empresaId)
     
     if (!empresa) {
       return {
@@ -137,7 +138,8 @@ export async function generateEmpresaMetadata(empresaId: string): Promise<Metada
  */
 export async function generateCalculosMetadata(empresaId: string): Promise<Metadata> {
   try {
-    const empresa = await cachedEmpresaData(empresaId)
+    const empresas = await cachedEmpresaData(empresaId)
+    const empresa = empresas.find(e => e.id === empresaId)
     
     if (!empresa) {
       return {

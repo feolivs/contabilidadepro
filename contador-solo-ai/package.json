@@ -21,7 +21,9 @@
     "analyze": "set ANALYZE=true && npm run build:webpack",
     "analyze:server": "set BUNDLE_ANALYZE=server && npm run build:webpack",
     "analyze:browser": "set BUNDLE_ANALYZE=browser && npm run build:webpack",
-    "supabase:types": "supabase gen types typescript --project-id selnwgpyjctpjzdrfrey > src/types/database.types.ts"
+    "supabase:types": "supabase gen types typescript --project-id selnwgpyjctpjzdrfrey > src/types/database.types.ts",
+    "workers:start": "tsx scripts/start-workers.ts",
+    "workers:dev": "tsx watch scripts/start-workers.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

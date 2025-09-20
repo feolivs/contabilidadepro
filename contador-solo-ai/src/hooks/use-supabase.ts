@@ -95,7 +95,7 @@ export function useAIQuery() {
   })
 }
 
-// Hook para assistente contábil IA (GPT-4o) - SEGURO
+// Hook para assistente contábil IA com Triple AI Agents
 export function useAssistenteContabilIA() {
   const supabase = useSupabase()
 
@@ -104,12 +104,16 @@ export function useAssistenteContabilIA() {
       question,
       context,
       empresaId,
-      userId
+      userId,
+      useTripleAI = false, // Nova opção para usar Triple AI
+      complexityThreshold = 'auto' // auto, simple, complex
     }: {
       question: string;
       context?: string;
       empresaId?: string;
       userId?: string;
+      useTripleAI?: boolean;
+      complexityThreshold?: 'auto' | 'simple' | 'complex';
     }) => {
       // ✅ VALIDAÇÃO NO FRONTEND
       if (!question?.trim()) {
@@ -120,27 +124,40 @@ export function useAssistenteContabilIA() {
         throw new Error('Usuário não identificado')
       }
 
-      // 🔒 CHAMADA SEGURA PARA EDGE FUNCTION
-      const { data, error } = await supabase.functions.invoke('assistente-contabil-ia', {
-        body: {
-          pergunta: question.trim(),
-          empresa_id: empresaId,
-          user_id: userId,
-          conversationHistory: [], // Pode ser expandido futuramente
-          timestamp: new Date().toISOString()
-        },
-      })
+      // Análise de complexidade automática
+      const shouldUseTripleAI = useTripleAI || analyzeComplexity(question, complexityThreshold)
 
-      if (error) {
-        console.error('Erro na chamada do assistente IA:', error)
-        throw new Error(error.message || 'Erro ao processar pergunta')
+      if (shouldUseTripleAI) {
+        // Usar Triple AI Agents via n8n MCP Server
+        return await callTripleAIAgents({
+          question,
+          context,
+          empresaId,
+          userId
+        })
+      } else {
+        // 🔒 CHAMADA SEGURA PARA EDGE FUNCTION (comportamento atual)
+        const { data, error } = await supabase.functions.invoke('assistente-contabil-ia', {
+          body: {
+            pergunta: question.trim(),
+            empresa_id: empresaId,
+            user_id: userId,
+            conversationHistory: [], // Pode ser expandido futuramente
+            timestamp: new Date().toISOString()
+          },
+        })
+
+        if (error) {
+          console.error('Erro na chamada do assistente IA:', error)
+          throw new Error(error.message || 'Erro ao processar pergunta')
+        }
+
+        if (!data?.success) {
+          throw new Error(data?.error || 'Resposta inválida do assistente')
+        }
+
+        return data
       }
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Resposta inválida do assistente')
-      }
-
-      return data
     },
     onError: (error) => {
       console.error('Erro no assistente contábil:', error)
@@ -148,10 +165,102 @@ export function useAssistenteContabilIA() {
     onSuccess: (data) => {
       console.log('✅ Resposta do assistente recebida:', {
         hasResponse: !!data?.resposta,
-        tokens: data?.usage?.total_tokens || 0
+        tokens: data?.usage?.total_tokens || 0,
+        usedTripleAI: !!data?.processing_info
       })
     }
   })
+}
+
+// Função para analisar complexidade da pergunta
+function analyzeComplexity(question: string, threshold: 'auto' | 'simple' | 'complex'): boolean {
+  if (threshold === 'simple') return false
+  if (threshold === 'complex') return true
+
+  // Análise automática de complexidade
+  const complexityIndicators = [
+    // Múltiplas operações
+    /calcul.*e.*gerar|calcul.*e.*consultar|processar.*e.*analisar/i,
+    // Múltiplas entidades
+    /empresa.*e.*documento|das.*e.*irpj|nfe.*e.*das/i,
+    // Relatórios complexos
+    /relatório.*completo|análise.*detalhada|situação.*fiscal.*completa/i,
+    // Múltiplas perguntas
+    /\?.*\?|\be\s+também\b|\be\s+ainda\b/i,
+    // Palavras-chave de complexidade
+    /comparar|analisar|relatório|completo|detalhado|histórico|tendência/i
+  ]
+
+  const hasComplexityIndicators = complexityIndicators.some(pattern => pattern.test(question))
+  const isLongQuery = question.length > 100
+  const hasMultipleQuestions = (question.match(/\?/g) || []).length > 1
+
+  return hasComplexityIndicators || isLongQuery || hasMultipleQuestions
+}
+
+// Função para chamar Triple AI Agents
+async function callTripleAIAgents({
+  question,
+  context,
+  empresaId,
+  userId
+}: {
+  question: string;
+  context?: string;
+  empresaId?: string;
+  userId?: string;
+}) {
+  try {
+    // Chamar n8n MCP Server com Triple AI
+    const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || 'http://localhost:5678/webhook'
+    const response = await fetch(`${n8nWebhookUrl}/contabilidade-triple-ai-mcp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_N8N_API_KEY || ''}`
+      },
+      body: JSON.stringify({
+        mcp_request: {
+          query: question,
+          context: context || 'assistente-contabil',
+          user_id: userId,
+          empresa_id: empresaId
+        },
+        user_context: {
+          userId,
+          empresaId,
+          timestamp: new Date().toISOString()
+        }
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Triple AI request failed: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // Adaptar resposta do Triple AI para formato esperado pelo frontend
+    return {
+      success: data.success,
+      resposta: data.response?.resumo || data.response,
+      explicacao: data.explanation,
+      proximos_passos: data.next_steps,
+      alertas: data.alerts,
+      recursos: data.resources,
+      processing_info: data.processing_info,
+      usage: {
+        total_tokens: data.processing_info?.tokens_used || 0,
+        model: 'triple-ai-agents'
+      },
+      // Manter compatibilidade com interface existente
+      timestamp: data.timestamp
+    }
+  } catch (error) {
+    console.error('Erro ao chamar Triple AI Agents:', error)
+    // Fallback para Edge Function direta em caso de erro
+    throw new Error('Triple AI temporariamente indisponível. Tente novamente.')
+  }
 }
 
 // Hook para assistente contábil IA Enhanced (com contexto rico)

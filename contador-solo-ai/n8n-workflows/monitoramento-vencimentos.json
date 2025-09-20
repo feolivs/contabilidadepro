@@ -1,0 +1,456 @@
+{
+  "name": "Monitoramento de Vencimentos - ContabilidadePRO",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-diario",
+      "name": "Cron - Verificação Diária 8h",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  af.*,\n  e.nome as empresa_nome,\n  e.email as empresa_email,\n  e.cnpj as empresa_cnpj,\n  EXTRACT(DAY FROM (af.data_evento - CURRENT_DATE)) as dias_restantes\nFROM agenda_fiscal af\nJOIN empresas e ON af.empresa_id = e.id\nWHERE af.status = 'pendente'\n  AND af.data_evento BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'\nORDER BY af.data_evento ASC",
+        "options": {}
+      },
+      "id": "buscar-vencimentos",
+      "name": "Buscar Vencimentos Próximos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [460, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-contabilidadepro",
+          "name": "Supabase ContabilidadePRO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-items",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "verificar-vencimentos",
+      "name": "Tem Vencimentos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "processar-cada-vencimento",
+      "name": "Processar Cada Vencimento",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "urgente",
+              "leftValue": "={{ $json.dias_restantes }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "verificar-urgencia",
+      "name": "É Urgente? (≤3 dias)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/queue/enqueue",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"queueName\": \"notificacoes\",\n  \"jobData\": {\n    \"type\": \"notificacao\",\n    \"tipo\": \"email\",\n    \"destinatario\": \"{{ $json.empresa_email }}\",\n    \"template\": \"vencimento_urgente\",\n    \"prioridade\": \"urgente\",\n    \"dados\": {\n      \"empresa_nome\": \"{{ $json.empresa_nome }}\",\n      \"cnpj\": \"{{ $json.empresa_cnpj }}\",\n      \"tipo_evento\": \"{{ $json.tipo_evento }}\",\n      \"data_vencimento\": \"{{ $json.data_evento }}\",\n      \"dias_restantes\": {{ $json.dias_restantes }},\n      \"valor\": \"{{ $json.valor }}\",\n      \"codigo_barras\": \"{{ $json.detalhes.codigo_barras }}\",\n      \"urgencia\": \"CRÍTICO\"\n    },\n    \"timestamp\": \"{{ new Date().toISOString() }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "notificar-urgente",
+      "name": "Notificar Urgente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/queue/enqueue",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"queueName\": \"notificacoes\",\n  \"jobData\": {\n    \"type\": \"notificacao\",\n    \"tipo\": \"sms\",\n    \"destinatario\": \"{{ $json.empresa_telefone || '+5511999999999' }}\",\n    \"template\": \"vencimento_sms_urgente\",\n    \"prioridade\": \"urgente\",\n    \"dados\": {\n      \"empresa_nome\": \"{{ $json.empresa_nome }}\",\n      \"tipo_evento\": \"{{ $json.tipo_evento }}\",\n      \"dias_restantes\": {{ $json.dias_restantes }},\n      \"valor\": \"{{ $json.valor }}\"\n    },\n    \"timestamp\": \"{{ new Date().toISOString() }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "sms-urgente",
+      "name": "SMS Urgente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "aviso-7-dias",
+              "leftValue": "={{ $json.dias_restantes }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "verificar-aviso",
+      "name": "Aviso 7 dias?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/queue/enqueue",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"queueName\": \"notificacoes\",\n  \"jobData\": {\n    \"type\": \"notificacao\",\n    \"tipo\": \"email\",\n    \"destinatario\": \"{{ $json.empresa_email }}\",\n    \"template\": \"vencimento_aviso\",\n    \"prioridade\": \"media\",\n    \"dados\": {\n      \"empresa_nome\": \"{{ $json.empresa_nome }}\",\n      \"cnpj\": \"{{ $json.empresa_cnpj }}\",\n      \"tipo_evento\": \"{{ $json.tipo_evento }}\",\n      \"data_vencimento\": \"{{ $json.data_evento }}\",\n      \"dias_restantes\": {{ $json.dias_restantes }},\n      \"valor\": \"{{ $json.valor }}\",\n      \"codigo_barras\": \"{{ $json.detalhes.codigo_barras }}\"\n    },\n    \"timestamp\": \"{{ new Date().toISOString() }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "notificar-aviso",
+      "name": "Notificar Aviso",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "table": {
+          "value": "agenda_fiscal",
+          "mode": "list"
+        },
+        "updateKey": "id",
+        "columnsUi": {
+          "columnToMatchOn": "id",
+          "valueToMatchOn": "={{ $json.id }}",
+          "columns": [
+            {
+              "column": "ultimo_aviso",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "column": "avisos_enviados",
+              "value": "={{ ($json.avisos_enviados || 0) + 1 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "atualizar-aviso",
+      "name": "Atualizar Último Aviso",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1560, 400],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-contabilidadepro",
+          "name": "Supabase ContabilidadePRO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as total_vencimentos,\n       COUNT(CASE WHEN dias_restantes <= 3 THEN 1 END) as urgentes,\n       COUNT(CASE WHEN dias_restantes <= 7 THEN 1 END) as avisos\nFROM (\n  SELECT EXTRACT(DAY FROM (data_evento - CURRENT_DATE)) as dias_restantes\n  FROM agenda_fiscal \n  WHERE status = 'pendente' \n    AND data_evento BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'\n) subquery",
+        "options": {}
+      },
+      "id": "estatisticas-vencimentos",
+      "name": "Estatísticas de Vencimentos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [900, 500],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-contabilidadepro",
+          "name": "Supabase ContabilidadePRO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/queue/enqueue",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"queueName\": \"notificacoes\",\n  \"jobData\": {\n    \"type\": \"notificacao\",\n    \"tipo\": \"email\",\n    \"destinatario\": \"contador@contabilidadepro.com\",\n    \"template\": \"relatorio_vencimentos_diario\",\n    \"prioridade\": \"baixa\",\n    \"dados\": {\n      \"data_relatorio\": \"{{ new Date().toISOString().split('T')[0] }}\",\n      \"total_vencimentos\": {{ $json.total_vencimentos }},\n      \"vencimentos_urgentes\": {{ $json.urgentes }},\n      \"vencimentos_aviso\": {{ $json.avisos }},\n      \"periodo_monitorado\": \"próximos 30 dias\"\n    },\n    \"timestamp\": \"{{ new Date().toISOString() }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "relatorio-contador",
+      "name": "Relatório para Contador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 500]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO logs_automacao (workflow_name, execution_id, acao, status, detalhes, timestamp)\nVALUES ($1, $2, $3, $4, $5, NOW())",
+        "additionalFields": {
+          "queryParameters": "=[\n  \"monitoramento-vencimentos\",\n  \"{{ $workflow.id }}\",\n  \"verificacao_vencimentos\",\n  \"sucesso\",\n  {\n    \"total_verificados\": {{ $('Buscar Vencimentos Próximos').item(0).json.length || 0 }},\n    \"urgentes_encontrados\": {{ $('Estatísticas de Vencimentos').item(0).json.urgentes }},\n    \"avisos_enviados\": {{ $('Estatísticas de Vencimentos').item(0).json.avisos }},\n    \"data_verificacao\": \"{{ new Date().toISOString().split('T')[0] }}\"\n  }\n]"
+        }
+      },
+      "id": "log-monitoramento",
+      "name": "Log Monitoramento",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1340, 500],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-contabilidadepro",
+          "name": "Supabase ContabilidadePRO"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron - Verificação Diária 8h": {
+      "main": [
+        [
+          {
+            "node": "Buscar Vencimentos Próximos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Vencimentos Próximos": {
+      "main": [
+        [
+          {
+            "node": "Tem Vencimentos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem Vencimentos?": {
+      "main": [
+        [
+          {
+            "node": "Processar Cada Vencimento",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Estatísticas de Vencimentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar Cada Vencimento": {
+      "main": [
+        [
+          {
+            "node": "É Urgente? (≤3 dias)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Urgente? (≤3 dias)": {
+      "main": [
+        [
+          {
+            "node": "Notificar Urgente",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SMS Urgente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso 7 dias?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Urgente": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Último Aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS Urgente": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Último Aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso 7 dias?": {
+      "main": [
+        [
+          {
+            "node": "Notificar Aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Aviso": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Último Aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estatísticas de Vencimentos": {
+      "main": [
+        [
+          {
+            "node": "Relatório para Contador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Relatório para Contador": {
+      "main": [
+        [
+          {
+            "node": "Log Monitoramento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-01-19T10:30:00.000Z",
+      "updatedAt": "2025-01-19T10:30:00.000Z",
+      "id": "fiscal-monitoring",
+      "name": "Monitoramento Fiscal"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-19T10:30:00.000Z",
+  "versionId": "1"
+}

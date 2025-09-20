@@ -1,4 +1,12 @@
 /**
+ * @deprecated Este arquivo foi substituído pelo UnifiedCacheService
+ * Use import { fiscalCache } from '@/lib/unified-cache' em vez disso
+ * 
+ * Este arquivo será removido em uma versão futura.
+ * Migração automática disponível em scripts/migrate-cache-systems.js
+ */
+
+/**
  * 🚀 SISTEMA DE CACHE SIMPLIFICADO
  * ContabilidadePRO - Cache unificado para contador solo
  */

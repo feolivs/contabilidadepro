@@ -19,6 +19,7 @@ import { HistoricoConversas } from '@/components/assistente/historico-conversas'
 import { ChatMessage } from '@/components/assistente/chat-message'
 import { VoiceInput } from '@/components/assistente/voice-input'
 import { TypingIndicator } from '@/components/assistente/typing-indicator'
+import { ChatTripleAI } from '@/components/assistente/chat-triple-ai'
 // Removido: ConversationContextService - Fase 2 simplificação
 // import { ConversationContextService, type ConversationMessage } from '@/services/conversation-context'
 import { useAuthStore } from '@/store/auth-store'
@@ -310,6 +311,10 @@ export default function AssistentePage() {
               <Bot className="h-3 w-3" />
               GPT-4o Básico
             </Badge>
+            <Badge className="flex items-center gap-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white">
+              <Sparkles className="h-3 w-3" />
+              Triple AI
+            </Badge>
           </div>
         </div>
 
@@ -358,8 +363,12 @@ export default function AssistentePage() {
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="chat">Chat</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="chat">Chat Básico</TabsTrigger>
+            <TabsTrigger value="triple-ai" className="flex items-center gap-1">
+              <Sparkles className="h-3 w-3" />
+              Triple AI
+            </TabsTrigger>
             <TabsTrigger value="actions">Ações Rápidas</TabsTrigger>
             <TabsTrigger value="statistics">Estatísticas</TabsTrigger>
             <TabsTrigger value="history">Histórico</TabsTrigger>
@@ -430,6 +439,46 @@ export default function AssistentePage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="triple-ai" className="space-y-4">
+            <div className="space-y-4">
+              <Card className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-purple-900 dark:text-purple-100">
+                      Triple AI Agents
+                    </h3>
+                    <p className="text-sm text-purple-700 dark:text-purple-300">
+                      Sistema avançado com 3 camadas de IA: Análise → Processamento → Síntese
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Agente PRÉ: Análise inteligente</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>MCP Tools: Processamento técnico</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Agente PÓS: Síntese contextual</span>
+                  </div>
+                </div>
+              </Card>
+
+              <ChatTripleAI
+                empresaId={selectedEmpresa || undefined}
+                initialMode="auto"
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="actions" className="space-y-4">

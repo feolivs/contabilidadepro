@@ -1,4 +1,11 @@
 /**
+ * @deprecated A maior parte deste arquivo foi substituída pelo UnifiedCacheService
+ * Use import { unifiedCache, fiscalCache } from '@/lib/unified-cache' em vez disso
+ * 
+ * Apenas browserCache ainda é usado para compatibilidade.
+ */
+
+/**
  * Sistema de Cache Inteligente para ContabilidadePRO
  * 
  * Implementa cache em múltiplas camadas:
@@ -332,3 +339,13 @@ export const browserCache = {
     keys.forEach(key => localStorage.removeItem(key))
   }
 }
+
+// Re-exports para compatibilidade (DEPRECATED)
+import { unifiedCache, fiscalCache } from './unified-cache'
+
+/** @deprecated Use unifiedCache em vez disso */
+export const cache = unifiedCache
+
+/** @deprecated Use fiscalCache em vez disso */
+export { fiscalCache }
+

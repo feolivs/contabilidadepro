@@ -43,7 +43,7 @@ export function useOptimizedSupabaseQuery<T>(
     // Verificar cache primeiro
     const cacheKey = `supabase:${tableName}:${JSON.stringify(filters)}`
     if (cache) {
-      const cached = performanceCache.get(cacheKey)
+      const cached = await unifiedCache.get(cacheKey)
       if (cached) {
         return cached
       }
@@ -77,7 +77,7 @@ export function useOptimizedSupabaseQuery<T>(
 
     // Salvar no cache
     if (cache && data) {
-      performanceCache.set(cacheKey, data, cacheTTL)
+      await unifiedCache.set(cacheKey, data, cacheTTL)
     }
 
     return data as T

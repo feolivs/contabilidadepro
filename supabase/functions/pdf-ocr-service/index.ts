@@ -7,6 +7,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import { ocrCache } from '../_shared/ocr-cache-adapter.ts'
 
 // Configuração
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
@@ -388,6 +389,33 @@ async function processPDFWithOCR(request: PDFOCRRequest): Promise<PDFOCRResponse
 
   console.log(`[PDF_OCR] 🚀 PROCESSAMENTO RÁPIDO: ${fileName}`)
 
+  // 1. VERIFICAR CACHE PRIMEIRO (se habilitado)
+  if (options.enableCache !== false) {
+    try {
+      const cachedResult = await ocrCache.get(storagePath)
+      if (cachedResult) {
+        console.log(`[PDF_OCR] 🎯 Cache HIT: ${fileName}`)
+        return {
+          success: true,
+          documentId,
+          extractedText: cachedResult.text,
+          method: cachedResult.method,
+          confidence: cachedResult.confidence,
+          processingTime: cachedResult.processing_time,
+          textQuality: {
+            characterCount: cachedResult.text.length,
+            wordCount: cachedResult.text.split(/\s+/).length,
+            readabilityScore: cachedResult.confidence,
+            hasStructuredData: !!cachedResult.structured_data
+          },
+          structuredData: cachedResult.structured_data
+        }
+      }
+    } catch (cacheError) {
+      console.warn('[PDF_OCR] Cache error (continuing):', cacheError)
+    }
+  }
+
   // TIMEOUT PROTECTION - Máximo 20 segundos
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => reject(new Error('Timeout: Processamento excedeu 20 segundos')), 20000)
@@ -517,7 +545,25 @@ async function processPDFWithOCR(request: PDFOCRRequest): Promise<PDFOCRResponse
     ]).then(() => console.log(`[PDF_OCR] 🎉 SUCESSO: ${actualFileName} (${processingTime}ms)`))
       .catch(err => console.log(`[PDF_OCR] ⚠️ Erro não crítico no banco: ${err.message}`))
 
-    // Retornar resposta imediatamente (não esperar banco)
+    // 6. SALVAR NO CACHE (não bloquear resposta)
+    if (options.enableCache !== false) {
+      ocrCache.set(storagePath, {
+        text: extractedText,
+        confidence,
+        pages: 1, // Estimativa
+        method,
+        processing_time: processingTime,
+        structured_data: structuredData,
+        metadata: {
+          file_size: fileBuffer.byteLength,
+          file_type: mimeType,
+          readability_score: textQuality.readabilityScore
+        }
+      }).then(() => console.log(`[PDF_OCR] 💾 Cache salvo: ${fileName}`))
+        .catch(err => console.log(`[PDF_OCR] ⚠️ Cache falhou (não crítico): ${err.message}`))
+    }
+
+    // Retornar resposta imediatamente (não esperar banco/cache)
     return response
 
   } catch (error) {

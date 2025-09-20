@@ -5,7 +5,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { corsHeaders } from '../_shared/cors.ts'
-import { IntelligentCache } from '../_shared/intelligent-cache.ts'
+import { intelligentCache } from '../_shared/unified-cache-adapter.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Configuração OpenAI
@@ -26,8 +26,8 @@ const PERFORMANCE_CONFIG = {
   TEMPERATURE: 0.7       // Temperatura OpenAI
 }
 
-// Inicializar cache inteligente
-const cache = new IntelligentCache(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+// Usar cache unificado (compatibilidade mantida)
+const cache = intelligentCache
 
 // Inicializar cliente Supabase para métricas
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)

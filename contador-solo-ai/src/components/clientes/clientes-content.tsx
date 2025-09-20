@@ -48,6 +48,8 @@ import { useDebounce } from 'use-debounce'
 import { toast } from 'react-hot-toast'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
+import { AdvancedSearchBox } from '@/components/search/AdvancedSearchBox'
+import { useEmpresaSearch } from '@/hooks/use-advanced-search'
 import autoTable from 'jspdf-autotable'
 import { CreateEmpresaModal } from '@/components/clientes/create-empresa-modal'
 import { EditEmpresaModal } from '@/components/clientes/edit-empresa-modal'
@@ -103,14 +105,40 @@ export function ClientesContent({ initialEmpresas, initialStats }: ClientesConte
   const [deletingEmpresa, setDeletingEmpresa] = useState<Empresa | null>(null)
   const [viewingEmpresa, setViewingEmpresa] = useState<Empresa | null>(null)
   const [documentsEmpresa, setDocumentsEmpresa] = useState<Empresa | null>(null)
+  const [useAdvancedSearch, setUseAdvancedSearch] = useState(false)
 
   // Debounced search
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300)
 
+  // Busca avançada
+  const {
+    results: searchResults,
+    isLoading: isSearching,
+    hasResults: hasSearchResults,
+    query: advancedQuery,
+    setQuery: setAdvancedQuery,
+    clearSearch
+  } = useEmpresaSearch({
+    limit: 50,
+    threshold: 0.3,
+    autoSearch: useAdvancedSearch
+  })
+
   // Filtrar e ordenar empresas
   const filteredAndSortedEmpresas = useMemo(() => {
-    const filtered = empresas.filter(empresa => {
-      const matchSearch = !debouncedSearchTerm || 
+    let baseEmpresas = empresas
+
+    // Se estiver usando busca avançada e houver resultados
+    if (useAdvancedSearch && hasSearchResults) {
+      baseEmpresas = searchResults.map(result => result.data)
+    } else if (useAdvancedSearch && advancedQuery && !hasSearchResults) {
+      // Se busca avançada ativa mas sem resultados, mostrar lista vazia
+      baseEmpresas = []
+    }
+
+    const filtered = baseEmpresas.filter(empresa => {
+      // Busca simples (quando busca avançada não está ativa)
+      const matchSearch = useAdvancedSearch || !debouncedSearchTerm ||
         empresa.nome.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         empresa.nome_fantasia?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         empresa.cnpj?.includes(debouncedSearchTerm)
@@ -121,20 +149,25 @@ export function ClientesContent({ initialEmpresas, initialStats }: ClientesConte
       return matchSearch && matchRegime && matchStatus
     })
 
-    // Ordenar
-    filtered.sort((a, b) => {
-      const aValue = a[sortField] || ''
-      const bValue = b[sortField] || ''
-      
-      if (sortDirection === 'asc') {
-        return aValue > bValue ? 1 : -1
-      } else {
-        return aValue < bValue ? 1 : -1
-      }
-    })
+    // Ordenar (preservar ordem de relevância da busca avançada se aplicável)
+    if (useAdvancedSearch && hasSearchResults) {
+      // Manter ordem de relevância da busca avançada, mas aplicar filtros adicionais
+      return filtered
+    } else {
+      // Ordenação normal
+      filtered.sort((a, b) => {
+        const aValue = a[sortField] || ''
+        const bValue = b[sortField] || ''
 
-    return filtered
-  }, [empresas, debouncedSearchTerm, filterRegime, filterStatus, sortField, sortDirection])
+        if (sortDirection === 'asc') {
+          return aValue > bValue ? 1 : -1
+        } else {
+          return aValue < bValue ? 1 : -1
+        }
+      })
+      return filtered
+    }
+  }, [empresas, debouncedSearchTerm, filterRegime, filterStatus, sortField, sortDirection, useAdvancedSearch, searchResults, hasSearchResults, advancedQuery])
 
   // Paginação
   const totalPages = Math.ceil(filteredAndSortedEmpresas.length / itemsPerPage)
@@ -163,9 +196,12 @@ export function ClientesContent({ initialEmpresas, initialStats }: ClientesConte
 
   const handleClearFilters = () => {
     setSearchTerm('')
+    setAdvancedQuery('')
+    clearSearch()
     setFilterRegime('all')
     setFilterStatus('all')
     setCurrentPage(1)
+    setUseAdvancedSearch(false)
   }
 
   // Funções de navegação de paginação
@@ -295,7 +331,7 @@ export function ClientesContent({ initialEmpresas, initialStats }: ClientesConte
     toast.success('Arquivo PDF exportado com sucesso!')
   }
 
-  const hasFilters = searchTerm || (filterRegime && filterRegime !== 'all') || (filterStatus && filterStatus !== 'all')
+  const hasFilters = searchTerm || advancedQuery || (filterRegime && filterRegime !== 'all') || (filterStatus && filterStatus !== 'all')
 
   return (
     <div className="space-y-6 relative">
@@ -351,18 +387,62 @@ export function ClientesContent({ initialEmpresas, initialStats }: ClientesConte
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome, nome fantasia ou CNPJ..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
+          <div className="flex flex-col gap-4">
+            {/* Toggle entre busca simples e avançada */}
+            <div className="flex items-center gap-4">
+              <Button
+                variant={!useAdvancedSearch ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setUseAdvancedSearch(false)
+                  setAdvancedQuery('')
+                  clearSearch()
+                }}
+              >
+                Busca Simples
+              </Button>
+              <Button
+                variant={useAdvancedSearch ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUseAdvancedSearch(true)}
+              >
+                Busca Avançada
+              </Button>
+              {isSearching && (
+                <div className="text-sm text-muted-foreground">
+                  Buscando...
+                </div>
+              )}
             </div>
 
-            <Select value={filterRegime} onValueChange={setFilterRegime}>
+            <div className="flex flex-col sm:flex-row gap-4">
+              {useAdvancedSearch ? (
+                <div className="flex-1">
+                  <AdvancedSearchBox
+                    searchType="empresas"
+                    placeholder="Busca inteligente: nome, CNPJ, ou termos similares..."
+                    onResultSelect={(result) => {
+                      // Opcional: focar na empresa selecionada
+                      console.log('Empresa selecionada:', result.data)
+                    }}
+                    showFilters={false}
+                    className="w-full"
+                  />
+                </div>
+              ) : (
+                <div className="relative flex-1">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome, nome fantasia ou CNPJ..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+              )}
+            </div>
+
+              <Select value={filterRegime} onValueChange={setFilterRegime}>
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Todos os regimes" />
               </SelectTrigger>
@@ -405,6 +485,11 @@ export function ClientesContent({ initialEmpresas, initialStats }: ClientesConte
             {hasFilters ? (
               <>
                 {filteredAndSortedEmpresas.length} de {initialStats.total} empresa(s) encontrada(s)
+                {useAdvancedSearch && hasSearchResults && (
+                  <span className="ml-2 text-blue-600">
+                    (Busca inteligente ativa)
+                  </span>
+                )}
                 {totalPages > 1 && (
                   <span className="ml-2">
                     (Página {currentPage} de {totalPages})

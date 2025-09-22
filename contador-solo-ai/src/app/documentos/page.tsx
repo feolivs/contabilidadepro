@@ -42,14 +42,19 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
-  Shield
+  Shield,
+  AlertTriangle,
+  BarChart
 } from 'lucide-react'
 import { useDocumentos, useDocumentosStats, useDownloadDocumento } from '@/hooks/use-documentos'
+import { useDocumentosRealtime } from '@/hooks/use-realtime-documentos'
 import { useEmpresas } from '@/hooks/use-empresas'
 import { DocumentProcessingStatus } from '@/components/documentos/document-processing-status'
 import { DocumentViewerModal } from '@/components/documentos/document-viewer-modal'
 import { DocumentVerificationModal } from '@/components/documentos/document-verification-modal'
 import { UploadDocumentoModal } from '@/components/documentos/upload-documento-modal'
+import { BatchUploadModal } from '@/components/documentos/batch-upload-modal'
+import { ErrorRecoveryPanel } from '@/components/documentos/error-recovery-panel'
 import { DeleteDocumentoModal } from '@/components/documentos/delete-documento-modal'
 import {
   Documento,
@@ -60,7 +65,7 @@ import {
   TIPOS_DOCUMENTO_COLORS
 } from '@/types/documento'
 import { useDebounce } from 'use-debounce'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 const formatFileSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes'
@@ -96,6 +101,7 @@ const getFileIcon = (mimeType: string) => {
 
 export default function DocumentosPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const empresaIdFromUrl = searchParams.get('empresa')
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -103,8 +109,10 @@ export default function DocumentosPage() {
   const [selectedTipo, setSelectedTipo] = useState<TipoDocumento | 'all'>('all')
   const [selectedStatus, setSelectedStatus] = useState<StatusProcessamento | 'all'>('all')
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [batchUploadModalOpen, setBatchUploadModalOpen] = useState(false)
   const [viewerModalOpen, setViewerModalOpen] = useState(false)
   const [verificationModalOpen, setVerificationModalOpen] = useState(false)
+  const [errorRecoveryModalOpen, setErrorRecoveryModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<Documento | null>(null)
 
@@ -122,6 +130,7 @@ export default function DocumentosPage() {
   }), [debouncedSearchTerm, selectedEmpresa, selectedTipo, selectedStatus])
 
   const { data: documentos = [], isLoading } = useDocumentos(documentFilter)
+  const { isConnected } = useDocumentosRealtime(documentFilter)
   const downloadMutation = useDownloadDocumento()
 
   const handleDownload = (documento: Documento) => {
@@ -150,6 +159,11 @@ export default function DocumentosPage() {
     setVerificationModalOpen(true)
   }
 
+  const handleErrorRecovery = (documento: Documento) => {
+    setSelectedDocument(documento)
+    setErrorRecoveryModalOpen(true)
+  }
+
   const handleApproveDocument = async (documentId: string, correctedData: any) => {
     // TODO: Implementar aprovação do documento com dados corrigidos
     console.log('Approving document:', documentId, correctedData)
@@ -162,13 +176,35 @@ export default function DocumentosPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Documentos</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-foreground">Documentos</h1>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                <span className="text-sm text-muted-foreground">
+                  {isConnected ? 'Atualizações em tempo real' : 'Desconectado'}
+                </span>
+              </div>
+            </div>
             <p className="text-muted-foreground">Gerencie todos os documentos das suas empresas</p>
           </div>
-          <Button onClick={() => setUploadModalOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Documento
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/documentos/performance')}
+              className="text-muted-foreground"
+            >
+              <BarChart className="h-4 w-4 mr-2" />
+              Performance
+            </Button>
+            <Button variant="outline" onClick={() => setBatchUploadModalOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload em Lote
+            </Button>
+            <Button onClick={() => setUploadModalOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Documento
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -351,6 +387,9 @@ export default function DocumentosPage() {
                       <DocumentProcessingStatus
                         status={documento.status_processamento}
                         confidence={documento.dados_extraidos?.confidence}
+                        progress={documento.processing_progress?.progress_percent}
+                        estimatedTime={documento.processing_progress?.estimated_time_remaining}
+                        dadosExtraidos={documento.dados_extraidos}
                       />
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -384,6 +423,12 @@ export default function DocumentosPage() {
                               Verificar
                             </DropdownMenuItem>
                           )}
+                          {(documento.status_processamento === 'erro' || documento.status_processamento === 'rejeitado') && (
+                            <DropdownMenuItem onClick={() => handleErrorRecovery(documento)}>
+                              <AlertTriangle className="h-4 w-4 mr-2" />
+                              Recuperar Erro
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             onClick={() => handleDelete(documento)}
@@ -410,6 +455,13 @@ export default function DocumentosPage() {
         empresaIdPadrao={selectedEmpresa === 'all' ? undefined : selectedEmpresa}
       />
 
+      {/* Modal de Upload em Lote */}
+      <BatchUploadModal
+        open={batchUploadModalOpen}
+        onOpenChange={setBatchUploadModalOpen}
+        empresaIdPadrao={selectedEmpresa === 'all' ? undefined : selectedEmpresa}
+      />
+
       {/* Modal de Visualização */}
       <DocumentViewerModal
         documento={selectedDocument}
@@ -430,6 +482,18 @@ export default function DocumentosPage() {
         }}
         onApprove={handleApproveDocument}
       />
+
+      {/* Modal de Recuperação de Erro */}
+      {selectedDocument && (
+        <ErrorRecoveryPanel
+          documento={selectedDocument}
+          isOpen={errorRecoveryModalOpen}
+          onClose={() => {
+            setErrorRecoveryModalOpen(false)
+            setSelectedDocument(null)
+          }}
+        />
+      )}
 
       {/* Modal de Exclusão */}
       <DeleteDocumentoModal

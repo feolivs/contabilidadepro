@@ -31,8 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications'
-import { formatDistanceToNow } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { formatRelativeTime } from '@/lib/date-utils'
 import { cn } from '@/lib/utils'
 
 export function NotificationCenter() {
@@ -215,10 +214,7 @@ export function NotificationCenter() {
                       <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center text-xs text-muted-foreground">
                           <Clock className="h-3 w-3 mr-1" />
-                          {formatDistanceToNow(new Date(notification.created_at), {
-                            addSuffix: true,
-                            locale: ptBR
-                          })}
+                          {formatRelativeTime(notification.created_at)}
                         </div>
 
                         <div className="flex items-center gap-1">

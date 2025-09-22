@@ -5,25 +5,26 @@
 'use client'
 
 import { useMemo } from 'react'
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts'
+import dynamic from 'next/dynamic'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+
+// Dynamic import do Recharts para otimização de bundle
+const LineChart = dynamic(() => import('recharts').then(mod => ({ default: mod.LineChart })), { ssr: false })
+const Line = dynamic(() => import('recharts').then(mod => ({ default: mod.Line })), { ssr: false })
+const AreaChart = dynamic(() => import('recharts').then(mod => ({ default: mod.AreaChart })), { ssr: false })
+const Area = dynamic(() => import('recharts').then(mod => ({ default: mod.Area })), { ssr: false })
+const BarChart = dynamic(() => import('recharts').then(mod => ({ default: mod.BarChart })), { ssr: false })
+const Bar = dynamic(() => import('recharts').then(mod => ({ default: mod.Bar })), { ssr: false })
+const PieChart = dynamic(() => import('recharts').then(mod => ({ default: mod.PieChart })), { ssr: false })
+const Pie = dynamic(() => import('recharts').then(mod => ({ default: mod.Pie })), { ssr: false })
+const Cell = dynamic(() => import('recharts').then(mod => ({ default: mod.Cell })), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then(mod => ({ default: mod.XAxis })), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then(mod => ({ default: mod.YAxis })), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then(mod => ({ default: mod.CartesianGrid })), { ssr: false })
+const Tooltip = dynamic(() => import('recharts').then(mod => ({ default: mod.Tooltip })), { ssr: false })
+const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false })
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => ({ default: mod.ResponsiveContainer })), { ssr: false })
 
 interface ChartDataPoint {
   date?: string
@@ -164,7 +165,10 @@ export function RealtimeChart({
               tickFormatter={formatYAxisLabel}
             />
             <Tooltip
-              formatter={formatTooltipValue}
+              formatter={(value: any, name: string) => [
+                typeof value === 'number' ? formatTooltipValue(value) : value,
+                name
+              ]}
               labelStyle={{ color: '#374151' }}
               contentStyle={{
                 backgroundColor: 'white',
@@ -203,7 +207,10 @@ export function RealtimeChart({
               tickFormatter={formatYAxisLabel}
             />
             <Tooltip
-              formatter={formatTooltipValue}
+              formatter={(value: any, name: string) => [
+                typeof value === 'number' ? formatTooltipValue(value) : value,
+                name
+              ]}
               labelStyle={{ color: '#374151' }}
               contentStyle={{
                 backgroundColor: 'white',
@@ -242,7 +249,10 @@ export function RealtimeChart({
               tickFormatter={formatYAxisLabel}
             />
             <Tooltip
-              formatter={formatTooltipValue}
+              formatter={(value: any, name: string) => [
+                typeof value === 'number' ? formatTooltipValue(value) : value,
+                name
+              ]}
               labelStyle={{ color: '#374151' }}
               contentStyle={{
                 backgroundColor: 'white',

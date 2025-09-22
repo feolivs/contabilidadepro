@@ -25,7 +25,9 @@ export function RealtimeDocumentStatus() {
   const {
     documents,
     isLoading,
-    error
+    error,
+    isConnected,
+    refresh
   } = useRealtimeDocuments()
 
   const getRecentDocuments = (limit: number) => documents.slice(0, limit)
@@ -43,22 +45,18 @@ export function RealtimeDocumentStatus() {
     processando: documents.filter(d => d.status === 'processing').length,
     processados: documents.filter(d => d.status === 'completed').length,
     erros: documents.filter(d => d.status === 'error').length,
-    totalTamanho: 0
-  }
-
-  const refresh = () => {
-    // Placeholder para refresh
+    totalTamanho: documents.reduce((sum, doc) => sum + (doc.arquivo_tamanho || 0), 0)
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'processado':
+      case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'processando':
+      case 'processing':
         return <Zap className="h-4 w-4 text-blue-600 animate-pulse" />
-      case 'erro':
+      case 'error':
         return <AlertCircle className="h-4 w-4 text-red-600" />
-      case 'pendente':
+      case 'pending':
         return <Clock className="h-4 w-4 text-yellow-600" />
       default:
         return <FileText className="h-4 w-4 text-gray-600" />
@@ -67,13 +65,13 @@ export function RealtimeDocumentStatus() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'processado':
+      case 'completed':
         return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-      case 'processando':
+      case 'processing':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-      case 'erro':
+      case 'error':
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-      case 'pendente':
+      case 'pending':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
@@ -82,13 +80,13 @@ export function RealtimeDocumentStatus() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'processado':
+      case 'completed':
         return 'Processado'
-      case 'processando':
+      case 'processing':
         return 'Processando'
-      case 'erro':
+      case 'error':
         return 'Erro'
-      case 'pendente':
+      case 'pending':
         return 'Pendente'
       default:
         return 'Desconhecido'
@@ -135,9 +133,13 @@ export function RealtimeDocumentStatus() {
           <div className="flex items-center">
             <FileText className="h-5 w-5 mr-2" />
             Status dos Documentos
-            <Badge className="ml-2 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-              <Activity className="h-3 w-3 mr-1 animate-pulse" />
-              Tempo Real
+            <Badge className={`ml-2 ${
+              isConnected
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+            }`}>
+              <Activity className={`h-3 w-3 mr-1 ${isConnected ? 'animate-pulse' : ''}`} />
+              {isConnected ? 'Conectado' : 'Desconectado'}
             </Badge>
           </div>
 
@@ -148,33 +150,54 @@ export function RealtimeDocumentStatus() {
               onClick={refresh}
               className="h-8 w-8 p-0"
               title="Atualizar status"
+              disabled={isLoading}
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </CardTitle>
       </CardHeader>
 
       <CardContent>
-        {/* Stats dos documentos */}
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-            <div className="text-xs text-muted-foreground">Total</div>
+        {/* Mostrar erro se houver */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="flex items-center space-x-2 text-red-700 dark:text-red-400">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">{error}</span>
+            </div>
           </div>
-          <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
-            <div className="text-2xl font-bold text-yellow-600">{stats.processando}</div>
-            <div className="text-xs text-muted-foreground">Processando</div>
+        )}
+
+        {/* Loading state */}
+        {isLoading ? (
+          <div className="text-center py-8">
+            <RefreshCw className="h-8 w-8 text-gray-400 mx-auto mb-3 animate-spin" />
+            <p className="text-gray-500">Carregando documentos...</p>
           </div>
-          <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{stats.processados}</div>
-            <div className="text-xs text-muted-foreground">Processados</div>
-          </div>
-          <div className="text-center p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
-            <div className="text-2xl font-bold text-red-600">{stats.erros}</div>
-            <div className="text-xs text-muted-foreground">Erros</div>
-          </div>
-        </div>
+        ) : (
+          <>
+            {/* Stats dos documentos */}
+            <div className="grid grid-cols-4 gap-3 mb-6">
+              <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+                <div className="text-xs text-muted-foreground">Total</div>
+              </div>
+              <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600">{stats.processando}</div>
+                <div className="text-xs text-muted-foreground">Processando</div>
+              </div>
+              <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{stats.processados}</div>
+                <div className="text-xs text-muted-foreground">Processados</div>
+              </div>
+              <div className="text-center p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                <div className="text-2xl font-bold text-red-600">{stats.erros}</div>
+                <div className="text-xs text-muted-foreground">Erros</div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Info adicional */}
         <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
@@ -223,7 +246,7 @@ export function RealtimeDocumentStatus() {
                         <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-2">
                           <span>{document.type}</span>
                           <span>•</span>
-                          <span>{formatFileSize(0)}</span>
+                          <span>{formatFileSize(document.arquivo_tamanho || 0)}</span>
                           <span>•</span>
                           <span>
                             {formatDistanceToNow(new Date(document.lastUpdated), {
@@ -231,6 +254,14 @@ export function RealtimeDocumentStatus() {
                               locale: ptBR
                             })}
                           </span>
+                          {document.confidence && (
+                            <>
+                              <span>•</span>
+                              <span className="text-green-600">
+                                {Math.round(document.confidence * 100)}% confiança
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -246,8 +277,18 @@ export function RealtimeDocumentStatus() {
                           value={document.progress}
                           className="h-2"
                         />
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Processando... {Math.round(document.progress)}%
+                        <div className="text-xs text-muted-foreground mt-1 flex items-center justify-between">
+                          <span>
+                            {document.processing_stage
+                              ? `${document.processing_stage}... ${Math.round(document.progress)}%`
+                              : `Processando... ${Math.round(document.progress)}%`
+                            }
+                          </span>
+                          {document.progress > 0 && (
+                            <span className="text-blue-600">
+                              {document.progress === 100 ? 'Finalizando...' : 'Em andamento'}
+                            </span>
+                          )}
                         </div>
                       </div>
                     )}

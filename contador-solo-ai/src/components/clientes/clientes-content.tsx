@@ -46,7 +46,7 @@ import {
 } from '@/components/ui/table'
 import { useDebounce } from 'use-debounce'
 import { toast } from 'react-hot-toast'
-import * as XLSX from 'xlsx'
+// Lazy imports para otimização de bundle
 import jsPDF from 'jspdf'
 import { AdvancedSearchBox } from '@/components/search/AdvancedSearchBox'
 import { useEmpresaSearch } from '@/hooks/use-advanced-search'
@@ -258,24 +258,32 @@ export function ClientesContent({ initialEmpresas, initialStats }: ClientesConte
     return pages
   }
 
-  const handleExportExcel = () => {
-    const exportData = filteredAndSortedEmpresas.map(empresa => ({
-      'Nome': empresa.nome,
-      'Nome Fantasia': empresa.nome_fantasia || '',
-      'CNPJ': empresa.cnpj || '',
-      'Regime Tributário': regimeTributarioLabels[empresa.regime_tributario as keyof typeof regimeTributarioLabels] || '',
-      'Status': statusLabels[empresa.status as keyof typeof statusLabels] || '',
-      'Atividade Principal': empresa.atividade_principal || '',
-      'Email': empresa.email || '',
-      'Telefone': empresa.telefone || '',
-      'Criado em': new Date(empresa.created_at).toLocaleDateString('pt-BR')
-    }))
+  const handleExportExcel = async () => {
+    try {
+      // Dynamic import para carregar XLSX apenas quando necessário
+      const XLSX = await import('xlsx')
 
-    const ws = XLSX.utils.json_to_sheet(exportData)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Empresas')
-    XLSX.writeFile(wb, `empresas_${new Date().toISOString().split('T')[0]}.xlsx`)
-    toast.success('Arquivo Excel exportado com sucesso!')
+      const exportData = filteredAndSortedEmpresas.map(empresa => ({
+        'Nome': empresa.nome,
+        'Nome Fantasia': empresa.nome_fantasia || '',
+        'CNPJ': empresa.cnpj || '',
+        'Regime Tributário': regimeTributarioLabels[empresa.regime_tributario as keyof typeof regimeTributarioLabels] || '',
+        'Status': statusLabels[empresa.status as keyof typeof statusLabels] || '',
+        'Atividade Principal': empresa.atividade_principal || '',
+        'Email': empresa.email || '',
+        'Telefone': empresa.telefone || '',
+        'Criado em': new Date(empresa.created_at).toLocaleDateString('pt-BR')
+      }))
+
+      const ws = XLSX.utils.json_to_sheet(exportData)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Empresas')
+      XLSX.writeFile(wb, `empresas_${new Date().toISOString().split('T')[0]}.xlsx`)
+      toast.success('Arquivo Excel exportado com sucesso!')
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error)
+      toast.error('Erro ao exportar arquivo Excel')
+    }
   }
 
   const exportToPDF = () => {

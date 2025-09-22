@@ -1,0 +1,166 @@
+{
+  "timestamp": "2025-09-22T02:03:10.558Z",
+  "environment": "test",
+  "suites": [
+    {
+      "name": "Database Tests",
+      "tests": [
+        {
+          "name": "Verificar tabelas criadas",
+          "status": "passed",
+          "duration": 428,
+          "details": {
+            "tablesChecked": 4
+          }
+        },
+        {
+          "name": "Verificar funções helper",
+          "status": "passed",
+          "duration": 95,
+          "details": {
+            "functionResult": true
+          }
+        },
+        {
+          "name": "Verificar RLS policies",
+          "status": "passed",
+          "duration": 81,
+          "details": {
+            "rlsWorking": true
+          }
+        }
+      ],
+      "totalDuration": 605,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Edge Function Tests",
+      "tests": [
+        {
+          "name": "Testar conectividade empresa-context-service",
+          "status": "passed",
+          "duration": 160,
+          "details": {
+            "functionResponding": true,
+            "duration": 159,
+            "hasResponse": false,
+            "responseType": "object",
+            "statusReceived": true
+          }
+        },
+        {
+          "name": "Testar conectividade documentos-analytics-service",
+          "status": "passed",
+          "duration": 211,
+          "details": {
+            "functionResponding": true,
+            "duration": 210,
+            "hasResponse": false,
+            "responseType": "object",
+            "statusReceived": true
+          }
+        },
+        {
+          "name": "Testar estrutura de resposta das Edge Functions",
+          "status": "failed",
+          "duration": 152,
+          "error": "Response structure is invalid"
+        }
+      ],
+      "totalDuration": 524,
+      "passed": 2,
+      "failed": 1,
+      "skipped": 0
+    },
+    {
+      "name": "Cache Tests",
+      "tests": [
+        {
+          "name": "Testar operações básicas de cache",
+          "status": "passed",
+          "duration": 0,
+          "details": {
+            "cacheWorking": true,
+            "dataMatches": true
+          }
+        },
+        {
+          "name": "Testar invalidação por tags",
+          "status": "passed",
+          "duration": 1,
+          "details": {
+            "tagInvalidationWorking": true
+          }
+        },
+        {
+          "name": "Testar estatísticas de cache",
+          "status": "passed",
+          "duration": 0,
+          "details": {
+            "totalEntries": 2,
+            "hitRate": 66.66666666666666,
+            "missRate": 33.33333333333333,
+            "statsWorking": true
+          }
+        }
+      ],
+      "totalDuration": 1,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Integration Tests",
+      "tests": [
+        {
+          "name": "Testar fluxo completo com cache",
+          "status": "passed",
+          "duration": 136,
+          "details": {
+            "firstCallDuration": 134,
+            "secondCallDuration": 0,
+            "cacheSpeedup": 134,
+            "dataConsistent": true
+          }
+        }
+      ],
+      "totalDuration": 136,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Performance Tests",
+      "tests": [
+        {
+          "name": "Testar performance Edge Functions",
+          "status": "failed",
+          "duration": 151,
+          "error": "Iteration 0 failed"
+        }
+      ],
+      "totalDuration": 151,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0
+    }
+  ],
+  "summary": {
+    "totalTests": 11,
+    "totalPassed": 9,
+    "totalFailed": 2,
+    "totalSkipped": 0,
+    "totalDuration": 1417,
+    "successRate": 81.81818181818183
+  },
+  "performance": {
+    "avgEdgeFunctionTime": 174.33333333333334,
+    "avgCacheHitRate": 75,
+    "avgDatabaseQueryTime": 0
+  },
+  "recommendations": [
+    "Todos os sistemas funcionando perfeitamente! 🎉"
+  ]
+}

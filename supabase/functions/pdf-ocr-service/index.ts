@@ -24,7 +24,29 @@ interface PDFOCRRequest {
     quality?: 'low' | 'medium' | 'high'
     forceOCR?: boolean
     enableCache?: boolean
+    enableProgressTracking?: boolean
+    maxRetries?: number
+    retryDelay?: number
   }
+}
+
+// Progress tracking interface
+interface ProcessingProgress {
+  documentId: string
+  stage: 'uploading' | 'ocr_processing' | 'data_extraction' | 'validation' | 'completed' | 'error'
+  progress: number // 0-100
+  message: string
+  timestamp: string
+  error?: string
+  retryCount?: number
+}
+
+// Retry configuration
+interface RetryConfig {
+  maxRetries: number
+  baseDelay: number
+  maxDelay: number
+  backoffMultiplier: number
 }
 
 interface PDFOCRResponse {
@@ -59,6 +81,131 @@ interface DocumentStructuredData {
   }>
   numeroDocumento?: string
   chaveAcesso?: string
+}
+
+// Configuração de retry padrão
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  baseDelay: 1000, // 1 segundo
+  maxDelay: 10000, // 10 segundos
+  backoffMultiplier: 2
+}
+
+/**
+ * 📊 Atualizar progresso do processamento
+ */
+async function updateProgress(
+  documentId: string,
+  stage: ProcessingProgress['stage'],
+  progress: number,
+  message: string,
+  error?: string,
+  retryCount?: number
+): Promise<void> {
+  try {
+    const progressData: ProcessingProgress = {
+      documentId,
+      stage,
+      progress: Math.min(100, Math.max(0, progress)),
+      message,
+      timestamp: new Date().toISOString(),
+      error,
+      retryCount
+    }
+
+    console.log(`[PROGRESS] ${documentId}: ${stage} (${progress}%) - ${message}`)
+
+    // Inicializar cliente Supabase
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Atualizar na tabela documentos
+    const { error: updateError } = await supabase
+      .from('documentos')
+      .update({
+        status_processamento: stage === 'completed' ? 'processado' :
+                             stage === 'error' ? 'erro' : 'processando',
+        progresso_processamento: progress,
+        mensagem_status: message,
+        erro_processamento: error,
+        tentativas_processamento: retryCount || 0,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', documentId)
+
+    if (updateError) {
+      console.error('[PROGRESS] Erro ao atualizar progresso:', updateError)
+    }
+
+  } catch (error) {
+    console.error('[PROGRESS] Erro ao atualizar progresso:', error)
+  }
+}
+
+/**
+ * 🔄 Executar função com retry automático
+ */
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG,
+  documentId?: string,
+  operationName: string = 'operation'
+): Promise<T> {
+  let lastError: Error
+  let delay = config.baseDelay
+
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        console.log(`[RETRY] Tentativa ${attempt}/${config.maxRetries} para ${operationName}`)
+
+        if (documentId) {
+          await updateProgress(
+            documentId,
+            'ocr_processing',
+            20 + (attempt * 10),
+            `Tentativa ${attempt}/${config.maxRetries} - ${operationName}`,
+            undefined,
+            attempt
+          )
+        }
+
+        // Aguardar antes da próxima tentativa
+        await new Promise(resolve => setTimeout(resolve, delay))
+        delay = Math.min(delay * config.backoffMultiplier, config.maxDelay)
+      }
+
+      const result = await operation()
+
+      if (attempt > 0) {
+        console.log(`[RETRY] Sucesso na tentativa ${attempt} para ${operationName}`)
+      }
+
+      return result
+
+    } catch (error) {
+      lastError = error as Error
+      console.error(`[RETRY] Tentativa ${attempt} falhou para ${operationName}:`, error.message)
+
+      if (attempt === config.maxRetries) {
+        console.error(`[RETRY] Todas as tentativas falharam para ${operationName}`)
+
+        if (documentId) {
+          await updateProgress(
+            documentId,
+            'error',
+            0,
+            `Falha após ${config.maxRetries} tentativas: ${operationName}`,
+            lastError.message,
+            attempt
+          )
+        }
+
+        throw new Error(`Operação ${operationName} falhou após ${config.maxRetries} tentativas: ${lastError.message}`)
+      }
+    }
+  }
+
+  throw lastError!
 }
 
 // Google Document AI - Processamento avançado
@@ -188,6 +335,154 @@ async function enhanceWithAI(
     console.error('[AI_ENHANCE] Erro:', error)
     return extractBasicStructuredData(text)
   }
+}
+
+/**
+ * 💾 Salvar dados estruturados no banco de dados
+ */
+async function saveDadosEstruturados(
+  supabase: any,
+  documentId: string,
+  structuredData: DocumentStructuredData,
+  confidence: number,
+  extractedText: string
+): Promise<void> {
+  try {
+    console.log(`[SAVE_STRUCTURED] Salvando dados estruturados para documento ${documentId}`)
+
+    // Mapear tipo de documento para enum do banco
+    const tipoDocumentoMap: Record<string, string> = {
+      'nfe': 'NFE',
+      'nfce': 'NFE',
+      'nfse': 'NFSE',
+      'das': 'RECIBO',
+      'boleto': 'BOLETO',
+      'recibo': 'RECIBO',
+      'extrato': 'EXTRATO',
+      'nota_fiscal': 'NFE',
+      'cupom_fiscal': 'NFE'
+    }
+
+    const tipoDocumento = tipoDocumentoMap[structuredData.documentType?.toLowerCase()] || 'RECIBO'
+
+    // Extrair campos para array
+    const camposExtraidos = []
+    if (structuredData.cnpj) camposExtraidos.push('cnpj')
+    if (structuredData.cpf) camposExtraidos.push('cpf')
+    if (structuredData.razaoSocial) camposExtraidos.push('razaoSocial')
+    if (structuredData.valores?.length) camposExtraidos.push('valores')
+    if (structuredData.datas?.length) camposExtraidos.push('datas')
+    if (structuredData.numeroDocumento) camposExtraidos.push('numeroDocumento')
+    if (structuredData.chaveAcesso) camposExtraidos.push('chaveAcesso')
+
+    // Validar dados extraídos
+    const errosValidacao = []
+    if (structuredData.cnpj && !isValidCNPJ(structuredData.cnpj)) {
+      errosValidacao.push({ campo: 'cnpj', erro: 'Formato inválido' })
+    }
+    if (structuredData.cpf && !isValidCPF(structuredData.cpf)) {
+      errosValidacao.push({ campo: 'cpf', erro: 'Formato inválido' })
+    }
+
+    // Inserir dados estruturados
+    const { error: insertError } = await supabase
+      .from('dados_estruturados')
+      .insert({
+        documento_id: documentId,
+        tipo_documento: tipoDocumento,
+        dados_processados: structuredData,
+        confianca_extracao: Math.min(confidence, 1.0),
+        campos_extraidos: camposExtraidos,
+        erros_validacao: errosValidacao,
+        processado_por: 'pdf-ocr-service',
+        versao_processador: '1.0',
+        metadados_processamento: {
+          metodo_ocr: 'google_document_ai',
+          tamanho_texto: extractedText.length,
+          timestamp: new Date().toISOString()
+        }
+      })
+
+    if (insertError) {
+      console.error('[SAVE_STRUCTURED] Erro ao inserir dados estruturados:', insertError)
+      throw insertError
+    }
+
+    // Atualizar tabela documentos com dados estruturados
+    const { error: updateError } = await supabase
+      .from('documentos')
+      .update({
+        dados_estruturados: structuredData,
+        confianca_estruturacao: Math.min(confidence, 1.0),
+        data_estruturacao: new Date().toISOString(),
+        erros_estruturacao: errosValidacao
+      })
+      .eq('id', documentId)
+
+    if (updateError) {
+      console.error('[SAVE_STRUCTURED] Erro ao atualizar documento:', updateError)
+      throw updateError
+    }
+
+    console.log(`[SAVE_STRUCTURED] Dados estruturados salvos com sucesso para documento ${documentId}`)
+
+  } catch (error) {
+    console.error('[SAVE_STRUCTURED] Erro ao salvar dados estruturados:', error)
+    throw error
+  }
+}
+
+/**
+ * 🔍 Validar CNPJ
+ */
+function isValidCNPJ(cnpj: string): boolean {
+  const cleanCNPJ = cnpj.replace(/[^\d]/g, '')
+  if (cleanCNPJ.length !== 14) return false
+
+  // Algoritmo de validação do CNPJ
+  const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+
+  const digits = cleanCNPJ.split('').map(Number)
+
+  const sum1 = digits.slice(0, 12).reduce((sum, digit, index) => sum + digit * weights1[index], 0)
+  const remainder1 = sum1 % 11
+  const checkDigit1 = remainder1 < 2 ? 0 : 11 - remainder1
+
+  if (digits[12] !== checkDigit1) return false
+
+  const sum2 = digits.slice(0, 13).reduce((sum, digit, index) => sum + digit * weights2[index], 0)
+  const remainder2 = sum2 % 11
+  const checkDigit2 = remainder2 < 2 ? 0 : 11 - remainder2
+
+  return digits[13] === checkDigit2
+}
+
+/**
+ * 🔍 Validar CPF
+ */
+function isValidCPF(cpf: string): boolean {
+  const cleanCPF = cpf.replace(/[^\d]/g, '')
+  if (cleanCPF.length !== 11) return false
+
+  // Verificar se todos os dígitos são iguais
+  if (/^(\d)\1{10}$/.test(cleanCPF)) return false
+
+  const digits = cleanCPF.split('').map(Number)
+
+  // Primeiro dígito verificador
+  const sum1 = digits.slice(0, 9).reduce((sum, digit, index) => sum + digit * (10 - index), 0)
+  const remainder1 = sum1 % 11
+  const checkDigit1 = remainder1 < 2 ? 0 : 11 - remainder1
+
+  if (digits[9] !== checkDigit1) return false
+
+  // Segundo dígito verificador
+  const sum2 = digits.slice(0, 10).reduce((sum, digit, index) => sum + digit * (11 - index), 0)
+  const remainder2 = sum2 % 11
+  const checkDigit2 = remainder2 < 2 ? 0 : 11 - remainder2
+
+  return digits[10] === checkDigit2
 }
 
 // Fallback para Google Vision API
@@ -382,19 +677,41 @@ function analyzeTextQuality(text: string) {
   }
 }
 
-// Função principal de processamento - OTIMIZADA PARA VELOCIDADE
+// Função principal de processamento - OTIMIZADA PARA VELOCIDADE COM PROGRESS TRACKING
 async function processPDFWithOCR(request: PDFOCRRequest): Promise<PDFOCRResponse> {
   const startTime = Date.now()
   const { documentId, storagePath, fileName, options = {} } = request
 
   console.log(`[PDF_OCR] 🚀 PROCESSAMENTO RÁPIDO: ${fileName}`)
 
+  // Configuração de retry personalizada
+  const retryConfig: RetryConfig = {
+    maxRetries: options.maxRetries || DEFAULT_RETRY_CONFIG.maxRetries,
+    baseDelay: options.retryDelay || DEFAULT_RETRY_CONFIG.baseDelay,
+    maxDelay: DEFAULT_RETRY_CONFIG.maxDelay,
+    backoffMultiplier: DEFAULT_RETRY_CONFIG.backoffMultiplier
+  }
+
+  // Inicializar progresso
+  if (options.enableProgressTracking !== false) {
+    await updateProgress(documentId, 'uploading', 5, 'Iniciando processamento do documento')
+  }
+
   // 1. VERIFICAR CACHE PRIMEIRO (se habilitado)
   if (options.enableCache !== false) {
     try {
+      if (options.enableProgressTracking !== false) {
+        await updateProgress(documentId, 'uploading', 10, 'Verificando cache')
+      }
+
       const cachedResult = await ocrCache.get(storagePath)
       if (cachedResult) {
         console.log(`[PDF_OCR] 🎯 Cache HIT: ${fileName}`)
+
+        if (options.enableProgressTracking !== false) {
+          await updateProgress(documentId, 'completed', 100, 'Documento processado (cache)')
+        }
+
         return {
           success: true,
           documentId,
@@ -418,32 +735,54 @@ async function processPDFWithOCR(request: PDFOCRRequest): Promise<PDFOCRResponse
 
   // TIMEOUT PROTECTION - Máximo 20 segundos
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error('Timeout: Processamento excedeu 20 segundos')), 20000)
+    setTimeout(() => {
+      updateProgress(documentId, 'error', 0, 'Timeout: Processamento excedeu 20 segundos', 'TIMEOUT')
+      reject(new Error('Timeout: Processamento excedeu 20 segundos'))
+    }, 20000)
   })
 
   try {
     // Inicializar cliente Supabase
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // 1. DOWNLOAD ULTRA-RÁPIDO DO STORAGE INTERNO
-    const downloadPromise = supabase.storage
-      .from('documentos')
-      .download(storagePath)
-
-    const { data: fileData, error: downloadError } = await Promise.race([
-      downloadPromise,
-      timeoutPromise
-    ])
-
-    if (downloadError) {
-      throw new Error(`❌ Falha no download: ${downloadError.message}`)
+    if (options.enableProgressTracking !== false) {
+      await updateProgress(documentId, 'uploading', 15, 'Baixando arquivo do storage')
     }
+
+    // 1. DOWNLOAD ULTRA-RÁPIDO DO STORAGE INTERNO COM RETRY
+    const downloadOperation = async () => {
+      const downloadPromise = supabase.storage
+        .from('documentos')
+        .download(storagePath)
+
+      const { data: fileData, error: downloadError } = await Promise.race([
+        downloadPromise,
+        timeoutPromise
+      ])
+
+      if (downloadError) {
+        throw new Error(`❌ Falha no download: ${downloadError.message}`)
+      }
+
+      return fileData
+    }
+
+    const fileData = await withRetry(
+      downloadOperation,
+      retryConfig,
+      documentId,
+      'download do arquivo'
+    )
 
     const fileBuffer = await fileData.arrayBuffer()
     const actualFileName = fileName || storagePath.split('/').pop() || 'unknown'
     console.log(`[PDF_OCR] ✅ Download OK: ${actualFileName}, ${fileBuffer.byteLength} bytes`)
 
-    // 2. PROCESSAMENTO INTELIGENTE E RÁPIDO
+    if (options.enableProgressTracking !== false) {
+      await updateProgress(documentId, 'ocr_processing', 30, 'Iniciando processamento OCR')
+    }
+
+    // 2. PROCESSAMENTO INTELIGENTE E RÁPIDO COM RETRY
     let extractedText = ''
     let confidence = 0
     let method: PDFOCRResponse['method'] = 'native'
@@ -453,20 +792,39 @@ async function processPDFWithOCR(request: PDFOCRRequest): Promise<PDFOCRResponse
     const mimeType = fileData.type || ''
     console.log(`[PDF_OCR] 📄 Tipo detectado: ${mimeType}`)
 
-    // 3. ESTRATÉGIA DE PROCESSAMENTO OTIMIZADA
+    // 3. ESTRATÉGIA DE PROCESSAMENTO OTIMIZADA COM RETRY
     if (mimeType === 'text/plain' || actualFileName.toLowerCase().endsWith('.txt')) {
       // TEXTO PURO - INSTANTÂNEO
       console.log('[PDF_OCR] 📝 Texto puro - processamento instantâneo')
+
+      if (options.enableProgressTracking !== false) {
+        await updateProgress(documentId, 'ocr_processing', 50, 'Processando texto puro')
+      }
+
       extractedText = new TextDecoder().decode(fileBuffer)
       confidence = 1.0
       method = 'native'
       structuredData = extractBasicStructuredData(extractedText)
 
     } else if (mimeType.startsWith('image/')) {
-      // IMAGEM - OPENAI VISION (MAIS RÁPIDO QUE GOOGLE)
+      // IMAGEM - OPENAI VISION (MAIS RÁPIDO QUE GOOGLE) COM RETRY
       console.log('[PDF_OCR] 🖼️ Imagem - usando OpenAI Vision')
-      const ocrPromise = processImageWithOpenAI(fileBuffer, mimeType)
-      const result = await Promise.race([ocrPromise, timeoutPromise])
+
+      if (options.enableProgressTracking !== false) {
+        await updateProgress(documentId, 'ocr_processing', 40, 'Processando imagem com IA')
+      }
+
+      const ocrOperation = async () => {
+        const ocrPromise = processImageWithOpenAI(fileBuffer, mimeType)
+        return await Promise.race([ocrPromise, timeoutPromise])
+      }
+
+      const result = await withRetry(
+        ocrOperation,
+        retryConfig,
+        documentId,
+        'OCR de imagem'
+      )
 
       extractedText = result.text
       confidence = result.confidence
@@ -476,6 +834,11 @@ async function processPDFWithOCR(request: PDFOCRRequest): Promise<PDFOCRResponse
     } else {
       // OUTROS (PDF, etc.) - PROCESSAMENTO BÁSICO RÁPIDO
       console.log('[PDF_OCR] 📄 Arquivo complexo - extração básica')
+
+      if (options.enableProgressTracking !== false) {
+        await updateProgress(documentId, 'ocr_processing', 45, 'Processando documento complexo')
+      }
+
       try {
         extractedText = new TextDecoder().decode(fileBuffer)
         confidence = 0.7
@@ -490,12 +853,20 @@ async function processPDFWithOCR(request: PDFOCRRequest): Promise<PDFOCRResponse
 
     console.log(`[PDF_OCR] ✅ Processamento concluído: ${extractedText.length} chars`)
 
+    if (options.enableProgressTracking !== false) {
+      await updateProgress(documentId, 'data_extraction', 70, 'Extraindo dados estruturados')
+    }
+
     // 4. ANÁLISE DE QUALIDADE RÁPIDA
     const textQuality = {
       characterCount: extractedText.length,
       wordCount: extractedText.split(/\s+/).length,
       readabilityScore: confidence,
       hasStructuredData: !!structuredData && Object.keys(structuredData).length > 1
+    }
+
+    if (options.enableProgressTracking !== false) {
+      await updateProgress(documentId, 'validation', 85, 'Validando dados extraídos')
     }
 
     const processingTime = Date.now() - startTime
@@ -511,39 +882,70 @@ async function processPDFWithOCR(request: PDFOCRRequest): Promise<PDFOCRResponse
       structuredData
     }
 
-    // 5. ATUALIZAÇÃO RÁPIDA DO BANCO (SEM BLOQUEAR)
-    Promise.all([
-      // Atualizar documento principal
-      supabase
-        .from('documentos')
-        .update({
-          status_processamento: 'processado',
-          dados_extraidos: {
-            texto: extractedText,
-            dados_estruturados: structuredData,
-            metodo: method,
-            confianca: confidence,
-            processado_em: new Date().toISOString()
+    if (options.enableProgressTracking !== false) {
+      await updateProgress(documentId, 'validation', 90, 'Salvando resultados no banco de dados')
+    }
+
+    // 5. ATUALIZAÇÃO RÁPIDA DO BANCO COM RETRY
+    const saveOperation = async () => {
+      await Promise.all([
+        // Atualizar documento principal
+        supabase
+          .from('documentos')
+          .update({
+            status_processamento: 'processado',
+            dados_extraidos: {
+              texto: extractedText,
+              dados_estruturados: structuredData,
+              metodo: method,
+              confianca: confidence,
+              processado_em: new Date().toISOString()
+            },
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', documentId),
+
+        // Salvar dados estruturados na nova tabela (se existirem)
+        structuredData && Object.keys(structuredData).length > 1
+          ? saveDadosEstruturados(supabase, documentId, structuredData, confidence, extractedText)
+              .then(() => console.log('[PDF_OCR] ✅ Dados estruturados salvos'))
+              .catch(err => console.log(`[PDF_OCR] ⚠️ Dados estruturados falharam: ${err.message}`))
+          : Promise.resolve(),
+
+        // Salvar métricas de performance
+        supabase.from('performance_metrics').insert({
+          metric_type: 'ocr',
+          operation_name: 'pdf_ocr_processing',
+          execution_time_ms: processingTime,
+          tokens_used: 0,
+          data_processed_bytes: fileBuffer.byteLength,
+          success: true,
+          metadata: {
+            method,
+            confidence,
+            character_count: textQuality.characterCount,
+            word_count: textQuality.wordCount,
+            file_type: mimeType,
+            has_structured_data: textQuality.hasStructuredData
           },
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', documentId),
+          timestamp: new Date().toISOString()
+        }).then(() => console.log('[PDF_OCR] ✅ Métricas de performance salvas'))
+          .catch(() => console.log('[PDF_OCR] ⚠️ Métricas falharam (não crítico)'))
+      ])
+    }
 
-      // Salvar métricas (opcional - não bloquear se falhar)
-      supabase.from('ocr_processing_metrics').insert({
-        document_id: documentId,
-        method,
-        confidence,
-        processing_time: processingTime,
-        character_count: textQuality.characterCount,
-        word_count: textQuality.wordCount,
-        success: true,
-        created_at: new Date().toISOString()
-      }).then(() => console.log('[PDF_OCR] ✅ Métricas salvas'))
-        .catch(() => console.log('[PDF_OCR] ⚠️ Métricas falharam (não crítico)'))
+    await withRetry(
+      saveOperation,
+      { ...retryConfig, maxRetries: 2 }, // Menos tentativas para operações de banco
+      documentId,
+      'salvamento no banco de dados'
+    )
 
-    ]).then(() => console.log(`[PDF_OCR] 🎉 SUCESSO: ${actualFileName} (${processingTime}ms)`))
-      .catch(err => console.log(`[PDF_OCR] ⚠️ Erro não crítico no banco: ${err.message}`))
+    if (options.enableProgressTracking !== false) {
+      await updateProgress(documentId, 'completed', 100, 'Processamento concluído com sucesso')
+    }
+
+    console.log(`[PDF_OCR] 🎉 SUCESSO: ${actualFileName} (${processingTime}ms)`)
 
     // 6. SALVAR NO CACHE (não bloquear resposta)
     if (options.enableCache !== false) {
@@ -569,7 +971,38 @@ async function processPDFWithOCR(request: PDFOCRRequest): Promise<PDFOCRResponse
   } catch (error) {
     console.error(`[PDF_OCR] Erro no processamento: ${error.message}`)
 
+    // Atualizar progresso com erro
+    if (options.enableProgressTracking !== false) {
+      await updateProgress(
+        documentId,
+        'error',
+        0,
+        `Erro no processamento: ${error.message}`,
+        error.message
+      )
+    }
+
     const processingTime = Date.now() - startTime
+
+    // Salvar métricas de erro
+    try {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      await supabase.from('performance_metrics').insert({
+        metric_type: 'ocr',
+        operation_name: 'pdf_ocr_processing',
+        execution_time_ms: processingTime,
+        tokens_used: 0,
+        data_processed_bytes: 0,
+        success: false,
+        metadata: {
+          error_message: error.message,
+          error_type: error.constructor.name
+        },
+        timestamp: new Date().toISOString()
+      })
+    } catch (metricsError) {
+      console.warn('[PDF_OCR] Erro ao salvar métricas de erro:', metricsError)
+    }
 
     return {
       success: false,

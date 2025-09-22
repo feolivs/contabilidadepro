@@ -20,7 +20,11 @@ interface EmpresaContextRequest {
   include_financial?: boolean
   include_documents?: boolean
   include_obligations?: boolean
+  include_insights?: boolean
+  include_compliance?: boolean
+  include_metrics?: boolean
   period_months?: number
+  insight_type?: 'financeiro' | 'compliance' | 'operacional' | 'estrategico' | 'completo'
 }
 
 interface EmpresaContextResponse {
@@ -29,6 +33,9 @@ interface EmpresaContextResponse {
   financial_summary?: FinancialSummary
   documents_summary?: DocumentsSummary
   obligations_summary?: ObligationsSummary
+  insights_summary?: InsightsSummary
+  compliance_summary?: ComplianceSummary
+  metrics_summary?: MetricsSummary
   recommendations?: string[]
   cached: boolean
   generated_at: string
@@ -78,6 +85,50 @@ interface ObligationsSummary {
     valor_estimado?: number
   }>
   alertas_criticos: string[]
+}
+
+interface InsightsSummary {
+  latest_insight: any | null
+  insight_count: number
+  last_generated: string | null
+  confidence_score: number | null
+  key_recommendations: string[]
+  financial_highlights: string[]
+  compliance_alerts: string[]
+  operational_insights: string[]
+}
+
+interface ComplianceSummary {
+  score_geral: number | null
+  nivel: string | null
+  riscos_identificados: string[]
+  alertas_urgentes: string[]
+  last_analysis: string | null
+  documentos_analisados: number
+  areas_criticas: string[]
+}
+
+interface MetricsSummary {
+  periodo_analise: {
+    inicio: string
+    fim: string
+  }
+  receitas_mensais: Array<{
+    mes: string
+    valor: number
+  }>
+  crescimento_percentual: number
+  projecoes: {
+    proximo_mes: number
+    proximo_trimestre: number
+    anual: number
+  }
+  indicadores_performance: {
+    margem_bruta: number
+    ticket_medio: number
+    frequencia_documentos: number
+  }
+  confianca_dados: number
 }
 
 // Inicializar cliente Supabase
@@ -286,15 +337,228 @@ async function getObligationsSummary(empresaId: string, empresa: EmpresaData): P
 }
 
 /**
+ * 🤖 Buscar resumo de insights de IA
+ */
+async function getInsightsSummary(empresaId: string, insightType: string = 'completo'): Promise<InsightsSummary> {
+  try {
+    // Buscar insights mais recentes usando a função do banco
+    const { data: latestInsight } = await supabase
+      .rpc('get_latest_ai_insights', {
+        p_empresa_id: empresaId,
+        p_tipo_insight: insightType
+      })
+
+    // Contar total de insights
+    const { count: insightCount } = await supabase
+      .from('ai_insights')
+      .select('*', { count: 'exact', head: true })
+      .eq('empresa_id', empresaId)
+
+    if (!latestInsight || Object.keys(latestInsight).length === 0) {
+      return {
+        latest_insight: null,
+        insight_count: insightCount || 0,
+        last_generated: null,
+        confidence_score: null,
+        key_recommendations: [],
+        financial_highlights: [],
+        compliance_alerts: [],
+        operational_insights: []
+      }
+    }
+
+    // Extrair informações dos insights
+    const resumoExecutivo = latestInsight.resumo_executivo || {}
+    const analiseFinanceira = latestInsight.analise_financeira || {}
+    const analiseCompliance = latestInsight.analise_compliance || {}
+    const insightsOperacionais = latestInsight.insights_operacionais || {}
+
+    return {
+      latest_insight: latestInsight,
+      insight_count: insightCount || 0,
+      last_generated: latestInsight.data_geracao,
+      confidence_score: latestInsight.confianca_analise,
+      key_recommendations: resumoExecutivo.principais_recomendacoes || [],
+      financial_highlights: analiseFinanceira.pontos_destaque || [],
+      compliance_alerts: analiseCompliance.alertas || [],
+      operational_insights: insightsOperacionais.melhorias_sugeridas || []
+    }
+  } catch (error) {
+    console.error('Erro ao buscar insights:', error)
+    return {
+      latest_insight: null,
+      insight_count: 0,
+      last_generated: null,
+      confidence_score: null,
+      key_recommendations: [],
+      financial_highlights: [],
+      compliance_alerts: [],
+      operational_insights: []
+    }
+  }
+}
+
+/**
+ * 📊 Buscar resumo de compliance
+ */
+async function getComplianceSummary(empresaId: string): Promise<ComplianceSummary> {
+  try {
+    // Buscar análise de compliance mais recente usando a função do banco
+    const { data: latestCompliance } = await supabase
+      .rpc('get_latest_compliance_analysis', {
+        p_empresa_id: empresaId
+      })
+
+    if (!latestCompliance || Object.keys(latestCompliance).length === 0) {
+      return {
+        score_geral: null,
+        nivel: null,
+        riscos_identificados: [],
+        alertas_urgentes: [],
+        last_analysis: null,
+        documentos_analisados: 0,
+        areas_criticas: []
+      }
+    }
+
+    return {
+      score_geral: latestCompliance.score_geral,
+      nivel: latestCompliance.nivel,
+      riscos_identificados: latestCompliance.riscos_identificados || [],
+      alertas_urgentes: latestCompliance.alertas_urgentes || [],
+      last_analysis: latestCompliance.data_analise,
+      documentos_analisados: latestCompliance.documentos_analisados || 0,
+      areas_criticas: latestCompliance.qualidade_documentacao?.areas_criticas || []
+    }
+  } catch (error) {
+    console.error('Erro ao buscar compliance:', error)
+    return {
+      score_geral: null,
+      nivel: null,
+      riscos_identificados: [],
+      alertas_urgentes: [],
+      last_analysis: null,
+      documentos_analisados: 0,
+      areas_criticas: []
+    }
+  }
+}
+
+/**
+ * 📈 Buscar resumo de métricas financeiras
+ */
+async function getMetricsSummary(empresaId: string, periodMonths: number = 6): Promise<MetricsSummary> {
+  try {
+    // Buscar métricas financeiras mais recentes usando a função do banco
+    const { data: latestMetrics } = await supabase
+      .rpc('get_latest_metricas_financeiras', {
+        p_empresa_id: empresaId
+      })
+
+    const dataInicio = new Date()
+    dataInicio.setMonth(dataInicio.getMonth() - periodMonths)
+    const dataFim = new Date()
+
+    if (!latestMetrics || Object.keys(latestMetrics).length === 0) {
+      return {
+        periodo_analise: {
+          inicio: dataInicio.toISOString().split('T')[0],
+          fim: dataFim.toISOString().split('T')[0]
+        },
+        receitas_mensais: [],
+        crescimento_percentual: 0,
+        projecoes: {
+          proximo_mes: 0,
+          proximo_trimestre: 0,
+          anual: 0
+        },
+        indicadores_performance: {
+          margem_bruta: 0,
+          ticket_medio: 0,
+          frequencia_documentos: 0
+        },
+        confianca_dados: 0
+      }
+    }
+
+    const metricasMensais = latestMetrics.metricas_mensais || []
+    const projecoes = latestMetrics.projecoes || {}
+    const indicadores = latestMetrics.indicadores_performance || {}
+
+    return {
+      periodo_analise: {
+        inicio: latestMetrics.periodo?.inicio || dataInicio.toISOString().split('T')[0],
+        fim: latestMetrics.periodo?.fim || dataFim.toISOString().split('T')[0]
+      },
+      receitas_mensais: metricasMensais.map((m: any) => ({
+        mes: m.mes,
+        valor: m.receita_total || 0
+      })),
+      crescimento_percentual: indicadores.crescimento_percentual || 0,
+      projecoes: {
+        proximo_mes: projecoes.proximo_mes || 0,
+        proximo_trimestre: projecoes.proximo_trimestre || 0,
+        anual: projecoes.anual || 0
+      },
+      indicadores_performance: {
+        margem_bruta: indicadores.margem_bruta || 0,
+        ticket_medio: indicadores.ticket_medio || 0,
+        frequencia_documentos: indicadores.frequencia_documentos || 0
+      },
+      confianca_dados: latestMetrics.confianca_calculo || 0
+    }
+  } catch (error) {
+    console.error('Erro ao buscar métricas:', error)
+    return {
+      periodo_analise: {
+        inicio: new Date().toISOString().split('T')[0],
+        fim: new Date().toISOString().split('T')[0]
+      },
+      receitas_mensais: [],
+      crescimento_percentual: 0,
+      projecoes: {
+        proximo_mes: 0,
+        proximo_trimestre: 0,
+        anual: 0
+      },
+      indicadores_performance: {
+        margem_bruta: 0,
+        ticket_medio: 0,
+        frequencia_documentos: 0
+      },
+      confianca_dados: 0
+    }
+  }
+}
+
+/**
  * 🤖 Gerar recomendações inteligentes
  */
 function generateRecommendations(
   empresa: EmpresaData,
   financial?: FinancialSummary,
   documents?: DocumentsSummary,
-  obligations?: ObligationsSummary
+  obligations?: ObligationsSummary,
+  insights?: InsightsSummary,
+  compliance?: ComplianceSummary,
+  metrics?: MetricsSummary
 ): string[] {
   const recommendations = []
+
+  // Recomendações de insights de IA (prioridade alta)
+  if (insights && insights.key_recommendations.length > 0) {
+    recommendations.push(...insights.key_recommendations.slice(0, 2))
+  }
+
+  // Recomendações de compliance (críticas)
+  if (compliance) {
+    if (compliance.score_geral !== null && compliance.score_geral < 70) {
+      recommendations.push(`Score de compliance baixo (${compliance.score_geral}). Ação urgente necessária.`)
+    }
+    if (compliance.alertas_urgentes.length > 0) {
+      recommendations.push(...compliance.alertas_urgentes.slice(0, 1))
+    }
+  }
 
   // Recomendações financeiras
   if (financial) {
@@ -306,6 +570,16 @@ function generateRecommendations(
     }
     if (financial.faturamento_atual_mes === 0) {
       recommendations.push('Sem faturamento registrado este mês. Verifique lançamentos.')
+    }
+  }
+
+  // Recomendações de métricas
+  if (metrics) {
+    if (metrics.confianca_dados < 0.7) {
+      recommendations.push('Qualidade dos dados baixa. Revise documentos para análises mais precisas.')
+    }
+    if (metrics.crescimento_percentual < -10) {
+      recommendations.push('Queda significativa no faturamento. Analise causas e estratégias.')
     }
   }
 
@@ -334,7 +608,7 @@ function generateRecommendations(
     recommendations.push('Configure o regime tributário para cálculos mais precisos.')
   }
 
-  return recommendations.slice(0, 5) // Máximo 5 recomendações
+  return recommendations.slice(0, 7) // Máximo 7 recomendações
 }
 
 /**
@@ -348,13 +622,17 @@ async function processEmpresaContext(request: EmpresaContextRequest): Promise<Em
     include_financial = true,
     include_documents = true,
     include_obligations = true,
-    period_months = 12
+    include_insights = false,
+    include_compliance = false,
+    include_metrics = false,
+    period_months = 12,
+    insight_type = 'completo'
   } = request
 
   console.log(`🏢 Processando contexto da empresa: ${empresa_id}`)
 
   // 1. Verificar cache primeiro
-  const cacheKey = `empresa_context:${empresa_id}:${user_id}:${include_financial ? 'f' : ''}${include_documents ? 'd' : ''}${include_obligations ? 'o' : ''}`
+  const cacheKey = `empresa_context:${empresa_id}:${user_id}:${include_financial ? 'f' : ''}${include_documents ? 'd' : ''}${include_obligations ? 'o' : ''}${include_insights ? 'i' : ''}${include_compliance ? 'c' : ''}${include_metrics ? 'm' : ''}`
 
   try {
     const cachedData = await intelligentCache.get(cacheKey, user_id)
@@ -387,6 +665,18 @@ async function processEmpresaContext(request: EmpresaContextRequest): Promise<Em
     promises.push(getObligationsSummary(empresa_id, empresa))
   }
 
+  if (include_insights) {
+    promises.push(getInsightsSummary(empresa_id, insight_type))
+  }
+
+  if (include_compliance) {
+    promises.push(getComplianceSummary(empresa_id))
+  }
+
+  if (include_metrics) {
+    promises.push(getMetricsSummary(empresa_id, period_months))
+  }
+
   const results = await Promise.allSettled(promises)
 
   let resultIndex = 0
@@ -402,12 +692,27 @@ async function processEmpresaContext(request: EmpresaContextRequest): Promise<Em
     ? results[resultIndex - 1].value as ObligationsSummary
     : undefined
 
+  const insights_summary = include_insights && results[resultIndex++]?.status === 'fulfilled'
+    ? results[resultIndex - 1].value as InsightsSummary
+    : undefined
+
+  const compliance_summary = include_compliance && results[resultIndex++]?.status === 'fulfilled'
+    ? results[resultIndex - 1].value as ComplianceSummary
+    : undefined
+
+  const metrics_summary = include_metrics && results[resultIndex++]?.status === 'fulfilled'
+    ? results[resultIndex - 1].value as MetricsSummary
+    : undefined
+
   // 4. Gerar recomendações
   const recommendations = generateRecommendations(
     empresa,
     financial_summary,
     documents_summary,
-    obligations_summary
+    obligations_summary,
+    insights_summary,
+    compliance_summary,
+    metrics_summary
   )
 
   const response: EmpresaContextResponse = {
@@ -416,6 +721,9 @@ async function processEmpresaContext(request: EmpresaContextRequest): Promise<Em
     financial_summary,
     documents_summary,
     obligations_summary,
+    insights_summary,
+    compliance_summary,
+    metrics_summary,
     recommendations,
     cached: false,
     generated_at: new Date().toISOString()

@@ -6,6 +6,7 @@ import { ToastProvider } from "@/providers/toast-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { NotificationProvider } from "@/providers/notification-provider";
+import { CacheProvider } from "@/providers/cache-provider";
 import { baseMetadata } from "@/lib/metadata";
 import { ServiceWorkerProvider } from "@/providers/service-worker-provider";
 
@@ -53,14 +54,16 @@ export default function RootLayout({
           themes={['light', 'dark', 'system']}
         >
           <ServiceWorkerProvider>
-            <QueryProvider>
-              <AuthProvider>
-                <NotificationProvider>
-                  {children}
-                  <ToastProvider />
-                </NotificationProvider>
-              </AuthProvider>
-            </QueryProvider>
+            <CacheProvider autoCleanup={true} cleanupInterval={5 * 60 * 1000}>
+              <QueryProvider>
+                <AuthProvider>
+                  <NotificationProvider>
+                    {children}
+                    <ToastProvider />
+                  </NotificationProvider>
+                </AuthProvider>
+              </QueryProvider>
+            </CacheProvider>
           </ServiceWorkerProvider>
         </ThemeProvider>
       </body>

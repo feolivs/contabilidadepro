@@ -62,12 +62,15 @@ const nextConfig: NextConfig = {
       'react-markdown',
       'react-syntax-highlighter'
     ],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  },
+
+  // Configuração do Turbopack
+  turbopack: {
+    root: __dirname,
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
@@ -94,6 +97,7 @@ const nextConfig: NextConfig = {
         ...config.optimization.splitChunks,
         cacheGroups: {
           ...config.optimization.splitChunks?.cacheGroups,
+          // Core UI libraries
           lucide: {
             name: 'lucide-react',
             test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
@@ -106,11 +110,45 @@ const nextConfig: NextConfig = {
             chunks: 'all',
             priority: 25,
           },
+          // Backend libraries
           supabase: {
             name: 'supabase',
             test: /[\\/]node_modules[\\/]@supabase[\\/]/,
             chunks: 'all',
             priority: 25,
+          },
+          // Heavy libraries - load async
+          pdf: {
+            name: 'pdf-libs',
+            test: /[\\/]node_modules[\\/](jspdf|pdfjs-dist)[\\/]/,
+            chunks: 'async',
+            priority: 35,
+          },
+          charts: {
+            name: 'charts',
+            test: /[\\/]node_modules[\\/]recharts[\\/]/,
+            chunks: 'async',
+            priority: 30,
+          },
+          excel: {
+            name: 'excel',
+            test: /[\\/]node_modules[\\/]xlsx[\\/]/,
+            chunks: 'async',
+            priority: 30,
+          },
+          // Date utilities
+          dateFns: {
+            name: 'date-fns',
+            test: /[\\/]node_modules[\\/]date-fns[\\/]/,
+            chunks: 'all',
+            priority: 20,
+          },
+          // React Query
+          reactQuery: {
+            name: 'react-query',
+            test: /[\\/]node_modules[\\/]@tanstack[\\/]react-query[\\/]/,
+            chunks: 'all',
+            priority: 20,
           },
         },
       },
@@ -119,10 +157,6 @@ const nextConfig: NextConfig = {
     return config
   },
 
-  // Configuração do Turbopack
-  turbopack: {
-    root: __dirname,
-  },
 
 
   // Compressão

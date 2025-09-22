@@ -38,7 +38,7 @@ export function useRealtimeNotifications() {
     return () => {
       unsubscribe()
     }
-  }, [user?.id, subscribe, unsubscribe])
+  }, [user?.id]) // Removidas as dependências subscribe e unsubscribe para evitar loops
 
   return {
     notifications,

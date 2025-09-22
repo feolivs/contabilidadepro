@@ -143,9 +143,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
     setChannel(newChannel)
 
-    // Carregar notificações existentes
+    // Carregar notificações existentes apenas uma vez
     loadExistingNotifications(userId)
-  }, [supabase])
+  }, [supabase]) // Removidas as dependências para evitar loops infinitos
 
   const unsubscribe = useCallback(() => {
     if (channel) {
@@ -214,12 +214,47 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         context_data: alert.context_data
       },
       created_at: alert.created_at,
-      updated_at: alert.updated_at
+      updated_at: alert.updated_at,
+      read: false,
+      timestamp: alert.created_at
     }
 
     handleNewNotification(notification)
-    showAlert(alert)
-  }, [])
+
+    // Chamar showAlert diretamente aqui para evitar problemas de inicialização
+    if (alert.priority === 'CRITICAL') {
+      toast.error(alert.title, {
+        description: alert.description,
+        duration: 10000,
+        action: {
+          label: alert.suggested_actions?.[0] || 'Ver Detalhes',
+          onClick: () => {
+            if (alert.context_data?.action_url) {
+              window.location.href = alert.context_data.action_url
+            }
+          }
+        }
+      })
+    } else if (alert.priority === 'HIGH') {
+      toast.warning(alert.title, {
+        description: alert.description,
+        duration: 7000,
+        action: {
+          label: alert.suggested_actions?.[0] || 'Ver Detalhes',
+          onClick: () => {
+            if (alert.context_data?.action_url) {
+              window.location.href = alert.context_data.action_url
+            }
+          }
+        }
+      })
+    } else {
+      toast.info(alert.title, {
+        description: alert.description,
+        duration: 5000
+      })
+    }
+  }, [handleNewNotification])
 
   // =====================================================
   // NOTIFICATION ACTIONS

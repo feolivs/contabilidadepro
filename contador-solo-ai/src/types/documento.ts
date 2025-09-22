@@ -1,14 +1,14 @@
 export type TipoDocumento =
-  | 'NFe'
-  | 'NFCe'
-  | 'NFSe'
-  | 'CTe'
-  | 'Recibo'
-  | 'Contrato'
-  | 'Boleto'
-  | 'Extrato'
-  | 'Pró-labore'
-  | 'Outro'
+  | 'NFE'
+  | 'NFCE'
+  | 'NFSE'
+  | 'CTE'
+  | 'RECIBO'
+  | 'CONTRATO'
+  | 'BOLETO'
+  | 'EXTRATO'
+  | 'COMPROVANTE'
+  | 'OUTROS'
 
 export type StatusProcessamento =
   | 'pendente'
@@ -17,6 +17,17 @@ export type StatusProcessamento =
   | 'erro'
   | 'rejeitado'
   | 'requer_verificacao'
+
+export interface ProcessingProgress {
+  document_id: string
+  stage: 'upload' | 'ocr' | 'ai_analysis' | 'validation' | 'complete'
+  progress_percent: number
+  estimated_time_remaining?: number
+  current_operation?: string
+  error_message?: string
+  created_at: string
+  updated_at: string
+}
 
 export interface Documento {
   id: string
@@ -35,9 +46,10 @@ export interface Documento {
   status_processamento: StatusProcessamento
   data_processamento?: string
   observacoes?: string
+  processing_progress?: ProcessingProgress
   created_at: string
   updated_at: string
-  
+
   // Relacionamentos
   empresa?: {
     id: string

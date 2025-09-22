@@ -21,8 +21,7 @@ import {
   BellOff,
   Filter
 } from 'lucide-react'
-import { format, differenceInDays } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { formatDate, daysBetween } from '@/lib/date-utils'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
@@ -95,7 +94,7 @@ export function AlertsPanel({
 
       // Converter prazos em alertas
       const deadlineAlerts: Alert[] = (deadlines || []).map(deadline => {
-        const daysUntilDue = differenceInDays(new Date(deadline.due_date), new Date())
+        const daysUntilDue = daysBetween(new Date(), new Date(deadline.due_date))
         let priority: Alert['priority'] = 'low'
         
         if (daysUntilDue <= 3) priority = 'critical'
@@ -344,7 +343,7 @@ export function AlertsPanel({
                         
                         {alert.due_date && (
                           <p className="text-xs text-gray-500 mt-1">
-                            Vencimento: {format(new Date(alert.due_date), 'dd/MM/yyyy', { locale: ptBR })}
+                            Vencimento: {formatDate(alert.due_date, 'dd/MM/yyyy')}
                           </p>
                         )}
                       </div>

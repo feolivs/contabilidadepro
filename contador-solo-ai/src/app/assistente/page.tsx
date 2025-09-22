@@ -18,6 +18,7 @@ import { EstatisticasIA } from '@/components/assistente/estatisticas-ia'
 import { HistoricoConversas } from '@/components/assistente/historico-conversas'
 import { ChatMessage } from '@/components/assistente/chat-message'
 import { VoiceInput } from '@/components/assistente/voice-input'
+import { VoiceInputEnhanced } from '@/components/assistente/voice-input-enhanced'
 import { TypingIndicator } from '@/components/assistente/typing-indicator'
 // Removido: ConversationContextService - Fase 2 simplificação
 // import { ConversationContextService, type ConversationMessage } from '@/services/conversation-context'
@@ -193,6 +194,20 @@ export default function AssistentePage() {
 
   const handleVoiceTranscript = (transcript: string) => {
     setInput(prev => prev + transcript)
+  }
+
+  const handleVoiceResponse = (response: string) => {
+    // Resposta de voz foi processada - já aparece no áudio
+    // Opcionalmente pode ser adicionada ao chat também
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      content: response,
+      role: 'assistant',
+      timestamp: new Date(),
+      type: 'text',
+      model: 'Voice + GPT-4o'
+    }
+    setMessages((prev) => [...prev, assistantMessage])
   }
 
   const handleSend = async (customPrompt?: string) => {
@@ -424,9 +439,12 @@ export default function AssistentePage() {
                       disabled={aiQuery.isPending}
                       className="flex-1"
                     />
-                    <VoiceInput
+                    <VoiceInputEnhanced
+                      empresaId={selectedEmpresa || undefined}
                       onTranscript={handleVoiceTranscript}
+                      onResponse={handleVoiceResponse}
                       disabled={aiQuery.isPending}
+                      showTextInput={process.env.NODE_ENV === 'development'}
                     />
                     <Button
                       onClick={() => handleSend()}

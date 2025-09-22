@@ -4,10 +4,14 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Loader2, CheckCircle, AlertCircle, Clock, Brain, AlertTriangle } from 'lucide-react'
 import { StatusProcessamento } from '@/types/documento'
+import { useDocumentProgress } from '@/lib/document-progress'
 
 interface DocumentProcessingStatusProps {
   status: StatusProcessamento
   confidence?: number
+  progress?: number
+  estimatedTime?: number
+  dadosExtraidos?: any
   className?: string
 }
 
@@ -53,60 +57,109 @@ const statusConfig = {
 export function DocumentProcessingStatus({
   status,
   confidence,
+  progress,
+  estimatedTime,
+  dadosExtraidos,
   className = ''
 }: DocumentProcessingStatusProps) {
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pendente
   const Icon = config.icon
 
+  // Usar o hook de progresso para cálculo inteligente
+  const progressData = useDocumentProgress(status, dadosExtraidos, progress)
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Badge 
-        variant="outline" 
+      <Badge
+        variant="outline"
         className={`${config.color} flex items-center gap-1.5 px-2 py-1`}
       >
-        <Icon 
-          className={`h-3 w-3 ${status === 'processando' ? 'animate-spin' : ''}`} 
+        <Icon
+          className={`h-3 w-3 ${progressData.shouldShowAnimation ? 'animate-spin' : ''}`}
         />
         {config.label}
       </Badge>
-      
+
       {status === 'processado' && confidence && (
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Brain className="h-3 w-3" />
           <span>{Math.round(confidence * 100)}% confiança</span>
         </div>
       )}
-      
-      {status === 'processando' && (
+
+      {progressData.shouldShowProgress && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Progress value={65} className="w-16 h-1" />
-          <span>Analisando...</span>
+          <Progress value={progressData.progress} className="w-20 h-2" />
+          <span>
+            {progressData.stageLabel ? (
+              <>
+                {progressData.stageLabel}... {Math.round(progressData.progress)}%
+              </>
+            ) : (
+              progressData.message
+            )}
+            {(progressData.formattedTimeRemaining || (estimatedTime && estimatedTime > 0)) && (
+              <span className="ml-2 text-xs opacity-75">
+                {progressData.formattedTimeRemaining || `~${Math.round(estimatedTime!)}s`}
+              </span>
+            )}
+          </span>
         </div>
       )}
     </div>
   )
 }
 
-export function DocumentProcessingDetails({ 
-  status, 
-  confidence, 
-  dadosExtraidos 
+export function DocumentProcessingDetails({
+  status,
+  confidence,
+  dadosExtraidos
 }: {
   status: StatusProcessamento
   confidence?: number
   dadosExtraidos?: any
 }) {
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pendente
+  const progressData = useDocumentProgress(status, dadosExtraidos)
 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <DocumentProcessingStatus status={status} confidence={confidence} />
+        <DocumentProcessingStatus
+          status={status}
+          confidence={confidence}
+          dadosExtraidos={dadosExtraidos}
+        />
       </div>
-      
+
       <p className="text-sm text-muted-foreground">
-        {config.description}
+        {progressData.description || config.description}
       </p>
+
+      {/* Mostrar detalhes do progresso se estiver processando */}
+      {progressData.shouldShowProgress && progressData.stage && (
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              {progressData.stageLabel}
+            </span>
+            <span className="text-sm text-blue-700 dark:text-blue-300">
+              {Math.round(progressData.progress)}%
+            </span>
+          </div>
+          <Progress value={progressData.progress} className="h-2 mb-2" />
+          {progressData.description && (
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              {progressData.description}
+            </p>
+          )}
+          {progressData.formattedTimeRemaining && (
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              Tempo estimado: {progressData.formattedTimeRemaining}
+            </p>
+          )}
+        </div>
+      )}
       
       {status === 'processado' && dadosExtraidos && (
         <div className="space-y-2">

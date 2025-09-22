@@ -346,9 +346,10 @@ function validateOpenAIKey(): boolean {
 
 const OPENAI_CONFIGURED = validateOpenAIKey()
 
-const SYSTEM_PROMPT = `Você é um assistente contábil especializado em contabilidade brasileira.
+// Sistema de prompts contextuais será criado dinamicamente
+let SYSTEM_PROMPT = `Você é um assistente contábil especializado em contabilidade brasileira.
 
-CONHECIMENTOS:
+CONHECIMENTOS BASE:
 - Simples Nacional, Lucro Presumido, Lucro Real, MEI
 - DAS, DARF, GPS, obrigações fiscais
 - Prazos, alíquotas, cálculos tributários
@@ -359,9 +360,204 @@ INSTRUÇÕES:
 - Use linguagem técnica mas acessível
 - Cite sempre a base legal quando relevante
 - Se não souber algo, seja honesto
-- Mantenha respostas concisas (máximo 3 parágrafos)
+- Mantenha respostas concisas mas informativas
 
 Responda sempre em português brasileiro.`
+
+// =====================================================
+// SISTEMA DE CONTEXTO INTELIGENTE
+// =====================================================
+
+/**
+ * 🔍 Analisar pergunta para determinar contexto necessário
+ */
+function analyzeQuestionContext(pergunta: string, empresa_id?: string): {
+  needsEmpresaContext: boolean
+  needsDocumentosContext: boolean
+  needsFiscalCalculation: boolean
+  contextLevel: 'basic' | 'medium' | 'detailed'
+  suggestedActions: string[]
+} {
+  const question = pergunta.toLowerCase()
+
+  // Detectar necessidade de contexto de empresa (MELHORADO)
+  const empresaIndicators = [
+    /minha empresa/i, /esta empresa/i, /essa empresa/i, /empresa.*atual/i,
+    /regime.*tributario/i, /das.*empresa/i, /faturamento/i,
+    /situação.*fiscal/i, /obrigações.*empresa/i,
+    /como.*est[aá].*empresa/i, /status.*empresa/i, /dados.*empresa/i,
+    /informaç[oõ]es.*empresa/i, /da.*empresa/i, /desta.*empresa/i,
+    /dessa.*empresa/i, /na.*empresa/i
+  ]
+  const needsEmpresaContext = empresaIndicators.some(pattern => pattern.test(question)) || !!empresa_id
+
+  // Detectar necessidade de contexto de documentos (MELHORADO)
+  const documentosIndicators = [
+    /documentos/i, /nfe/i, /nota.*fiscal/i, /recibos/i,
+    /upload/i, /processamento/i, /ocr/i, /extrair/i,
+    /último.*documento/i, /últimos.*documentos/i, /documento.*recente/i,
+    /pendentes/i, /processados/i, /documento.*empresa/i,
+    /anexos/i, /arquivos/i, /da.*empresa/i
+  ]
+  const needsDocumentosContext = documentosIndicators.some(pattern => pattern.test(question)) ||
+    (!!empresa_id && (/documento/i.test(question) || /arquivo/i.test(question)))
+
+  // Detectar necessidade de cálculos fiscais
+  const calculoIndicators = [
+    /calcul/i, /das/i, /imposto/i, /aliquota/i,
+    /simular/i, /quanto.*pagar/i, /valor.*das/i
+  ]
+  const needsFiscalCalculation = calculoIndicators.some(pattern => pattern.test(question))
+
+  // Determinar nível de contexto
+  let contextLevel: 'basic' | 'medium' | 'detailed' = 'basic'
+  if (needsEmpresaContext || needsDocumentosContext) contextLevel = 'medium'
+  if (needsEmpresaContext && needsDocumentosContext) contextLevel = 'detailed'
+
+  // Sugerir ações
+  const suggestedActions = []
+  if (needsEmpresaContext) suggestedActions.push('empresa_context')
+  if (needsDocumentosContext) suggestedActions.push('documentos_context')
+  if (needsFiscalCalculation) suggestedActions.push('fiscal_calculation')
+
+  return {
+    needsEmpresaContext,
+    needsDocumentosContext,
+    needsFiscalCalculation,
+    contextLevel,
+    suggestedActions
+  }
+}
+
+/**
+ * 🏢 Buscar contexto da empresa
+ */
+async function fetchEmpresaContext(empresaId: string, userId: string): Promise<any> {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/empresa-context-service`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        empresa_id: empresaId,
+        user_id: userId,
+        include_financial: true,
+        include_documents: false, // Separado para otimizar
+        include_obligations: true,
+        period_months: 12
+      })
+    })
+
+    if (!response.ok) {
+      console.warn('Erro ao buscar contexto da empresa:', response.status)
+      return null
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.warn('Erro ao conectar com empresa-context-service:', error)
+    return null
+  }
+}
+
+/**
+ * 📄 Buscar contexto de documentos
+ */
+async function fetchDocumentosContext(empresaId: string | undefined, userId: string): Promise<any> {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/documentos-context-service`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        empresa_id: empresaId,
+        user_id: userId,
+        period_days: 30,
+        include_analysis: true,
+        include_patterns: false, // Para velocidade
+        limit: 5
+      })
+    })
+
+    if (!response.ok) {
+      console.warn('Erro ao buscar contexto de documentos:', response.status)
+      return null
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.warn('Erro ao conectar com documentos-context-service:', error)
+    return null
+  }
+}
+
+/**
+ * 🎯 Criar prompt contextual baseado nos dados obtidos
+ */
+function buildContextualPrompt(
+  basePrompt: string,
+  pergunta: string,
+  empresaContext?: any,
+  documentosContext?: any
+): string {
+  let contextualPrompt = basePrompt
+
+  // Adicionar contexto da empresa se disponível
+  if (empresaContext?.success && empresaContext.empresa) {
+    const empresa = empresaContext.empresa
+    const financial = empresaContext.financial_summary
+    const obligations = empresaContext.obligations_summary
+
+    contextualPrompt += `\n\nCONTEXTO DA EMPRESA ATUAL:
+- Nome: ${empresa.nome}
+- CNPJ: ${empresa.cnpj}
+- Regime: ${empresa.regime_tributario}
+- Situação: ${empresa.situacao_fiscal}`
+
+    if (financial) {
+      contextualPrompt += `\n- Faturamento 12 meses: R$ ${financial.faturamento_12_meses.toLocaleString('pt-BR')}
+- Faturamento mês atual: R$ ${financial.faturamento_atual_mes.toLocaleString('pt-BR')}
+- Crescimento: ${financial.crescimento_percentual.toFixed(1)}%`
+    }
+
+    if (obligations?.das_pendente) {
+      contextualPrompt += `\n- DAS pendente: R$ ${obligations.das_valor_estimado?.toFixed(2)} (vence ${obligations.das_vencimento})`
+    }
+
+    if (empresaContext.recommendations?.length > 0) {
+      contextualPrompt += `\n- Alertas: ${empresaContext.recommendations.slice(0, 2).join('; ')}`
+    }
+  }
+
+  // Adicionar contexto de documentos se disponível
+  if (documentosContext?.success && documentosContext.summary) {
+    const summary = documentosContext.summary
+    const status = documentosContext.processing_status
+
+    contextualPrompt += `\n\nCONTEXTO DE DOCUMENTOS:
+- Total documentos: ${summary.total_documents}
+- Taxa sucesso: ${summary.success_rate.toFixed(1)}%
+- Pendentes: ${status.pending_count}`
+
+    if (documentosContext.recent_documents?.length > 0) {
+      const recent = documentosContext.recent_documents[0]
+      contextualPrompt += `\n- Último documento: ${recent.tipo_documento} (${recent.status_processamento})`
+    }
+  }
+
+  contextualPrompt += `\n\nIMPORTANTE:
+- USE SEMPRE ESTES DADOS CONTEXTUAIS para responder
+- Quando o usuário perguntar sobre "empresa", "essa empresa", "minha empresa", refira-se aos dados específicos fornecidos acima
+- Para documentos, use os dados reais do sistema em vez de respostas genéricas
+- Seja específico com números, valores e datas dos dados contextuais
+- Identifique-se como tendo acesso aos dados do sistema quando responder`
+
+  return contextualPrompt
+}
 
 serve(async (req) => {
   // CORS
@@ -435,7 +631,7 @@ serve(async (req) => {
             }
           )
         }
-        result = await processChat(requestData)
+        result = await processChat(requestData, req)
         break
 
       case 'dashboard':
@@ -518,50 +714,134 @@ serve(async (req) => {
 // =====================================================
 // FUNÇÃO DE PROCESSAMENTO DO CHAT
 // =====================================================
-async function processChat(requestData: any) {
-  const { pergunta, user_id } = requestData
+async function processChat(requestData: any, req: Request) {
+  const { pergunta, user_id, empresa_id } = requestData
 
-  console.log(`🤖 Processando pergunta: ${pergunta.substring(0, 50)}...`)
+  console.log('🔍 DEBUG processChat:', {
+    pergunta,
+    user_id,
+    empresa_id,
+    hasEmpresaId: !!empresa_id,
+    requestData: JSON.stringify(requestData)
+  })
 
-  // 🎯 VERIFICAR CACHE PRIMEIRO (com timeout)
-  const perfLogger = new PerformanceLogger(`Consulta IA: ${pergunta.substring(0, 30)}...`)
+  console.log(`🤖 Processando pergunta com contexto: ${pergunta.substring(0, 50)}...`)
+
+  // 🎯 VERIFICAR CACHE PRIMEIRO (considerando empresa_id no cache)
+  const perfLogger = new PerformanceLogger(`Consulta IA Contextual: ${pergunta.substring(0, 30)}...`)
+  const cacheKey = empresa_id ? `${pergunta}_${empresa_id}` : pergunta
 
   let cachedResponse
   try {
     cachedResponse = await withTimeout(
-      cache.get(pergunta, user_id),
+      cache.get(cacheKey, user_id),
       PERFORMANCE_CONFIG.CACHE_TIMEOUT,
       'Cache timeout'
     )
-    perfLogger.log('Cache verificado', { hit: !!cachedResponse })
+    perfLogger.log('Cache verificado', { hit: !!cachedResponse, withContext: !!empresa_id })
   } catch (error) {
     perfLogger.log('Cache falhou', { error: error.message })
-    // Continuar sem cache se falhar
   }
 
   if (cachedResponse) {
-    perfLogger.log('Cache HIT - retornando resposta')
-
+    perfLogger.log('Cache HIT - retornando resposta contextual')
     const response = {
       success: true,
       resposta: cachedResponse.resposta,
       cached: true,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      context_used: cachedResponse.context_used || false
     }
-
     perfLogger.finish(true, { cached: true, streaming: false })
     return response
   }
 
-  perfLogger.log('Cache MISS - consultando OpenAI')
+  perfLogger.log('Cache MISS - analisando contexto necessário')
+
+  // 🔍 ANÁLISE INTELIGENTE DE CONTEXTO
+  let contextAnalysis
+  try {
+    contextAnalysis = analyzeQuestionContext(pergunta, empresa_id)
+    console.log('🔍 DEBUG contextAnalysis:', contextAnalysis)
+    perfLogger.log('Contexto analisado', {
+      level: contextAnalysis.contextLevel,
+      actions: contextAnalysis.suggestedActions
+    })
+  } catch (error) {
+    console.error('❌ Erro na análise de contexto:', error)
+    contextAnalysis = {
+      needsEmpresaContext: false,
+      needsDocumentosContext: false,
+      needsFiscalCalculation: false,
+      contextLevel: 'basic' as const,
+      suggestedActions: []
+    }
+  }
+
+  // 📊 BUSCAR CONTEXTOS EM PARALELO (se necessário)
+  const contextPromises = []
+
+  console.log('🔍 DEBUG contexto necessário:', {
+    needsEmpresaContext: contextAnalysis.needsEmpresaContext,
+    needsDocumentosContext: contextAnalysis.needsDocumentosContext,
+    empresa_id,
+    willFetchEmpresa: contextAnalysis.needsEmpresaContext && empresa_id,
+    willFetchDocumentos: contextAnalysis.needsDocumentosContext
+  })
+
+  let empresaPromiseAttempted = false
+  let documentosPromiseAttempted = false
+
+  if (contextAnalysis.needsEmpresaContext && empresa_id) {
+    console.log('📊 Buscando contexto de empresa...', { empresa_id, user_id })
+    empresaPromiseAttempted = true
+    contextPromises.push(fetchEmpresaContext(empresa_id, user_id))
+  } else {
+    console.log('📊 Não buscando contexto de empresa - needsContext:', contextAnalysis.needsEmpresaContext, 'empresa_id:', !!empresa_id)
+    contextPromises.push(Promise.resolve(null))
+  }
+
+  if (contextAnalysis.needsDocumentosContext) {
+    console.log('📄 Buscando contexto de documentos...', { empresa_id, user_id })
+    documentosPromiseAttempted = true
+    contextPromises.push(fetchDocumentosContext(empresa_id, user_id))
+  } else {
+    console.log('📄 Não buscando contexto de documentos - needsContext:', contextAnalysis.needsDocumentosContext)
+    contextPromises.push(Promise.resolve(null))
+  }
+
+  const [empresaContext, documentosContext] = await Promise.allSettled(contextPromises)
+
+  const empresaData = empresaContext.status === 'fulfilled' ? empresaContext.value : { error: 'Promise rejected', rejection: empresaContext.reason }
+  const documentosData = documentosContext.status === 'fulfilled' ? documentosContext.value : { error: 'Promise rejected', rejection: documentosContext.reason }
+
+  perfLogger.log('Contextos obtidos', {
+    empresa: !!empresaData?.success,
+    documentos: !!documentosData?.success,
+    empresaData: empresaData ? JSON.stringify(empresaData).substring(0, 200) : 'null',
+    documentosData: documentosData ? JSON.stringify(documentosData).substring(0, 200) : 'null',
+    totalTime: Date.now() - perfLogger.startTime
+  })
+
+  // 🎯 CRIAR PROMPT CONTEXTUAL
+  const contextualPrompt = buildContextualPrompt(
+    SYSTEM_PROMPT,
+    pergunta,
+    empresaData,
+    documentosData
+  )
 
   // Preparar mensagens para OpenAI
   const messages = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: contextualPrompt },
     { role: 'user', content: pergunta }
   ]
 
-  perfLogger.log('Mensagens preparadas', { messageCount: messages.length })
+  perfLogger.log('Mensagens contextuais preparadas', {
+    messageCount: messages.length,
+    promptLength: contextualPrompt.length,
+    hasContext: contextualPrompt.length > SYSTEM_PROMPT.length
+  })
 
   // Fazer chamada para OpenAI com retry e timeout otimizado
   const response = await withRetry(async () => {
@@ -601,16 +881,29 @@ async function processChat(requestData: any) {
 
   perfLogger.log('Resposta processada', { length: resposta.length })
 
-  // 💾 SALVAR NO CACHE (assíncrono)
+  // 💾 SALVAR NO CACHE (assíncrono) com contexto usado
   const responseData = {
     success: true,
     resposta,
     cached: false,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    context_used: !!(empresaData?.success || documentosData?.success),
+    context_attempted: !!(contextAnalysis.needsEmpresaContext || contextAnalysis.needsDocumentosContext),
+    context_level: contextAnalysis.contextLevel,
+    context_debug: {
+      empresa_attempted: empresaPromiseAttempted,
+      empresa_fetched: !!empresaData,
+      empresa_success: !!empresaData?.success,
+      documentos_attempted: documentosPromiseAttempted,
+      documentos_fetched: !!documentosData,
+      documentos_success: !!documentosData?.success,
+      empresa_error: empresaData?.error || null,
+      documentos_error: documentosData?.error || null
+    }
   }
 
-  // Salvar no cache de forma assíncrona (não bloquear resposta)
-  cache.set(pergunta, user_id, responseData).catch(err =>
+  // Salvar no cache com chave que inclui empresa_id se aplicável
+  cache.set(cacheKey, user_id, responseData).catch(err =>
     perfLogger.log('Erro ao salvar no cache', { error: err.message })
   )
 
@@ -624,7 +917,7 @@ async function processChat(requestData: any) {
   const sessionId = `session-${Date.now()}`
   const queryType = cache.classifyQuery ? cache.classifyQuery(pergunta) : 'general'
 
-  saveMetrics(user_id, sessionId, pergunta, queryType, metrics).catch(err =>
+  saveMetrics(user_id, sessionId, pergunta, queryType, metrics, req).catch(err =>
     console.warn('Erro ao salvar métricas:', err)
   )
 

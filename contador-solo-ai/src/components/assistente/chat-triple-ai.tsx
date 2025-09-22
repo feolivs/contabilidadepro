@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useAssistenteContabilIA } from '@/hooks/use-supabase'
+import { useAIQuery } from '@/hooks/use-supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { 
   Send, 
@@ -50,7 +50,7 @@ export function ChatTripleAI({ empresaId, initialMode = 'auto' }: ChatTripleAIPr
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
   
-  const assistenteIA = useAssistenteContabilIA()
+  const assistenteIA = useAIQuery()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

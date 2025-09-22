@@ -268,8 +268,8 @@ export class CalculoFiscalProcessor implements JobProcessor<CalculoFiscalJob> {
   private calcularDataVencimento(periodo: string): string {
     // Formato: YYYY-MM
     const [ano, mes] = periodo.split('-')
-    const proximoMes = parseInt(mes) + 1
-    const proximoAno = proximoMes > 12 ? parseInt(ano) + 1 : parseInt(ano)
+    const proximoMes = parseInt(mes!) + 1
+    const proximoAno = proximoMes > 12 ? parseInt(ano!) + 1 : parseInt(ano!)
     const mesVencimento = proximoMes > 12 ? 1 : proximoMes
     
     // DAS vence no dia 20 do mês seguinte

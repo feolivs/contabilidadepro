@@ -43,7 +43,18 @@
       "mcp__n8n-mcp__validate_workflow",
       "mcp__n8n-mcp__n8n_update_partial_workflow",
       "mcp__n8n-mcp__n8n_get_workflow",
-      "mcp__n8n-mcp__n8n_update_full_workflow"
+      "mcp__n8n-mcp__n8n_update_full_workflow",
+      "Bash(supabase logs:*)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_organizations",
+      "mcp__supabase__list_extensions",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__list_edge_functions",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__get_edge_function"
     ],
     "deny": [],
     "ask": []

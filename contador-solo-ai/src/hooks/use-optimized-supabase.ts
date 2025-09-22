@@ -4,6 +4,7 @@ import { useCallback, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { performanceCache } from '@/lib/performance-cache'
+import { unifiedCache } from '@/lib/unified-cache'
 
 interface OptimizedSupabaseOptions {
   cache?: boolean

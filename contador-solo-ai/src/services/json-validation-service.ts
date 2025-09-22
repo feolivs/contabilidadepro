@@ -254,12 +254,12 @@ export class JsonValidationService {
     let sum = 0
     const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
     for (let i = 0; i < 12; i++) {
-      sum += digits[i] * weights1[i]
+      sum += digits[i]! * weights1[i]!
     }
     const remainder1 = sum % 11
     const digit1 = remainder1 < 2 ? 0 : 11 - remainder1
 
-    if (digits[12] !== digit1) {
+    if (digits[12]! !== digit1) {
       return { isValid: false, errors: ['CNPJ inválido - primeiro dígito verificador'] }
     }
 
@@ -267,12 +267,12 @@ export class JsonValidationService {
     sum = 0
     const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
     for (let i = 0; i < 13; i++) {
-      sum += digits[i] * weights2[i]
+      sum += digits[i]! * weights2[i]!
     }
     const remainder2 = sum % 11
     const digit2 = remainder2 < 2 ? 0 : 11 - remainder2
 
-    if (digits[13] !== digit2) {
+    if (digits[13]! !== digit2) {
       return { isValid: false, errors: ['CNPJ inválido - segundo dígito verificador'] }
     }
 

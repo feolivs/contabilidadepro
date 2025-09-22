@@ -276,5 +276,4 @@ export class TripleAIService {
 // Instância singleton para uso global
 export const tripleAIService = new TripleAIService()
 
-// Tipos para exportação
-export type { TripleAIRequest, TripleAIResponse, TripleAIConfig }
+// Tipos já exportados acima como interfaces

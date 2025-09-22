@@ -3,6 +3,7 @@
  * Substitui os hooks de cache existentes por uma interface consistente
  */
 
+import React from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { unifiedCache, CacheConfig, CacheOptions } from '@/lib/unified-cache'
 import { logger } from '@/lib/simple-logger'
@@ -47,7 +48,7 @@ export function useUnifiedCache<T>(
       const data = await queryFn()
       
       // Armazenar no cache
-      await unifiedCache.set(key, data, { ttl, tags, ...cacheOptions }, config)
+      await unifiedCache.set(key, userId, data, { ttl, tags, ...cacheOptions })
       
       return data
     },
@@ -135,7 +136,7 @@ export function useCacheInvalidation() {
 
   const invalidateTag = useMutation({
     mutationFn: async ({ tag, config }: { tag: string; config?: CacheConfig }) => {
-      const count = await unifiedCache.invalidateByTag(tag, config)
+      const count = await unifiedCache.invalidateByTag(tag)
       
       // Invalidar queries relacionadas no React Query
       queryClient.invalidateQueries({ 
@@ -240,7 +241,7 @@ export function usePreloadCache() {
       queries.map(([type, key]) =>
         queryClient.prefetchQuery({
           queryKey: [key],
-          queryFn: () => unifiedCache.get(key),
+          queryFn: () => unifiedCache.get(key, userId),
           staleTime: 5 * 60 * 1000
         })
       )
@@ -266,8 +267,8 @@ export function CacheProvider({
 }: CacheProviderProps) {
   // Configurar defaults globais
   React.useEffect(() => {
-    // Configurações globais podem ser aplicadas aqui
+    // Configuracoes globais podem ser aplicadas aqui
   }, [defaultConfig, defaultTTL])
 
-  return <>{children}</>
+  return React.createElement(React.Fragment, null, children)
 }

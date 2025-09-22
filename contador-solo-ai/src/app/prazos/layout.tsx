@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { Suspense } from 'react'
 import { MainLayout } from '@/components/layout/main-layout'
 import { SistemaAlertasStatus } from '@/components/prazos/sistema-alertas-status'
+import { AlertasIntegration } from '@/components/prazos/alertas-integration'
 
 // =====================================================
 // LAYOUT PARA PRAZOS FISCAIS - PARALLEL ROUTES
@@ -52,6 +53,13 @@ export default function PrazosLayout({
         {/* Sistema de Alertas Status */}
         <div className="mb-6">
           <SistemaAlertasStatus />
+        </div>
+
+        {/* Integração de Alertas Fiscais */}
+        <div className="mb-6">
+          <Suspense fallback={<AlertasLoadingSkeleton />}>
+            <AlertasIntegration showOnlyFiscal={true} maxItems={15} />
+          </Suspense>
         </div>
 
         {/* Stats Row - Always visible */}
@@ -205,6 +213,49 @@ function UploadLoadingSkeleton() {
             <div className="h-4 w-16 bg-muted rounded animate-pulse" />
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function AlertasLoadingSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Stats skeleton */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="bg-card border rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="h-4 bg-muted rounded w-16 animate-pulse" />
+                <div className="h-6 bg-muted rounded w-8 animate-pulse" />
+              </div>
+              <div className="w-8 h-8 bg-muted rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Alertas panel skeleton */}
+      <div className="bg-card border rounded-lg">
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between">
+            <div className="h-6 bg-muted rounded w-32 animate-pulse" />
+            <div className="h-8 bg-muted rounded w-24 animate-pulse" />
+          </div>
+        </div>
+        <div className="p-4 space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 border rounded">
+              <div className="w-4 h-4 bg-muted rounded animate-pulse" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
+              </div>
+              <div className="h-5 bg-muted rounded w-16 animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

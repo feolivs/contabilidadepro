@@ -5,6 +5,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { ToastProvider } from "@/providers/toast-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { NotificationProvider } from "@/providers/notification-provider";
 import { baseMetadata } from "@/lib/metadata";
 import { ServiceWorkerProvider } from "@/providers/service-worker-provider";
 
@@ -54,8 +55,10 @@ export default function RootLayout({
           <ServiceWorkerProvider>
             <QueryProvider>
               <AuthProvider>
-                {children}
-                <ToastProvider />
+                <NotificationProvider>
+                  {children}
+                  <ToastProvider />
+                </NotificationProvider>
               </AuthProvider>
             </QueryProvider>
           </ServiceWorkerProvider>

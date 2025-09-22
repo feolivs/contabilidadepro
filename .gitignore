@@ -6,6 +6,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+.mcp.json
+
 # Next.js
 .next/
 out/

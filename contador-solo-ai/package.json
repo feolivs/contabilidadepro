@@ -23,7 +23,13 @@
     "analyze:browser": "set BUNDLE_ANALYZE=browser && npm run build:webpack",
     "supabase:types": "supabase gen types typescript --project-id selnwgpyjctpjzdrfrey > src/types/database.types.ts",
     "workers:start": "tsx scripts/start-workers.ts",
-    "workers:dev": "tsx watch scripts/start-workers.ts"
+    "workers:dev": "tsx watch scripts/start-workers.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest --testPathPattern=unit",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:ci": "jest --coverage --watchAll=false --passWithNoTests"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -38,6 +44,7 @@
     "@radix-ui/react-scroll-area": "^1.2.10",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slider": "^1.3.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
@@ -82,6 +89,10 @@
     "@next/bundle-analyzer": "^15.5.3",
     "@tailwindcss/postcss": "^4",
     "@tanstack/react-query-devtools": "^5.87.4",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.19.14",
     "@types/qrcode.react": "^1.0.5",
     "@types/react": "^19",
@@ -92,11 +103,14 @@
     "eslint-config-next": "15.5.3",
     "glob": "^11.0.3",
     "husky": "^9.1.7",
+    "jest": "^30.1.3",
+    "jest-environment-jsdom": "^30.1.2",
     "lint-staged": "^16.1.6",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "supabase": "^2.40.7",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.4",
     "tw-animate-css": "^1.3.8",
     "typescript": "^5"
   }

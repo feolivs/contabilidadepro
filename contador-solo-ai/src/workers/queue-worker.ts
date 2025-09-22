@@ -6,6 +6,12 @@
 import { queueService, QueueName } from '@/services/queue-service'
 import { logger } from '@/lib/simple-logger'
 
+interface JobMessage {
+  type: string
+  data: any
+  timestamp: string
+}
+
 export interface WorkerConfig {
   queueName: QueueName
   concurrency: number
@@ -125,26 +131,26 @@ export class QueueWorker {
       logger.info('Processando job', {
         queueName: this.config.queueName,
         jobId: job.msg_id,
-        jobType: job.message.type
+        jobType: ((job.message as JobMessage) as JobMessage).type
       })
 
-      const processor = this.processors.get(job.message.type)
+      const processor = this.processors.get(((job.message as JobMessage) as JobMessage).type)
       if (!processor) {
         logger.error('Processador não encontrado', {
           queueName: this.config.queueName,
           jobId: job.msg_id,
-          jobType: job.message.type
+          jobType: ((job.message as JobMessage) as JobMessage).type
         })
         await queueService.ack(this.config.queueName, job.msg_id)
         return
       }
 
       // Validar dados se necessário
-      if (processor.validate && !processor.validate(job.message)) {
+      if (processor.validate && !processor.validate((job.message as JobMessage))) {
         logger.error('Dados do job inválidos', {
           queueName: this.config.queueName,
           jobId: job.msg_id,
-          jobType: job.message.type
+          jobType: ((job.message as JobMessage) as JobMessage).type
         })
         await queueService.ack(this.config.queueName, job.msg_id)
         return
@@ -152,11 +158,11 @@ export class QueueWorker {
 
       try {
         // Processar job
-        const result = await processor.process(job.message)
+        const result = await processor.process((job.message as JobMessage))
 
         // Callback de sucesso
         if (processor.onSuccess) {
-          await processor.onSuccess(result, job.message)
+          await processor.onSuccess(result, (job.message as JobMessage))
         }
 
         // Confirmar processamento
@@ -165,20 +171,20 @@ export class QueueWorker {
         logger.info('Job processado com sucesso', {
           queueName: this.config.queueName,
           jobId: job.msg_id,
-          jobType: job.message.type
+          jobType: ((job.message as JobMessage) as JobMessage).type
         })
 
       } catch (error) {
         logger.error('Erro no processamento do job', {
           queueName: this.config.queueName,
           jobId: job.msg_id,
-          jobType: job.message.type,
+          jobType: ((job.message as JobMessage) as JobMessage).type,
           error
         })
 
         // Callback de erro
         if (processor.onError) {
-          await processor.onError(error as Error, job.message)
+          await processor.onError(error as Error, (job.message as JobMessage))
         }
 
         // Decidir se deve rejeitar ou confirmar

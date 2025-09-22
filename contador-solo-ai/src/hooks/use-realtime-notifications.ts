@@ -1,46 +1,56 @@
-import { useState, useEffect } from 'react'
+'use client'
 
-export interface NotificationData {
-  id: string
-  title: string
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  timestamp: string
-  read: boolean
-}
+import { useEffect } from 'react'
+import { useNotifications, type NotificationData } from '@/providers/notification-provider'
+import { useAuthStore } from '@/store/auth-store'
 
-export function useRealtimeNotifications(userId?: string) {
-  const [notifications, setNotifications] = useState<NotificationData[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
+// Re-export types for backward compatibility
+export type { NotificationData }
 
+/**
+ * Hook para notificações em tempo real
+ * Agora conectado ao NotificationProvider global
+ */
+export function useRealtimeNotifications() {
+  const { user } = useAuthStore()
+  const {
+    notifications,
+    unreadCount,
+    isConnected,
+    subscribe,
+    unsubscribe,
+    markAsRead,
+    markAllAsRead,
+    dismissNotification
+  } = useNotifications()
+
+  // Auto-subscribe quando usuário está disponível
   useEffect(() => {
-    if (!userId) return
+    if (user?.id) {
+      console.log('🔔 Auto-subscribing para notificações do usuário:', user.id)
+      subscribe(user.id)
+    } else {
+      console.log('🔌 Unsubscribing - usuário não disponível')
+      unsubscribe()
+    }
 
-    // Placeholder for realtime subscription
-    const mockNotifications: NotificationData[] = []
-
-    setNotifications(mockNotifications)
-    setUnreadCount(mockNotifications.filter(n => !n.read).length)
-  }, [userId])
-
-  const markAsRead = async (notificationId: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-    )
-    setUnreadCount(prev => Math.max(0, prev - 1))
-  }
-
-  const markAllAsRead = async () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-    setUnreadCount(0)
-  }
+    // Cleanup na desmontagem
+    return () => {
+      unsubscribe()
+    }
+  }, [user?.id, subscribe, unsubscribe])
 
   return {
     notifications,
     unreadCount,
+    isLoading: false,
+    isConnected,
+    error: null,
     markAsRead,
     markAllAsRead,
-    isLoading: false,
-    error: null
+    dismissNotification,
+    // Métodos de controle manual (se necessário)
+    subscribe: user?.id ? () => subscribe(user.id) : () => {},
+    unsubscribe
   }
 }

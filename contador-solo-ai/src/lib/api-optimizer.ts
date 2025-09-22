@@ -1,6 +1,6 @@
-import { unifiedCache } from './unified-cache'
 'use client'
 
+import { unifiedCache } from './unified-cache'
 import { performanceCache } from './performance-cache'
 
 interface APIOptimizerOptions {
@@ -101,9 +101,9 @@ class APIOptimizer {
 
     // 1. Verificar cache primeiro
     if (cache) {
-      const cached = await unifiedCache.get(key)
+      const cached = await unifiedCache.get(key, 'api-optimizer')
       if (cached) {
-        return cached
+        return cached as T
       }
     }
 
@@ -119,7 +119,7 @@ class APIOptimizer {
 
     // 4. Salvar no cache
     if (cache && result) {
-      await unifiedCache.set(key, result, cacheTTL)
+      await unifiedCache.set(key, 'api-optimizer', result, { ttl: typeof cacheTTL === 'number' ? cacheTTL : 5000 })
     }
 
     return result

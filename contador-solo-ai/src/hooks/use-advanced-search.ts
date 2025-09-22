@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react'
-import { useDebounce } from '@/hooks/use-debounced-search'
+import { useDebounce } from 'use-debounce'
 import { advancedSearchService, SearchResult, SearchOptions } from '@/services/advanced-search-service'
 import { logger } from '@/lib/simple-logger'
 
@@ -220,7 +220,7 @@ export function useAdvancedSearch<T = any>(
     if (autoSearch && debouncedQuery) {
       search(debouncedQuery)
     }
-  }, [debouncedQuery, search, autoSearch])
+  }, [debouncedQuery, autoSearch, search])
 
   // Obter sugestões quando a query muda
   useEffect(() => {

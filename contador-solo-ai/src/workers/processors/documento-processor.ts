@@ -244,7 +244,7 @@ export class DocumentoProcessor implements JobProcessor<DocumentoJob> {
     for (const [campo, pattern] of Object.entries(patterns)) {
       const match = texto.match(pattern)
       if (match) {
-        dados[campo] = match[1].trim()
+        dados[campo] = match[1]?.trim()
       }
     }
 
@@ -279,7 +279,7 @@ export class DocumentoProcessor implements JobProcessor<DocumentoJob> {
     for (const [campo, pattern] of Object.entries(patterns)) {
       const match = texto.match(pattern)
       if (match) {
-        dados[campo] = match[1].trim()
+        dados[campo] = match[1]?.trim()
       }
     }
 
@@ -319,9 +319,11 @@ export class DocumentoProcessor implements JobProcessor<DocumentoJob> {
     try {
       switch (tipoDocumento) {
         case 'NFe':
-          return await jsonValidationService.validateNFe(dados)
+          const nfeResult = await jsonValidationService.validateNFe(dados)
+          return { valido: nfeResult.isValid, erros: nfeResult.errors }
         case 'DAS':
-          return await jsonValidationService.validateDAS(dados)
+          const dasResult = await jsonValidationService.validateDAS(dados)
+          return { valido: dasResult.isValid, erros: dasResult.errors }
         default:
           return { valido: true, erros: [] }
       }

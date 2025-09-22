@@ -210,7 +210,7 @@ class IntelligentCache {
 }
 
 // Instância singleton do cache
-export const cache = new IntelligentCache()
+const intelligentCache = new IntelligentCache()
 
 /**
  * Hook para cache com React Query
@@ -230,7 +230,7 @@ export function useCachedQuery<T>(
     queryKey: [key],
     queryFn: async (): Promise<T> => {
       // Tenta buscar do cache primeiro
-      const cached = cache.get<T>(key)
+      const cached = intelligentCache.get<T>(key)
       if (cached) {
         return cached
       }
@@ -239,7 +239,7 @@ export function useCachedQuery<T>(
       const data = await queryFn()
       
       // Armazena no cache
-      cache.set(key, data, ttl, tags)
+      intelligentCache.set(key, data, { ttl: ttl || 5000, tags })
       
       return data
     },
@@ -254,40 +254,46 @@ export function useCachedQuery<T>(
 export const fiscalCache = {
   // Cache para cálculos DAS
   getDASCalculation: (empresaId: string, competencia: string) => {
-    return cache.get<any>(`das:${empresaId}:${competencia}`)
+    return unifiedCache.get(`das:${empresaId}:${competencia}`, 'fiscal')
   },
 
   setDASCalculation: (empresaId: string, competencia: string, data: any) => {
-    cache.set(
-      `das:${empresaId}:${competencia}`, 
-      data, 
-      24 * 60 * 60 * 1000, // 24 horas
-      ['das', `empresa:${empresaId}`, 'calculos']
+    unifiedCache.set(
+      `das:${empresaId}:${competencia}`,
+      'fiscal',
+      data,
+      {
+        ttl: 24 * 60 * 60 * 1000, // 24 horas
+        tags: ['das', `empresa:${empresaId}`, 'calculos']
+      }
     )
   },
 
   // Cache para dados de empresas
   getEmpresa: (empresaId: string) => {
-    return cache.get<any>(`empresa:${empresaId}`)
+    return unifiedCache.get(`empresa:${empresaId}`, 'fiscal')
   },
 
   setEmpresa: (empresaId: string, data: any) => {
-    cache.set(
-      `empresa:${empresaId}`, 
-      data, 
-      60 * 60 * 1000, // 1 hora
-      ['empresas', `empresa:${empresaId}`]
+    unifiedCache.set(
+      `empresa:${empresaId}`,
+      'fiscal',
+      data,
+      {
+        ttl: 60 * 60 * 1000, // 1 hora
+        tags: ['empresas', `empresa:${empresaId}`]
+      }
     )
   },
 
   // Invalidar cache de uma empresa específica
   invalidateEmpresa: (empresaId: string) => {
-    cache.invalidateByTag(`empresa:${empresaId}`)
+    unifiedCache.invalidateByTag(`empresa:${empresaId}`)
   },
 
   // Invalidar todos os cálculos
   invalidateCalculos: () => {
-    cache.invalidateByTag('calculos')
+    unifiedCache.invalidateByTag('calculos')
   }
 }
 
@@ -346,6 +352,5 @@ import { unifiedCache, fiscalCache } from './unified-cache'
 /** @deprecated Use unifiedCache em vez disso */
 export const cache = unifiedCache
 
-/** @deprecated Use fiscalCache em vez disso */
-export { fiscalCache }
+// Removido export duplicado
 

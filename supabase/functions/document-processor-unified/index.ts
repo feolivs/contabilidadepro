@@ -23,15 +23,100 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const openaiApiKey = Deno.env.get('OPENAI_API_KEY') ?? ''
 
-// Interfaces essenciais
+// Interfaces essenciais (compatibilidade com frontend)
 interface ProcessRequest {
-  action: 'process_direct' | 'status'
+  action: 'process_direct' | 'process_ocr' | 'extract_data' | 'classify' | 'analyze' | 'status' | 'reprocess'
+  documentId?: string
+  filePath?: string
+  fileName?: string
   fileBuffer?: number[]
+  mimeType?: string
   options?: {
     fileName?: string
     mimeType?: string
     enableAI?: boolean
+    language?: string
+    quality?: 'low' | 'medium' | 'high'
+    extractTables?: boolean
+    enableCache?: boolean
+    documentType?: string
+    extractionMode?: 'basic' | 'advanced' | 'complete'
   }
+}
+
+// Estruturas de dados compatíveis com frontend
+interface UniversalExtractionResult {
+  success: boolean
+  documentId: string
+  processingStages: {
+    ocr: { method: string, success: boolean }
+    regex: { patterns_matched: number }
+    ai: { enabled: boolean }
+    validation: { is_valid: boolean }
+  }
+  extractedData: UniversalDocumentData
+  metadata: ProcessingMetadata
+  confidence: number
+  processingTime: number
+}
+
+interface UniversalDocumentData {
+  raw_text: string
+  document_type: string
+  confidence_score: number
+  entities: ExtractedEntity[]
+  financial_data: FinancialData[]
+  dates: ExtractedDate[]
+  contacts: ExtractedContact[]
+  additional_fields: Record<string, any>
+  relationships: DataRelationship[]
+  insights: string[]
+}
+
+interface ExtractedEntity {
+  type: 'person' | 'company' | 'product' | 'service' | 'location' | 'other'
+  value: string
+  confidence: number
+  context: string
+  position?: { start: number, end: number }
+}
+
+interface FinancialData {
+  type: 'total' | 'subtotal' | 'tax' | 'discount' | 'fee' | 'other'
+  value: number
+  currency: string
+  description: string
+  confidence: number
+}
+
+interface ExtractedDate {
+  type: 'emission' | 'due' | 'payment' | 'validity' | 'other'
+  date: string
+  confidence: number
+  context: string
+}
+
+interface ExtractedContact {
+  type: 'phone' | 'email' | 'website'
+  value: string
+  confidence: number
+  context: string
+}
+
+interface DataRelationship {
+  from_entity: string
+  to_entity: string
+  relationship_type: string
+  confidence: number
+}
+
+interface ProcessingMetadata {
+  fileName: string
+  mimeType?: string
+  fileSize?: number
+  extractionMode?: string
+  timestamp: string
+  providers_used: string[]
 }
 
 interface ProcessResult {
@@ -64,34 +149,55 @@ serve(async (req: Request) => {
     const request: ProcessRequest = await req.json()
     const { action } = request
 
+    console.log(`[UNIFIED_PROCESSOR] Processando ação: ${action}`)
+
     if (action === 'status') {
       return new Response(JSON.stringify({
         success: true,
         status: 'operational',
-        version: '2.0-optimized',
-        supportedFormats: ['pdf', 'docx', 'xlsx', 'csv', 'txt', 'html', 'png', 'jpg']
+        version: '2.0-hybrid',
+        supportedFormats: ['pdf', 'docx', 'xlsx', 'csv', 'txt', 'html', 'png', 'jpg'],
+        supportedActions: ['process_direct', 'process_ocr', 'extract_data', 'classify', 'analyze', 'status', 'reprocess']
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    if (action === 'process_direct') {
-      const startTime = Date.now()
-      const result = await processDocument(request)
-      const processingTime = Date.now() - startTime
+    const startTime = Date.now()
+    let result: any
 
-      return new Response(JSON.stringify({
-        success: true,
-        data: {
-          ...result,
-          processingTime
-        }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
+    // Mapear ações legadas para implementação otimizada
+    switch (action) {
+      case 'process_direct':
+        result = await processDocument(request)
+        break
+
+      case 'process_ocr':
+      case 'extract_data':
+      case 'classify':
+      case 'analyze':
+        result = await processLegacyAction(request)
+        break
+
+      case 'reprocess':
+        result = await handleReprocess(request)
+        break
+
+      default:
+        throw new Error(`Ação não suportada: ${action}`)
     }
 
-    throw new Error(`Ação não suportada: ${action}`)
+    const processingTime = Date.now() - startTime
+
+    return new Response(JSON.stringify({
+      success: true,
+      data: {
+        ...result,
+        processingTime
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
 
   } catch (error) {
     return new Response(JSON.stringify({
@@ -364,3 +470,232 @@ async function extractFromXLSX(buffer: Uint8Array): Promise<string> {
   const content = new TextDecoder().decode(buffer)
   return content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || 'XLSX: Dados extraídos'
 }
+
+/**
+ * 🔄 PROCESSAR AÇÕES LEGADAS
+ * Mapeia ações antigas para implementação otimizada
+ */
+async function processLegacyAction(request: ProcessRequest): Promise<UniversalExtractionResult> {
+  const { action, documentId, filePath, fileName, options } = request
+
+  console.log(`[LEGACY_ACTION] Processando ${action} para documento ${documentId}`)
+
+  let fileBuffer: number[]
+  let actualFileName: string
+  let actualMimeType: string
+
+  // Se temos filePath, baixar do storage
+  if (filePath && !request.fileBuffer) {
+    console.log(`[LEGACY_ACTION] Baixando arquivo do storage: ${filePath}`)
+    const downloadedBuffer = await downloadFileFromStorage(filePath)
+    fileBuffer = Array.from(downloadedBuffer)
+    actualFileName = fileName || filePath.split('/').pop() || 'unknown'
+    actualMimeType = getMimeType(actualFileName)
+  } else if (request.fileBuffer) {
+    fileBuffer = request.fileBuffer
+    actualFileName = fileName || options?.fileName || 'unknown'
+    actualMimeType = request.mimeType || options?.mimeType || getMimeType(actualFileName)
+  } else {
+    throw new Error('fileBuffer ou filePath é obrigatório')
+  }
+
+  // Processar com implementação otimizada
+  const simpleResult = await processDocument({
+    action: 'process_direct',
+    fileBuffer,
+    options: {
+      fileName: actualFileName,
+      mimeType: actualMimeType,
+      enableAI: options?.enableAI !== false
+    }
+  })
+
+  // Converter para formato universal esperado pelo frontend
+  return adaptToUniversalFormat(simpleResult, documentId, actualFileName, actualMimeType)
+}
+
+/**
+ * 🔄 REPROCESSAR DOCUMENTO
+ */
+async function handleReprocess(request: ProcessRequest): Promise<UniversalExtractionResult> {
+  const { documentId, options } = request
+
+  if (!documentId) {
+    throw new Error('documentId é obrigatório para reprocessamento')
+  }
+
+  console.log(`[REPROCESS] Reprocessando documento ${documentId}`)
+
+  // Buscar informações do documento no banco
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
+  const { data: documento, error } = await supabase
+    .from('documentos')
+    .select('arquivo_path, arquivo_nome, arquivo_tipo')
+    .eq('id', documentId)
+    .single()
+
+  if (error || !documento) {
+    throw new Error(`Documento ${documentId} não encontrado`)
+  }
+
+  // Processar como ação legada
+  return processLegacyAction({
+    action: 'process_ocr',
+    documentId,
+    filePath: documento.arquivo_path,
+    fileName: documento.arquivo_nome,
+    mimeType: documento.arquivo_tipo,
+    options: {
+      extractionMode: 'complete',
+      enableAI: true,
+      ...options
+    }
+  })
+}
+
+/**
+ * 📥 BAIXAR ARQUIVO DO STORAGE
+ */
+async function downloadFileFromStorage(filePath: string): Promise<Uint8Array> {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+  console.log(`[STORAGE] Baixando arquivo: ${filePath}`)
+
+  const { data, error } = await supabase.storage
+    .from('documentos')
+    .download(filePath)
+
+  if (error) {
+    throw new Error(`Erro ao baixar arquivo: ${error.message}`)
+  }
+
+  return new Uint8Array(await data.arrayBuffer())
+}
+
+/**
+ * 🔄 ADAPTER PARA FORMATO UNIVERSAL
+ * Converte estrutura simples para estrutura complexa esperada pelo frontend
+ */
+function adaptToUniversalFormat(
+  simpleResult: any,
+  documentId?: string,
+  fileName?: string,
+  mimeType?: string
+): UniversalExtractionResult {
+  console.log('[ADAPTER] Convertendo para formato universal')
+
+  const entities: ExtractedEntity[] = []
+  const financialData: FinancialData[] = []
+  const dates: ExtractedDate[] = []
+  const contacts: ExtractedContact[] = []
+
+  // Converter entidades do formato simples para universal
+  if (simpleResult.extractedData?.entities) {
+    for (const [entityType, entityList] of Object.entries(simpleResult.extractedData.entities)) {
+      if (Array.isArray(entityList)) {
+        for (const entity of entityList) {
+          entities.push({
+            type: mapEntityType(entityType),
+            value: entity.value || entity,
+            confidence: entity.confidence || 0.9,
+            context: `Extraído via ${entityType}`,
+            position: entity.position
+          })
+
+          // Converter valores para dados financeiros
+          if (entityType === 'valores' && typeof entity.value === 'number') {
+            financialData.push({
+              type: 'other',
+              value: entity.value,
+              currency: 'BRL',
+              description: 'Valor detectado',
+              confidence: entity.confidence || 0.9
+            })
+          }
+
+          // Converter datas
+          if (entityType === 'datas') {
+            dates.push({
+              type: 'other',
+              date: entity.value || entity,
+              confidence: entity.confidence || 0.9,
+              context: 'Data detectada'
+            })
+          }
+
+          // Converter contatos
+          if (entityType === 'emails' || entityType === 'telefones') {
+            contacts.push({
+              type: entityType === 'emails' ? 'email' : 'phone',
+              value: entity.value || entity,
+              confidence: entity.confidence || 0.9,
+              context: 'Contato detectado'
+            })
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    success: true,
+    documentId: documentId || 'generated-' + Date.now(),
+    processingStages: {
+      ocr: {
+        method: 'hybrid-optimized',
+        success: true
+      },
+      regex: {
+        patterns_matched: Object.keys(simpleResult.extractedData?.entities || {}).length
+      },
+      ai: {
+        enabled: true
+      },
+      validation: {
+        is_valid: (simpleResult.confidence || 0) > 0.5
+      }
+    },
+    extractedData: {
+      raw_text: simpleResult.extractedData?.raw_text || '',
+      document_type: simpleResult.extractedData?.document_type || 'unknown',
+      confidence_score: simpleResult.confidence || 0,
+      entities,
+      financial_data: financialData,
+      dates,
+      contacts,
+      additional_fields: {},
+      relationships: [],
+      insights: [`Documento processado com confiança de ${Math.round((simpleResult.confidence || 0) * 100)}%`]
+    },
+    metadata: {
+      fileName: fileName || 'unknown',
+      mimeType,
+      timestamp: new Date().toISOString(),
+      providers_used: ['hybrid-processor']
+    },
+    confidence: simpleResult.confidence || 0,
+    processingTime: simpleResult.processingTime || 0
+  }
+}
+
+/**
+ * 🎯 MAPEAR TIPO DE ENTIDADE
+ */
+function mapEntityType(entityType: string): 'person' | 'company' | 'product' | 'service' | 'location' | 'other' {
+  const mapping: Record<string, 'person' | 'company' | 'product' | 'service' | 'location' | 'other'> = {
+    cnpjs: 'company',
+    cpfs: 'person',
+    emails: 'other',
+    telefones: 'other',
+    ceps: 'location',
+    valores: 'other',
+    datas: 'other',
+    urls: 'other',
+    regimes: 'other',
+    das_codes: 'other'
+  }
+
+  return mapping[entityType] || 'other'
+}
+
+// Handler já definido acima com serve()

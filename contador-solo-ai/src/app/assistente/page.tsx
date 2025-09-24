@@ -170,10 +170,17 @@ export default function AssistentePage() {
     }
   }, [user?.id, supabase])
 
-  // Verificar autenticação
+  // Verificar autenticação - apenas redireciona se realmente não autenticado
   useEffect(() => {
-    if (isInitialized && !isLoading && !user) {
-      router.push('/login?redirect=/assistente')
+    // Aguardar a inicialização completa do auth store
+    if (isInitialized && !isLoading) {
+      // Se não há usuário após inicialização, redirecionar para login
+      if (!user) {
+        console.log('🔍 Assistente: Redirecionando usuário não autenticado para login')
+        router.push('/login?redirect=/assistente')
+      } else {
+        console.log('🔍 Assistente: Usuário autenticado:', user.email)
+      }
     }
   }, [user, isLoading, isInitialized, router])
 
@@ -188,8 +195,17 @@ export default function AssistentePage() {
     }
   }, [user?.id, carregarEmpresas])
 
+  // Debug logs
+  console.log('🔍 Assistente Estado:', {
+    isInitialized,
+    isLoading,
+    hasUser: !!user,
+    userEmail: user?.email
+  })
+
   // Mostrar loading enquanto verifica autenticação
   if (!isInitialized || isLoading) {
+    console.log('⏳ Assistente: Mostrando loading...', { isInitialized, isLoading })
     return (
       <CleanLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -204,8 +220,11 @@ export default function AssistentePage() {
 
   // Redirecionar se não autenticado
   if (!user) {
+    console.log('🚫 Assistente: Usuário não autenticado, aguardando redirecionamento...')
     return null // O useEffect já fará o redirecionamento
   }
+
+  console.log('✅ Assistente: Renderizando página para usuário autenticado:', user.email)
 
   const handleRegenerateMessage = async (messageId: string) => {
     const messageIndex = messages.findIndex(m => m.id === messageId)

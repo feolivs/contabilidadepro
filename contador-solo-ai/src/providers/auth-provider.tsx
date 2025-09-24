@@ -67,8 +67,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Inicializar auth com Supabase
     initializeSupabaseAuth()
 
-    return
-
     // Configurar listener de mudanças de autenticação
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

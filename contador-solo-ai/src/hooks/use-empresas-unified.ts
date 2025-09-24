@@ -230,7 +230,7 @@ function calculateStatsFromEmpresas(empresas: any[]): EmpresasStats {
     crescimentoMensal: 0,
     crescimentoAnual: 0,
     
-    ultimaAtualizacao: new Date().toISOString()
+    ultimaAtualizacao: new Date(Date.now()).toISOString()
   }
 
   // Calcular percentuais
@@ -270,7 +270,7 @@ function getDefaultStats(): EmpresasStats {
     prazosPendentes: 0,
     empresasComCalculosRecentes: 0,
     empresasComDocumentosRecentes: 0,
-    ultimaAtualizacao: new Date().toISOString()
+    ultimaAtualizacao: new Date(Date.now()).toISOString()
   }
 }
 

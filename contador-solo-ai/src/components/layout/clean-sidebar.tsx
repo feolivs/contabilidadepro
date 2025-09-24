@@ -116,20 +116,14 @@ const useNavigationSections = (): NavigationSection[] => {
       title: 'Gestão de Dados',
       items: [
         {
-          title: 'Clientes',
-          href: '/clientes',
-          icon: Users,
+          title: 'Empresas',
+          href: '/empresas-clientes',
+          icon: Building2,
           badge: navigationData?.stats.totalClientes || 0,
           badgeVariant: getBadgeVariant(navigationData?.stats.totalClientes || 0, 'client'),
-          description: 'Gestão de clientes',
+          description: 'Gestão de empresas e clientes',
           dataKey: 'totalClientes',
           alertType: 'client'
-        },
-        {
-          title: 'Empresas',
-          href: '/empresas',
-          icon: Building2,
-          description: 'Gestão de empresas'
         },
         {
           title: 'Documentos',

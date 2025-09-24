@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,14 @@ interface EmpresasOverviewProps {
 
 export function EmpresasOverview({ onRefresh, isRefreshing = false }: EmpresasOverviewProps) {
   const stats = useEmpresasStatsUnified()
+  const [formattedDate, setFormattedDate] = useState<string>('')
+
+  // Formatar data apenas no cliente para evitar erro de hidratação
+  useEffect(() => {
+    if (stats.ultimaAtualizacao) {
+      setFormattedDate(new Date(stats.ultimaAtualizacao).toLocaleString('pt-BR'))
+    }
+  }, [stats.ultimaAtualizacao])
 
   const statCards = [
     {
@@ -93,55 +102,55 @@ export function EmpresasOverview({ onRefresh, isRefreshing = false }: EmpresasOv
   const getColorClasses = (color: string, isAlert = false) => {
     if (isAlert) {
       return {
-        card: 'border-red-200 bg-red-50',
-        icon: 'text-red-600 bg-red-100',
-        value: 'text-red-900',
-        title: 'text-red-800'
+        card: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/50',
+        icon: 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/50',
+        value: 'text-red-900 dark:text-red-100',
+        title: 'text-red-800 dark:text-red-200'
       }
     }
 
     const colorMap = {
       blue: {
-        card: 'border-blue-200 bg-blue-50',
-        icon: 'text-blue-600 bg-blue-100',
-        value: 'text-blue-900',
-        title: 'text-blue-800'
+        card: 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/50',
+        icon: 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/50',
+        value: 'text-blue-900 dark:text-blue-100',
+        title: 'text-blue-800 dark:text-blue-200'
       },
       green: {
-        card: 'border-green-200 bg-green-50',
-        icon: 'text-green-600 bg-green-100',
-        value: 'text-green-900',
-        title: 'text-green-800'
+        card: 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/50',
+        icon: 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/50',
+        value: 'text-green-900 dark:text-green-100',
+        title: 'text-green-800 dark:text-green-200'
       },
       purple: {
-        card: 'border-purple-200 bg-purple-50',
-        icon: 'text-purple-600 bg-purple-100',
-        value: 'text-purple-900',
-        title: 'text-purple-800'
+        card: 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/50',
+        icon: 'text-purple-600 bg-purple-100 dark:text-purple-400 dark:bg-purple-900/50',
+        value: 'text-purple-900 dark:text-purple-100',
+        title: 'text-purple-800 dark:text-purple-200'
       },
       orange: {
-        card: 'border-orange-200 bg-orange-50',
-        icon: 'text-orange-600 bg-orange-100',
-        value: 'text-orange-900',
-        title: 'text-orange-800'
+        card: 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/50',
+        icon: 'text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/50',
+        value: 'text-orange-900 dark:text-orange-100',
+        title: 'text-orange-800 dark:text-orange-200'
       },
       emerald: {
-        card: 'border-emerald-200 bg-emerald-50',
-        icon: 'text-emerald-600 bg-emerald-100',
-        value: 'text-emerald-900',
-        title: 'text-emerald-800'
+        card: 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/50',
+        icon: 'text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-900/50',
+        value: 'text-emerald-900 dark:text-emerald-100',
+        title: 'text-emerald-800 dark:text-emerald-200'
       },
       red: {
-        card: 'border-red-200 bg-red-50',
-        icon: 'text-red-600 bg-red-100',
-        value: 'text-red-900',
-        title: 'text-red-800'
+        card: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/50',
+        icon: 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/50',
+        value: 'text-red-900 dark:text-red-100',
+        title: 'text-red-800 dark:text-red-200'
       },
       yellow: {
-        card: 'border-yellow-200 bg-yellow-50',
-        icon: 'text-yellow-600 bg-yellow-100',
-        value: 'text-yellow-900',
-        title: 'text-yellow-800'
+        card: 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/50',
+        icon: 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/50',
+        value: 'text-yellow-900 dark:text-yellow-100',
+        title: 'text-yellow-800 dark:text-yellow-200'
       }
     }
 
@@ -153,9 +162,9 @@ export function EmpresasOverview({ onRefresh, isRefreshing = false }: EmpresasOv
       {/* Header com ações */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Visão Geral</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Última atualização: {new Date(stats.ultimaAtualizacao).toLocaleString('pt-BR')}
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Visão Geral</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {formattedDate ? `Última atualização: ${formattedDate}` : 'Carregando...'}
           </p>
         </div>
 

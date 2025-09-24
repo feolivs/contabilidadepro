@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { NotificationTest } from '@/components/notifications/notification-test'
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function TestNotificationsPage() {
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="container mx-auto py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">
@@ -22,6 +22,6 @@ export default function TestNotificationsPage() {
         
         <NotificationTest />
       </div>
-    </MainLayout>
+    </CleanLayout>
   )
 }

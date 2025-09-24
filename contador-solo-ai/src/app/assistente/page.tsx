@@ -23,6 +23,7 @@ import { TypingIndicator } from '@/components/assistente/typing-indicator'
 // Removido: ConversationContextService - Fase 2 simplificação
 // import { ConversationContextService, type ConversationMessage } from '@/services/conversation-context'
 import { useAuthStore } from '@/store/auth-store'
+import { useRouter } from 'next/navigation'
 import {
   Bot,
   Send,
@@ -113,7 +114,8 @@ const quickActions: QuickAction[] = [
 ]
 
 export default function AssistentePage() {
-  const { user } = useAuthStore()
+  const { user, isLoading, isInitialized } = useAuthStore()
+  const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -127,6 +129,32 @@ export default function AssistentePage() {
   const [activeTab, setActiveTab] = useState('chat')
   const [selectedEmpresa, setSelectedEmpresa] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Verificar autenticação
+  useEffect(() => {
+    if (isInitialized && !isLoading && !user) {
+      router.push('/login?redirect=/assistente')
+    }
+  }, [user, isLoading, isInitialized, router])
+
+  // Mostrar loading enquanto verifica autenticação
+  if (!isInitialized || isLoading) {
+    return (
+      <CleanLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Verificando autenticação...</p>
+          </div>
+        </div>
+      </CleanLayout>
+    )
+  }
+
+  // Redirecionar se não autenticado
+  if (!user) {
+    return null // O useEffect já fará o redirecionamento
+  }
 
   // Hook básico para consulta AI (simplificado)
   const aiQuery = useAIQuery()
@@ -230,7 +258,7 @@ export default function AssistentePage() {
 
     try {
       if (!user?.id) {
-        throw new Error('Usuário não autenticado')
+        throw new Error('Por favor, faça login para usar o assistente contábil.')
       }
 
       // Consulta com contexto inteligente
@@ -257,8 +285,8 @@ export default function AssistentePage() {
       console.error('Erro ao processar mensagem:', error)
 
       const errorContent = error instanceof Error
-        ? error.message === 'Usuário não autenticado'
-          ? 'Por favor, faça login para usar o assistente.'
+        ? error.message.includes('login')
+          ? error.message
           : `Erro: ${error.message}`
         : 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.'
 

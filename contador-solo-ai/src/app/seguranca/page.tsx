@@ -4,7 +4,7 @@
 
 import { Metadata } from 'next'
 import { SecuritySettings } from '@/components/security/security-settings'
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 
 export const metadata: Metadata = {
   title: 'Configurações de Segurança | ContabilidadePRO',
@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 
 export default function SecurityPage() {
   return (
-    <MainLayout>
+    <CleanLayout>
       <SecuritySettings />
-    </MainLayout>
+    </CleanLayout>
   )
 }

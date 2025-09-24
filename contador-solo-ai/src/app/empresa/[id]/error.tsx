@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, RefreshCw, Building2, ArrowLeft } from 'lucide-react'
 
@@ -19,7 +19,7 @@ export default function EmpresaFullPageError({ error, reset }: EmpresaFullPageEr
   }, [error])
 
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-6 max-w-md">
           <div className="space-y-4">
@@ -80,6 +80,6 @@ export default function EmpresaFullPageError({ error, reset }: EmpresaFullPageEr
           )}
         </div>
       </div>
-    </MainLayout>
+    </CleanLayout>
   )
 }

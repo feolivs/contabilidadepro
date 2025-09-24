@@ -12,28 +12,7 @@ import {
   StatusProcessamento
 } from '@/types/documento'
 
-// Função para mapear tipos do OCR para tipos da tabela
-function mapOCRTypeToDocumentType(ocrType: string): TipoDocumento | null {
-  const mapping: Record<string, TipoDocumento> = {
-    'nota_fiscal': 'NFE',
-    'nota_fiscal_entrada': 'NFE',
-    'nota_fiscal_saida': 'NFE',
-    'nfe': 'NFE',
-    'nfce': 'NFCE',
-    'nfse': 'NFSE',
-    'cte': 'CTE',
-    'das': 'OUTROS', // DAS não está na enum, usar 'OUTROS'
-    'boleto': 'BOLETO',
-    'boleto_bancario': 'BOLETO',
-    'recibo': 'RECIBO',
-    'recibo_pagamento': 'RECIBO',
-    'contrato': 'CONTRATO',
-    'extrato': 'EXTRATO',
-    'extrato_bancario': 'EXTRATO'
-  }
 
-  return mapping[ocrType.toLowerCase()] || null
-}
 
 // Hook para buscar documentos com filtros
 export function useDocumentos(filter?: DocumentoFilter) {
@@ -193,9 +172,9 @@ export function useUploadDocumento() {
         empresa: empresa
       }
 
-      // 4. Processar documento com IA (assíncrono)
+      // 4. Processar documento com IA usando Edge Function unificada
       try {
-        console.log('Chamando intelligent-document-processor com:', {
+        console.log('Chamando document-processor-unified com:', {
           documentId: documento.id,
           filePath: filePath,
           fileName: arquivo.name,
@@ -203,79 +182,84 @@ export function useUploadDocumento() {
           empresaId: data.empresa_id
         })
 
-        // Processar documento com OCR real usando pdf-ocr-service
-        const { data: processData, error: processError } = await supabase.functions.invoke('pdf-ocr-service', {
+        // Processar documento com OCR usando document-processor-unified
+        const { data: processData, error: processError } = await supabase.functions.invoke('document-processor-unified', {
           body: {
+            action: 'process_ocr',
             documentId: documento.id,
             filePath: filePath,
             fileName: arquivo.name,
             options: {
               language: 'por',
               quality: 'high',
-              forceOCR: true,
-              enableCache: false
+              extractionMode: 'complete',
+              enableAI: true,
+              extractTables: true,
+              enableCache: true,
+              documentType: data.tipo_documento
             }
           }
         })
 
-        console.log('Resposta do processamento OCR:', { processData, processError })
+        console.log('Resposta do processamento unificado:', { processData, processError })
 
         if (processError) {
-          console.error('Erro no processamento OCR:', processError)
+          console.error('Erro no processamento unificado:', processError)
           // Atualizar status para erro
           await supabase
             .from('documentos')
             .update({
               status_processamento: 'erro',
-              observacoes: `Erro no OCR: ${processError.message}`,
+              observacoes: `Erro no processamento: ${processError.message}`,
               updated_at: new Date().toISOString()
             })
             .eq('id', documento.id)
         } else if (processData && processData.success) {
-          // Processar resultado do OCR
-          const ocrResult = processData
+          // Processar resultado do processamento unificado
+          const unifiedResult = processData.data
 
-          // Atualizar documento com dados extraídos
+          // Atualizar documento com dados extraídos universais
           const updateData: any = {
             status_processamento: 'processado',
-            dados_extraidos: ocrResult.structuredData || {},
+            dados_extraidos: {
+              // Manter compatibilidade com estrutura antiga
+              confidence: unifiedResult.confidence_score,
+              extraction_method: 'unified_processor',
+              extraction_confidence: unifiedResult.confidence_score,
+
+              // Novos dados universais
+              raw_text: unifiedResult.raw_text,
+              document_type: unifiedResult.document_type,
+              entities: unifiedResult.entities,
+              financial_data: unifiedResult.financial_data,
+              dates: unifiedResult.dates,
+              contacts: unifiedResult.contacts,
+              additional_fields: unifiedResult.additional_fields,
+              relationships: unifiedResult.relationships,
+              insights: unifiedResult.insights,
+
+              // Dados específicos extraídos para compatibilidade
+              numero_documento: unifiedResult.entities?.find(e => e.type === 'other' && e.context.includes('número'))?.value,
+              valor_total: unifiedResult.financial_data?.find(f => f.type === 'total')?.value,
+              data_emissao: unifiedResult.dates?.find(d => d.type === 'emission')?.date,
+              empresa_emitente: unifiedResult.entities?.find(e => e.type === 'company')?.value,
+              cnpj_emitente: unifiedResult.entities?.find(e => e.value.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/))?.value
+            },
             data_processamento: new Date().toISOString(),
-            observacoes: `OCR processado com ${ocrResult.method} - Confiança: ${Math.round(ocrResult.confidence * 100)}%`,
+            observacoes: `Processamento unificado - Confiança: ${Math.round(unifiedResult.confidence_score * 100)}% - ${unifiedResult.entities?.length || 0} entidades encontradas`,
             updated_at: new Date().toISOString()
           }
 
-          // Adicionar dados estruturados se disponíveis
-          if (ocrResult.structuredData) {
-            updateData.dados_extraidos = ocrResult.structuredData
-            updateData.data_processamento = new Date().toISOString()
+          // Extrair campos específicos para compatibilidade com tabela
+          if (unifiedResult.financial_data?.length > 0) {
+            const maiorValor = Math.max(...unifiedResult.financial_data.map(f => f.value))
+            updateData.valor_total = maiorValor
+            console.log('Valor total detectado:', maiorValor)
+          }
 
-            // Atualizar campos específicos se detectados nos dados estruturados
-            if (ocrResult.structuredData.cnpj) {
-              // Não temos campo cnpj_emitente na tabela, vamos manter nos dados_extraidos
-              console.log('CNPJ detectado:', ocrResult.structuredData.cnpj)
-            }
-
-            if (ocrResult.structuredData.valores && ocrResult.structuredData.valores.length > 0) {
-              // Pegar o maior valor como valor total (heurística)
-              const maiorValor = Math.max(...ocrResult.structuredData.valores.map((v: any) => v.valor))
-              updateData.valor_total = maiorValor
-              console.log('Valor total detectado:', maiorValor)
-            }
-
-            if (ocrResult.structuredData.numeroDocumento) {
-              updateData.numero_documento = ocrResult.structuredData.numeroDocumento
-              console.log('Número do documento detectado:', ocrResult.structuredData.numeroDocumento)
-            }
-
-            // Atualizar tipo de documento se detectado e for válido
-            if (ocrResult.structuredData.documentType && ocrResult.structuredData.documentType !== 'unknown') {
-              // Mapear tipos do OCR para tipos da tabela
-              const tipoMapeado = mapOCRTypeToDocumentType(ocrResult.structuredData.documentType)
-              if (tipoMapeado) {
-                updateData.tipo_documento = tipoMapeado
-                console.log('Tipo de documento detectado:', tipoMapeado)
-              }
-            }
+          if (updateData.dados_extraidos.numero_documento) {
+            updateData.numero_documento = updateData.dados_extraidos.numero_documento
+            console.log('Número do documento detectado:', updateData.dados_extraidos.numero_documento)
           }
 
           await supabase

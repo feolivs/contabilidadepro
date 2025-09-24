@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,7 +24,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { setUser } = useAuthStore()
+
+  // Obter URL de redirecionamento dos parâmetros
+  const redirectUrl = searchParams.get('redirect') || '/dashboard'
 
   // Usar hook Supabase que gerencia autenticação
   const supabaseClient = useSupabase()
@@ -73,7 +77,7 @@ export default function LoginPage() {
       if (authData?.user) {
 
         setUser(authData.user)
-        router.push('/dashboard')
+        router.push(redirectUrl)
       } else {
         setError('root', { message: 'Erro inesperado. Tente novamente.' })
       }
@@ -98,7 +102,7 @@ export default function LoginPage() {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}${redirectUrl}`,
         },
       })
 
@@ -127,7 +131,7 @@ export default function LoginPage() {
     }
 
     setUser(mockUser as any)
-    router.push('/dashboard')
+    router.push(redirectUrl)
   }
 
   return (

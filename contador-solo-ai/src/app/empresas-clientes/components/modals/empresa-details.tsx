@@ -85,7 +85,7 @@ export function EmpresaDetailsModal({
       case 'Lucro Real':
         return 'bg-purple-100 text-purple-800 hover:bg-purple-200'
       default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
     }
   }
 

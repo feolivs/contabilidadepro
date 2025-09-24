@@ -63,3 +63,36 @@ export const toISODate = (date: Date | string) => {
 export const formatForInput = (date: Date | string) => {
   return formatDate(date, 'yyyy-MM-dd')
 }
+
+/**
+ * Formata data de forma segura para hidratação SSR
+ * Evita diferenças entre servidor e cliente
+ */
+export const formatDateSafe = (date: Date | string, formatStr: string = 'dd/MM/yyyy HH:mm') => {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date
+    // Verificar se a data é válida
+    if (isNaN(dateObj.getTime())) {
+      return 'Data inválida'
+    }
+    return format(dateObj, formatStr, { locale: ptBR })
+  } catch (error) {
+    console.warn('Erro ao formatar data:', error)
+    return 'Data inválida'
+  }
+}
+
+/**
+ * Hook para formatação de data no cliente (evita hidratação)
+ * Use em componentes que precisam evitar diferenças servidor/cliente
+ */
+export const useClientDateFormat = () => {
+  const formatDate = (date: Date | string, formatStr: string = 'dd/MM/yyyy HH:mm') => {
+    if (typeof window === 'undefined') {
+      return '' // Retorna vazio no servidor
+    }
+    return formatDateSafe(date, formatStr)
+  }
+
+  return { formatDate }
+}

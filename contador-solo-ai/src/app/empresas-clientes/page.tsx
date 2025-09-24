@@ -19,7 +19,12 @@ import { CreateEmpresaModal } from './components/modals/create-empresa'
 import { EditEmpresaModal } from './components/modals/edit-empresa'
 import { EmpresaDetailsModal } from './components/modals/empresa-details'
 import { EmpresaDocumentsModal } from './components/modals/empresa-documents'
-import { useEmpresasUnified } from '@/hooks/use-empresas-unified'
+import {
+  useEmpresasUnified,
+  useCreateEmpresaUnified,
+  useUpdateEmpresaUnified,
+  useDeleteEmpresaUnified
+} from '@/hooks/use-empresas-unified'
 import { useExport } from '@/hooks/use-export'
 import { toast } from 'sonner'
 import {
@@ -141,6 +146,11 @@ export default function EmpresasClientesPage() {
     enabled: true
   })
 
+  // Hooks para operações CRUD
+  const createEmpresa = useCreateEmpresaUnified()
+  const updateEmpresa = useUpdateEmpresaUnified()
+  const deleteEmpresa = useDeleteEmpresaUnified()
+
   // Handlers
   const handleRefresh = useCallback(() => {
     refetch()
@@ -180,13 +190,14 @@ export default function EmpresasClientesPage() {
   const handleBulkDelete = useCallback(async (empresas: EmpresaUnified[]) => {
     try {
       for (const empresa of empresas) {
-        await deleteEmpresa(empresa.id)
+        await deleteEmpresa.mutateAsync(empresa.id)
       }
       toast.success(`${empresas.length} empresas excluídas com sucesso`)
     } catch (error) {
+      console.error('Erro ao excluir empresas:', error)
       toast.error('Erro ao excluir empresas')
     }
-  }, [deleteEmpresa])
+  }, [deleteEmpresa.mutateAsync])
 
   const handleBulkExport = useCallback((empresas: EmpresaUnified[]) => {
     // Fallback para exportação rápida (será substituído pelo modal)
@@ -220,24 +231,26 @@ export default function EmpresasClientesPage() {
   const handleBulkActivate = useCallback(async (empresas: EmpresaUnified[]) => {
     try {
       for (const empresa of empresas) {
-        await updateEmpresa(empresa.id, { ativa: true })
+        await updateEmpresa.mutateAsync({ id: empresa.id, ativa: true })
       }
       toast.success(`${empresas.length} empresas ativadas com sucesso`)
     } catch (error) {
+      console.error('Erro ao ativar empresas:', error)
       toast.error('Erro ao ativar empresas')
     }
-  }, [updateEmpresa])
+  }, [updateEmpresa.mutateAsync])
 
   const handleBulkDeactivate = useCallback(async (empresas: EmpresaUnified[]) => {
     try {
       for (const empresa of empresas) {
-        await updateEmpresa(empresa.id, { ativa: false })
+        await updateEmpresa.mutateAsync({ id: empresa.id, ativa: false })
       }
       toast.success(`${empresas.length} empresas desativadas com sucesso`)
     } catch (error) {
+      console.error('Erro ao desativar empresas:', error)
       toast.error('Erro ao desativar empresas')
     }
-  }, [updateEmpresa])
+  }, [updateEmpresa.mutateAsync])
 
   // Handlers para ações das empresas
   const handleEditEmpresa = useCallback((empresa: EmpresaUnified) => {
@@ -245,10 +258,13 @@ export default function EmpresasClientesPage() {
     setEditModalOpen(true)
   }, [])
 
-  const handleDeleteEmpresa = useCallback((empresa: EmpresaUnified) => {
-    console.log('Excluir empresa:', empresa.id)
-    // TODO: Implementar confirmação e exclusão
-  }, [])
+  const handleDeleteEmpresa = useCallback(async (empresa: EmpresaUnified) => {
+    try {
+      await deleteEmpresa.mutateAsync(empresa.id)
+    } catch (error) {
+      console.error('Erro ao excluir empresa:', error)
+    }
+  }, [deleteEmpresa.mutateAsync])
 
   const handleViewEmpresa = useCallback((empresa: EmpresaUnified) => {
     setSelectedEmpresa(empresa)
@@ -315,10 +331,10 @@ export default function EmpresasClientesPage() {
       <CleanLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               Erro ao carregar empresas
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               {error?.message || 'Ocorreu um erro inesperado'}
             </p>
             <Button onClick={handleRefresh} className="flex items-center gap-2">

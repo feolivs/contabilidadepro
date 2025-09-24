@@ -121,6 +121,16 @@ cd contador-solo-ai && npm run test:e2e:watch
 cd contador-solo-ai && npm run test:e2e:coverage
 cd contador-solo-ai && npm run test:e2e:full
 cd contador-solo-ai && npm run test:e2e:report
+
+# OCR-specific tests
+cd contador-solo-ai && npm run test:ocr
+cd contador-solo-ai && npm run test:ocr:unit
+cd contador-solo-ai && npm run test:ocr:integration
+cd contador-solo-ai && npm run test:ocr:e2e
+cd contador-solo-ai && npm run test:ocr:precision
+cd contador-solo-ai && npm run test:ocr:all
+cd contador-solo-ai && npm run test:ocr:watch
+cd contador-solo-ai && npm run test:ocr:ci
 ```
 
 ## Key Environment Variables

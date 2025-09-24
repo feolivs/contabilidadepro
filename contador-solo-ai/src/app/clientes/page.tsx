@@ -1,180 +1,71 @@
-import { Suspense } from 'react'
-import { CleanLayout } from '@/components/layout/clean-layout'
-import { ClientesContent } from '@/components/clientes/clientes-content'
-import { ClientesStats } from '@/components/clientes/clientes-stats'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+'use client'
 
-// Tipos
-export interface Empresa {
-  id: string
-  nome: string
-  nome_fantasia?: string
-  cnpj?: string
-  regime_tributario?: string
-  atividade_principal?: string
-  status?: string
-  ativa: boolean
-  email?: string
-  telefone?: string
-  endereco?: string
-  created_at: string
-  updated_at: string
-}
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Building2, ArrowRight, Users } from 'lucide-react'
 
-export interface EmpresasStats {
-  total: number
-  ativas: number
-  simplesNacional: number
-  lucroPresumido: number
-  lucroReal: number
-  mei: number
-  novasEsteMes: number
-  percentualSimplesNacional: number
-  percentualLucroPresumido: number
-}
+export default function ClientesRedirectPage() {
+  const router = useRouter()
 
-// Server Component para buscar dados
-async function getEmpresas(): Promise<Empresa[]> {
-  const cookieStore = await cookies()
+  useEffect(() => {
+    // Redirect automático após 3 segundos
+    const timer = setTimeout(() => {
+      router.push('/empresas-clientes')
+    }, 3000)
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-
-  try {
-    const { data, error } = await supabase
-      .from('empresas')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-
-      return []
-    }
-
-    return data || []
-  } catch (_error) {
-
-    return []
+    return () => clearTimeout(timer)
+  }, [router])
+  const handleRedirect = () => {
+    router.push('/empresas-clientes')
   }
-}
 
-// Função para calcular estatísticas no servidor
-function calculateStats(empresas: Empresa[]): EmpresasStats {
-  const total = empresas.length
-  const ativas = empresas.filter(e => e.ativa).length
-  const simplesNacional = empresas.filter(e => e.regime_tributario === 'simples').length
-  const lucroPresumido = empresas.filter(e => e.regime_tributario === 'lucro_presumido').length
-  const lucroReal = empresas.filter(e => e.regime_tributario === 'lucro_real').length
-  const mei = empresas.filter(e => e.regime_tributario === 'mei').length
-
-  const now = new Date()
-  const novasEsteMes = empresas.filter(e => {
-    const created = new Date(e.created_at)
-    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear()
-  }).length
-
-  return {
-    total,
-    ativas,
-    simplesNacional,
-    lucroPresumido,
-    lucroReal,
-    mei,
-    novasEsteMes,
-    percentualSimplesNacional: total > 0 ? Math.round((simplesNacional / total) * 100) : 0,
-    percentualLucroPresumido: total > 0 ? Math.round((lucroPresumido / total) * 100) : 0,
-  }
-}
-
-// Componente de Loading para as estatísticas
-function StatsLoading() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Card key={i}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-3 w-20 mt-1" />
-          </CardContent>
-        </Card>
-      ))}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md mx-4">
+        <CardContent className="p-8 text-center space-y-6">
+          <div className="flex justify-center items-center space-x-2 text-blue-600">
+            <Users className="h-8 w-8" />
+            <ArrowRight className="h-6 w-6" />
+            <Building2 className="h-8 w-8" />
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Página Atualizada!
+            </h1>
+            <p className="text-gray-600">
+              A gestão de clientes foi unificada com empresas em uma nova página mais completa.
+            </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+            <h3 className="font-semibold text-blue-900 mb-2">✨ Novidades:</h3>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>• Busca inteligente com sugestões</li>
+              <li>• Filtros avançados por localização</li>
+              <li>• Seleção múltipla e ações em lote</li>
+              <li>• Exportação em Excel, CSV e PDF</li>
+              <li>• Interface moderna e responsiva</li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <Button
+              onClick={handleRedirect}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Building2 className="h-4 w-4" />
+              Ir para Empresas & Clientes
+            </Button>
+
+            <p className="text-xs text-gray-500">
+              Redirecionamento automático em 3 segundos...
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
-
-// Componente de Loading para o conteúdo
-function ContentLoading() {
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-4 w-48" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex gap-4">
-            <Skeleton className="h-10 flex-1" />
-            <Skeleton className="h-10 w-40" />
-            <Skeleton className="h-10 w-40" />
-            <Skeleton className="h-10 w-20" />
-          </div>
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// Server Component principal
-export default async function ClientesPage() {
-  // Buscar dados no servidor
-  const empresas = await getEmpresas()
-  const stats = calculateStats(empresas)
-
-  return (
-    <CleanLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
-            <p className="text-muted-foreground">
-              Gerencie suas empresas clientes e suas informações
-            </p>
-          </div>
-        </div>
-
-        {/* Estatísticas com Suspense */}
-        <Suspense fallback={<StatsLoading />}>
-          <ClientesStats stats={stats} />
-        </Suspense>
-
-        {/* Conteúdo principal com Suspense */}
-        <Suspense fallback={<ContentLoading />}>
-          <ClientesContent initialEmpresas={empresas} initialStats={stats} />
-        </Suspense>
-      </div>
-    </CleanLayout>
-  )
-}
-

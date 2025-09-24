@@ -74,7 +74,14 @@
       "Bash(yes Y)",
       "mcp__supabase__get_logs",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "mcp__n8n-mcp__get_node_info",
+      "mcp__n8n-mcp__get_node_documentation",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_press_key",
+      "mcp__playwright__browser_hover"
     ],
     "deny": [],
     "ask": []

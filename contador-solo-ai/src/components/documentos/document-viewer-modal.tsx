@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { DocumentProcessingDetails } from './document-processing-status'
 import { PDFViewer } from './pdf-viewer'
 import { OCRInfoPanel } from './ocr-info-panel'
+import { UniversalDataViewer } from './UniversalDataViewer'
 import { Documento } from '@/types/documento'
 import { TIPOS_DOCUMENTO_LABELS, TIPOS_DOCUMENTO_COLORS } from '@/types/documento'
 import { 
@@ -302,6 +303,11 @@ export function DocumentViewerModal({ documento, isOpen, onClose }: DocumentView
                 </div>
               </div>
             )}
+
+            <Separator />
+
+            {/* Visualizador Universal de Dados */}
+            <UniversalDataViewer documento={documento} />
 
             <Separator />
 

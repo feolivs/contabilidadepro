@@ -5,7 +5,7 @@
 
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { 
   DashboardStats, 
   DashboardStatsSkeleton,
@@ -28,7 +28,7 @@ export const metadata: Metadata = generateDashboardMetadata('overview')
 
 export default function DashboardOptimizedPage() {
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -167,7 +167,7 @@ export default function DashboardOptimizedPage() {
           </div>
         </section>
       </div>
-    </MainLayout>
+    </CleanLayout>
   )
 }
 

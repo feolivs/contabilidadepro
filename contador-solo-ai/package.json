@@ -34,7 +34,15 @@
     "test:e2e:watch": "jest --config jest.config.e2e.js --watch",
     "test:e2e:coverage": "jest --config jest.config.e2e.js --coverage",
     "test:e2e:full": "tsx scripts/run-e2e-tests.ts",
-    "test:e2e:report": "tsx scripts/run-e2e-tests.ts && open test-reports/e2e-report.html"
+    "test:e2e:report": "tsx scripts/run-e2e-tests.ts && open test-reports/e2e-report.html",
+    "test:ocr": "jest --testPathPatterns=ocr",
+    "test:ocr:unit": "jest --testPathPatterns=ocr.*unit",
+    "test:ocr:integration": "jest --testPathPatterns=ocr.*integration",
+    "test:ocr:e2e": "jest --testPathPatterns=ocr.*e2e",
+    "test:ocr:precision": "jest --testPathPatterns=ocr.*precision",
+    "test:ocr:all": "jest --testPathPatterns=ocr --coverage --verbose",
+    "test:ocr:watch": "jest --testPathPatterns=ocr --watch",
+    "test:ocr:ci": "jest --testPathPatterns=ocr --ci --coverage --watchAll=false --maxWorkers=2"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

@@ -1,9 +1,9 @@
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 export default function EmpresaFullPageLoading() {
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="space-y-6">
         {/* Header Skeleton */}
         <div className="flex items-center justify-between">
@@ -108,6 +108,6 @@ export default function EmpresaFullPageLoading() {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </CleanLayout>
   )
 }

@@ -258,7 +258,7 @@ export function useEmpresasStats(): EmpresasStats {
     crescimentoMensal: 0,
     crescimentoAnual: 0,
 
-    ultimaAtualizacao: new Date().toISOString()
+    ultimaAtualizacao: new Date(Date.now()).toISOString()
   }
 
   // Calcular percentuais

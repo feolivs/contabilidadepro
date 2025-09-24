@@ -33,6 +33,8 @@ import {
   CheckCircle2
 } from 'lucide-react'
 import { useUploadDocumento } from '@/hooks/use-documentos'
+import { useDocumentProcessorUnified } from '@/hooks/use-document-processor-unified'
+import { ProcessingDashboard } from './ProcessingDashboard'
 import { useEmpresas } from '@/hooks/use-empresas'
 import {
   TipoDocumento,
@@ -76,6 +78,11 @@ export function UploadDocumentoModal({
 
   const { data: empresas = [] } = useEmpresas()
   const uploadMutation = useUploadDocumento()
+  const {
+    uploadAndProcess,
+    processingStatus,
+    isLoading: isProcessing
+  } = useDocumentProcessorUnified()
 
   const form = useForm<UploadFormData>({
     resolver: zodResolver(uploadSchema),
@@ -406,6 +413,13 @@ export function UploadDocumentoModal({
             </Button>
           </div>
         </form>
+
+        {/* Dashboard de processamento */}
+        {processingStatus && (
+          <div className="mt-6">
+            <ProcessingDashboard status={processingStatus} />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { OCRPerformanceDashboard } from '@/components/documentos/ocr-performance-dashboard'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
@@ -10,7 +10,7 @@ export default function DocumentosPerformancePage() {
   const router = useRouter()
 
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -34,6 +34,6 @@ export default function DocumentosPerformancePage() {
         {/* Dashboard */}
         <OCRPerformanceDashboard />
       </div>
-    </MainLayout>
+    </CleanLayout>
   )
 }

@@ -14,7 +14,8 @@ export const APP_ROUTES = {
   DASHBOARD_OPTIMIZED: '/dashboard-optimized',
 
   // Gestão
-  CLIENTES: '/clientes',
+  CLIENTES: '/clientes', // Deprecated - usar EMPRESAS_CLIENTES
+  EMPRESAS_CLIENTES: '/empresas-clientes',
   EMPRESA: (id: string) => `/empresa/${id}`,
   DOCUMENTOS: '/documentos',
   DOCUMENTOS_OCR: '/documentos-ocr',

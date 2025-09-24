@@ -115,18 +115,18 @@ export function EmpresasList({
     switch (regime) {
       case 'Simples Nacional':
       case 'simples':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
       case 'Lucro Presumido':
       case 'lucro_presumido':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300'
       case 'Lucro Real':
       case 'lucro_real':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
       case 'MEI':
       case 'mei':
-        return 'bg-orange-100 text-orange-800'
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
     }
   }
 
@@ -216,10 +216,10 @@ export function EmpresasList({
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
               <div className="flex items-center space-x-4">
-                <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
+                <div className="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                 <div className="space-y-2 flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                 </div>
               </div>
             </CardContent>
@@ -233,11 +233,11 @@ export function EmpresasList({
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <Building2 className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
             Nenhuma empresa encontrada
           </h3>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Não há empresas que correspondam aos critérios de busca atuais.
           </p>
         </CardContent>
@@ -264,18 +264,18 @@ export function EmpresasList({
             </TableHeader>
             <TableBody>
               {empresas.map((empresa) => (
-                <TableRow key={empresa.id} className="hover:bg-gray-50">
+                <TableRow key={empresa.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <TableCell>
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Building2 className="h-5 w-5 text-blue-600" />
+                      <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                        <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
                           {empresa.nome}
                         </div>
                         {empresa.nome_fantasia && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             {empresa.nome_fantasia}
                           </div>
                         )}
@@ -312,7 +312,7 @@ export function EmpresasList({
                   </TableCell>
 
                   <TableCell>
-                    <div className="flex items-center space-x-1 text-sm text-gray-600">
+                    <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
                       <MapPin className="h-3 w-3" />
                       <span>{formatAddress(empresa.endereco)}</span>
                     </div>
@@ -321,13 +321,13 @@ export function EmpresasList({
                   <TableCell>
                     <div className="space-y-1">
                       {empresa.telefone && (
-                        <div className="flex items-center space-x-1 text-sm text-gray-600">
+                        <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
                           <Phone className="h-3 w-3" />
                           <span>{formatPhone(empresa.telefone)}</span>
                         </div>
                       )}
                       {empresa.email && (
-                        <div className="flex items-center space-x-1 text-sm text-gray-600">
+                        <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
                           <Mail className="h-3 w-3" />
                           <span>{empresa.email}</span>
                         </div>
@@ -355,15 +355,15 @@ export function EmpresasList({
           <CardContent className="p-4">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center space-x-3">
-                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-blue-600" />
+                <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 truncate">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
                     {empresa.nome}
                   </h3>
                   {empresa.nome_fantasia && (
-                    <p className="text-sm text-gray-500 truncate">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                       {empresa.nome_fantasia}
                     </p>
                   )}
@@ -374,7 +374,7 @@ export function EmpresasList({
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-mono text-gray-600">
+                <span className="text-sm font-mono text-gray-600 dark:text-gray-400">
                   {formatCNPJ(empresa.cnpj)}
                 </span>
                 <div className="flex items-center space-x-1">
@@ -394,28 +394,28 @@ export function EmpresasList({
               </Badge>
 
               {empresa.endereco && (
-                <div className="flex items-center space-x-1 text-sm text-gray-600">
+                <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
                   <MapPin className="h-3 w-3 flex-shrink-0" />
                   <span className="truncate">{formatAddress(empresa.endereco)}</span>
                 </div>
               )}
 
               {empresa.telefone && (
-                <div className="flex items-center space-x-1 text-sm text-gray-600">
+                <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
                   <Phone className="h-3 w-3 flex-shrink-0" />
                   <span>{formatPhone(empresa.telefone)}</span>
                 </div>
               )}
 
               {empresa.email && (
-                <div className="flex items-center space-x-1 text-sm text-gray-600">
+                <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
                   <Mail className="h-3 w-3 flex-shrink-0" />
                   <span className="truncate">{empresa.email}</span>
                 </div>
               )}
 
               {empresa.created_at && (
-                <div className="flex items-center space-x-1 text-xs text-gray-500">
+                <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
                   <Calendar className="h-3 w-3" />
                   <span>
                     Criada em {new Date(empresa.created_at).toLocaleDateString('pt-BR')}
@@ -425,8 +425,8 @@ export function EmpresasList({
             </div>
 
             {/* Indicadores de atividade */}
-            <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-              <div className="flex items-center space-x-4 text-xs text-gray-500">
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+              <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                 {empresa.documentos_count !== undefined && (
                   <div className="flex items-center space-x-1">
                     <FileText className="h-3 w-3" />

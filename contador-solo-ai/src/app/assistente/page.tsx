@@ -116,6 +116,11 @@ const quickActions: QuickAction[] = [
 export default function AssistentePage() {
   const { user, isLoading, isInitialized } = useAuthStore()
   const router = useRouter()
+
+  // Hook básico para consulta AI (simplificado) - SEMPRE no topo
+  const aiQuery = useAIQuery()
+  const supabase = useSupabase()
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -128,42 +133,14 @@ export default function AssistentePage() {
   const [input, setInput] = useState('')
   const [activeTab, setActiveTab] = useState('chat')
   const [selectedEmpresa, setSelectedEmpresa] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Verificar autenticação
-  useEffect(() => {
-    if (isInitialized && !isLoading && !user) {
-      router.push('/login?redirect=/assistente')
-    }
-  }, [user, isLoading, isInitialized, router])
-
-  // Mostrar loading enquanto verifica autenticação
-  if (!isInitialized || isLoading) {
-    return (
-      <CleanLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Verificando autenticação...</p>
-          </div>
-        </div>
-      </CleanLayout>
-    )
-  }
-
-  // Redirecionar se não autenticado
-  if (!user) {
-    return null // O useEffect já fará o redirecionamento
-  }
-
-  // Hook básico para consulta AI (simplificado)
-  const aiQuery = useAIQuery()
-  const supabase = useSupabase()
 
   // Estado para empresas do usuário
   const [empresas, setEmpresas] = useState<Array<{id: string, nome: string}>>([])
   const [loadingEmpresas, setLoadingEmpresas] = useState(false)
 
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // TODOS OS HOOKS DEVEM ESTAR NO TOPO - ANTES DE QUALQUER RETURN
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -193,6 +170,13 @@ export default function AssistentePage() {
     }
   }, [user?.id, supabase])
 
+  // Verificar autenticação
+  useEffect(() => {
+    if (isInitialized && !isLoading && !user) {
+      router.push('/login?redirect=/assistente')
+    }
+  }, [user, isLoading, isInitialized, router])
+
   useEffect(() => {
     scrollToBottom()
   }, [messages])
@@ -203,6 +187,25 @@ export default function AssistentePage() {
       carregarEmpresas()
     }
   }, [user?.id, carregarEmpresas])
+
+  // Mostrar loading enquanto verifica autenticação
+  if (!isInitialized || isLoading) {
+    return (
+      <CleanLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Verificando autenticação...</p>
+          </div>
+        </div>
+      </CleanLayout>
+    )
+  }
+
+  // Redirecionar se não autenticado
+  if (!user) {
+    return null // O useEffect já fará o redirecionamento
+  }
 
   const handleRegenerateMessage = async (messageId: string) => {
     const messageIndex = messages.findIndex(m => m.id === messageId)

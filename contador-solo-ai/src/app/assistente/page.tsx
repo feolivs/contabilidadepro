@@ -170,17 +170,10 @@ export default function AssistentePage() {
     }
   }, [user?.id, supabase])
 
-  // Verificar autenticação - apenas redireciona se realmente não autenticado
+  // Verificar autenticação
   useEffect(() => {
-    // Aguardar a inicialização completa do auth store
-    if (isInitialized && !isLoading) {
-      // Se não há usuário após inicialização, redirecionar para login
-      if (!user) {
-        console.log('🔍 Assistente: Redirecionando usuário não autenticado para login')
-        router.push('/login?redirect=/assistente')
-      } else {
-        console.log('🔍 Assistente: Usuário autenticado:', user.email)
-      }
+    if (isInitialized && !isLoading && !user) {
+      router.push('/login?redirect=/assistente')
     }
   }, [user, isLoading, isInitialized, router])
 

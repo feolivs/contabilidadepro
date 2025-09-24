@@ -331,6 +331,38 @@ port = 54327
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
 
+# ✅ Configurações JWT otimizadas para Edge Functions (2025)
+# Configurações específicas por função
+[functions.assistente-contabil-ia]
+verify_jwt = true  # Mantém autenticação para segurança
+
+[functions.pdf-ocr-service]
+verify_jwt = true  # Processa documentos sensíveis
+
+[functions.fiscal-service]
+verify_jwt = true  # Cálculos fiscais precisam autenticação
+
+[functions.realtime-analytics-engine]
+verify_jwt = false # Analytics podem ser públicos
+
+[functions.documentos-service]
+verify_jwt = true  # Documentos precisam autenticação
+
+[functions.empresa-context-service]
+verify_jwt = true  # Dados de empresa são sensíveis
+
+[functions.alerts-service]
+verify_jwt = false # Alertas podem vir de sistemas externos
+
+[functions.security-service]
+verify_jwt = true  # Segurança sempre autenticada
+
+[functions.monitoring-dashboard]
+verify_jwt = false # Monitoramento pode ser público
+
+[functions.voice-assistant-service]
+verify_jwt = true  # Assistente de voz precisa autenticação
+
 # Experimental features may be deprecated any time
 [experimental]
 # Configures Postgres storage engine to use OrioleDB (S3)

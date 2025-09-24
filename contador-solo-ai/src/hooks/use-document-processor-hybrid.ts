@@ -110,6 +110,43 @@ interface ProcessingStatus {
   currentStep?: string
 }
 
+// Funções de mapeamento para tabela unificada
+const mapDocumentCategory = (documentType?: string): 'fiscal' | 'contabil' | 'societario' | 'bancario' => {
+  if (!documentType) return 'fiscal'
+
+  const type = documentType.toLowerCase()
+  if (type.includes('nf') || type.includes('fiscal') || type.includes('das') || type.includes('darf')) {
+    return 'fiscal'
+  }
+  if (type.includes('contrato') || type.includes('ata') || type.includes('procuração')) {
+    return 'societario'
+  }
+  if (type.includes('extrato') || type.includes('boleto') || type.includes('bancário')) {
+    return 'bancario'
+  }
+  return 'contabil'
+}
+
+const mapDocumentType = (documentType?: string): string => {
+  if (!documentType) return 'documento_generico'
+
+  const mappings: Record<string, string> = {
+    'NFe': 'nota_fiscal_eletronica',
+    'NFCe': 'nota_fiscal_consumidor',
+    'DAS': 'das_simples_nacional',
+    'DARF': 'darf_federal',
+    'GPS': 'gps_inss',
+    'Boleto': 'boleto_bancario',
+    'Recibo': 'recibo_pagamento',
+    'Pró-labore': 'pro_labore',
+    'Contrato': 'contrato_social',
+    'Extrato': 'extrato_bancario',
+    'Outro': 'documento_generico'
+  }
+
+  return mappings[documentType] || documentType.toLowerCase().replace(/\s+/g, '_')
+}
+
 /**
  * 🚀 HOOK HÍBRIDO PRINCIPAL
  */
@@ -171,18 +208,22 @@ export function useDocumentProcessorHybrid() {
         message: 'Criando registro no banco...'
       })
 
-      // 2. Criar registro na tabela documentos
+      // 2. Criar registro na tabela unificada
       const { data: documento, error: dbError } = await supabase
-        .from('documentos')
+        .from('documentos_unified')
         .insert({
           empresa_id: user.user_metadata?.empresa_id || user.id,
-          tipo_documento: documentType || 'Outro',
+          user_id: user.id,
+          categoria: mapDocumentCategory(documentType),
+          tipo_documento: mapDocumentType(documentType),
           arquivo_nome: file.name,
           arquivo_tipo: file.type,
           arquivo_tamanho: file.size,
           arquivo_url: `${supabase.storage.from('documentos').getPublicUrl(filePath).data.publicUrl}`,
           arquivo_path: filePath,
-          status_processamento: 'processando'
+          status_processamento: 'processando',
+          metodo_processamento: 'hybrid_processor',
+          dados_extraidos: {}
         })
         .select()
         .single()
@@ -227,38 +268,45 @@ export function useDocumentProcessorHybrid() {
         message: 'Salvando resultados...'
       })
 
-      // 4. Atualizar documento com dados extraídos
+      // 4. Atualizar documento com dados extraídos na tabela unificada
       const result = data.data as UniversalExtractionResult
-      
+
       await supabase
-        .from('documentos')
+        .from('documentos_unified')
         .update({
           status_processamento: 'processado',
+          confianca_extracao: result.confidence,
+          data_processamento: new Date().toISOString(),
+          metodo_processamento: 'hybrid_processor',
           dados_extraidos: {
-            // Manter compatibilidade com estrutura antiga
-            confidence: result.confidence,
-            extraction_method: 'hybrid_processor',
-            extraction_confidence: result.confidence,
-
-            // Novos dados universais
+            // Estrutura universal completa
             raw_text: result.extractedData.raw_text,
             document_type: result.extractedData.document_type,
-            entities: result.extractedData.entities,
-            financial_data: result.extractedData.financial_data,
-            dates: result.extractedData.dates,
-            contacts: result.extractedData.contacts,
-            additional_fields: result.extractedData.additional_fields,
-            relationships: result.extractedData.relationships,
-            insights: result.extractedData.insights,
+            confidence_score: result.confidence,
+            entities: result.extractedData.entities || [],
+            financial_data: result.extractedData.financial_data || [],
+            dates: result.extractedData.dates || [],
+            contacts: result.extractedData.contacts || [],
+            additional_fields: result.extractedData.additional_fields || {},
+            relationships: result.extractedData.relationships || [],
+            insights: [
+              ...(result.extractedData.insights || []),
+              `Processamento híbrido concluído com ${Math.round(result.confidence * 100)}% de confiança`,
+              `${result.extractedData.entities?.length || 0} entidades identificadas`
+            ],
 
-            // Campos específicos para compatibilidade
-            numero_documento: result.extractedData.entities?.find(e => e.type === 'other' && e.context.includes('número'))?.value,
+            // Campos específicos para compatibilidade (mantidos no additional_fields)
+            numero_documento: result.extractedData.entities?.find(e => e.type === 'other' && e.context?.includes('número'))?.value,
             valor_total: result.extractedData.financial_data?.find(f => f.type === 'total')?.value,
             data_emissao: result.extractedData.dates?.find(d => d.type === 'emission')?.date,
             empresa_emitente: result.extractedData.entities?.find(e => e.type === 'company')?.value,
-            cnpj_emitente: result.extractedData.entities?.find(e => e.value.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/))?.value
+            cnpj_emitente: result.extractedData.entities?.find(e => e.value?.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/))?.value,
+
+            // Metadados do processamento
+            extraction_method: 'hybrid_processor',
+            processing_time: result.processingTime,
+            providers_used: result.metadata?.providers_used || ['hybrid_ai']
           },
-          data_processamento: new Date().toISOString(),
           observacoes: `Processamento híbrido - Confiança: ${Math.round(result.confidence * 100)}% - ${result.extractedData.entities?.length || 0} entidades encontradas`,
           updated_at: new Date().toISOString()
         })

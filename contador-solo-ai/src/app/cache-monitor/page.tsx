@@ -118,7 +118,6 @@ export default function CacheMonitorPage() {
               {alert.type === 'error' && <AlertTriangle className="h-4 w-4 text-red-600" />}
               {alert.type === 'warning' && <AlertTriangle className="h-4 w-4 text-yellow-600" />}
               {alert.type === 'success' && <CheckCircle className="h-4 w-4 text-green-600" />}
-              {alert.type === 'info' && <Info className="h-4 w-4 text-blue-600" />}
               <AlertDescription>
                 <div className="space-y-1">
                   <p className={`font-medium ${

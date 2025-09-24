@@ -46,6 +46,7 @@ cd contador-solo-ai && npm run lint:dev
 
 # Format code
 cd contador-solo-ai && npm run format
+cd contador-solo-ai && npm run format:check
 
 # Clean up imports
 cd contador-solo-ai && npm run clean:imports
@@ -56,7 +57,7 @@ cd contador-solo-ai && npm run lint:unused
 
 ### Bundle Analysis
 ```bash
-# Analyze bundle size
+# Analyze bundle size (Windows compatible - uses 'set')
 cd contador-solo-ai && npm run analyze
 
 # Analyze server bundle
@@ -64,6 +65,18 @@ cd contador-solo-ai && npm run analyze:server
 
 # Analyze browser bundle
 cd contador-solo-ai && npm run analyze:browser
+
+# Build with strict linting and type checking
+cd contador-solo-ai && npm run build:strict
+```
+
+### Workers and Background Tasks
+```bash
+# Start background workers
+cd contador-solo-ai && npm run workers:start
+
+# Start workers in development mode
+cd contador-solo-ai && npm run workers:dev
 ```
 
 ### Supabase Development
@@ -76,19 +89,51 @@ supabase start
 
 # Deploy functions
 supabase functions deploy
+
+# Deploy specific function
+supabase functions deploy [function-name]
+
+# View function logs
+supabase logs
+```
+
+### Testing
+```bash
+# Frontend tests
+cd contador-solo-ai && npm test
+cd contador-solo-ai && npm run test:watch
+cd contador-solo-ai && npm run test:coverage
+cd contador-solo-ai && npm run test:unit
+cd contador-solo-ai && npm run test:integration
+cd contador-solo-ai && npm run test:ci
+
+# Edge Functions tests (from root)
+cd supabase/functions && npm test
+cd supabase/functions && npm run test:watch
+cd supabase/functions && npm run test:coverage
+cd supabase/functions && npm run test:unit
+cd supabase/functions && npm run test:integration
+cd supabase/functions && npm run test:ci
+
+# End-to-end tests
+cd contador-solo-ai && npm run test:e2e
+cd contador-solo-ai && npm run test:e2e:watch
+cd contador-solo-ai && npm run test:e2e:coverage
+cd contador-solo-ai && npm run test:e2e:full
+cd contador-solo-ai && npm run test:e2e:report
 ```
 
 ## Key Environment Variables
 
 Required for development:
 ```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+# Supabase Authentication & API
+NEXT_PUBLIC_SUPABASE_URL=           # Your project URL (public)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=      # Anonymous/client key (public, RLS enforced)
+SUPABASE_SERVICE_ROLE_KEY=          # Service key (PRIVATE, bypasses RLS)
 
 # OpenAI (required for AI features)
-OPENAI_API_KEY=
+OPENAI_API_KEY=                     # OpenAI API key (PRIVATE)
 
 # Optional OCR services
 AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=
@@ -96,9 +141,22 @@ AZURE_DOCUMENT_INTELLIGENCE_KEY=
 GOOGLE_VISION_API_KEY=
 
 # Application
-NEXT_PUBLIC_APP_URL=
-NODE_ENV=
+NEXT_PUBLIC_APP_URL=                # Your app URL (public)
+NODE_ENV=                          # development/production
 ```
+
+### Supabase Key Usage
+- **ANON_KEY**: Used in frontend/client code, switches to user JWT after login
+- **SERVICE_KEY**: Used only in Edge Functions/server code, has full database access
+- **Never expose SERVICE_KEY** in client-side code or commit to version control
+
+### Authentication Flow
+ContabilidadePRO uses Supabase Auth with the following patterns:
+- Email/password authentication for accountants
+- Magic link support for passwordless login
+- MFA enrollment for enhanced security
+- User context automatically applied to all database operations via RLS
+- Admin functions (user invites) require SERVICE_KEY in Edge Functions
 
 ## Code Organization
 
@@ -112,21 +170,48 @@ NODE_ENV=
 
 ### Key Application Routes
 - `/` - Landing page
-- `/dashboard` - Main dashboard (optimized version at `/dashboard-optimized`)
+- `/login` - Authentication page
+- `/unauthorized` - Access denied page
+- `/dashboard` - Main dashboard
+- `/dashboard-optimized` - Optimized dashboard version
+- `/dashboard-comparativo` - Comparative dashboard
 - `/assistente` - AI chat assistant
 - `/calculos` - Tax calculations
+- `/novo-calculo` - New calculation wizard
 - `/documentos` - Document management with OCR
+- `/documentos-ocr` - OCR processing interface
 - `/clientes` - Client management
+- `/empresas` - Company management (multi-company support)
+- `/empresa` - Individual company management
 - `/prazos` - Tax deadlines and calendar
+- `/calendario` - Calendar view
 - `/relatorios` - Reports and analytics
+- `/relatorios-ia` - AI-powered reports
+- `/comparacao` - Comparison tools
+- `/seguranca` - Security settings
+- `/export` - Data export functionality
+- `/satisfacao` - User satisfaction/feedback
+- `/test-ocr` - OCR testing interface
+- `/test-notifications` - Notification testing
+- `/cache-migration` - Cache migration tools
+- `/cache-monitor` - Cache monitoring
+- `/edge-runtime-demo` - Edge runtime demonstrations
+- `/extensoes-demo` - Extensions demonstrations
 
 ### Supabase Functions (`supabase/functions/`)
 - `assistente-contabil-ia/` - AI assistant service
 - `pdf-ocr-service/` - Document OCR processing
 - `fiscal-service/` - Tax calculation services
-- `auth-security-monitor/` - Authentication monitoring
-- `mfa-enrollment-handler/` - Multi-factor authentication
 - `realtime-analytics-engine/` - Real-time analytics
+- `documentos-service/` - Unified document processing service
+- `data-export-service/` - Data export functionality
+- `relatorio-generator-service/` - Report generation
+- `empresa-context-service/` - Company context and data
+- `monitoring-dashboard/` - System monitoring and metrics
+- `alerts-service/` - Alert escalation and notification service
+- `security-service/` - Security monitoring and compliance
+- `voice-assistant-service/` - Voice assistant functionality
+- `_shared/` - Shared utilities and middleware
 
 ## Development Guidelines
 
@@ -135,6 +220,7 @@ NODE_ENV=
 - Production builds use stricter linting (`lint:prod`)
 - TypeScript strict mode enabled
 - Tailwind CSS for styling with custom design system
+- Two ESLint configs: `.eslintrc.development.js` (permissive) and `.eslintrc.production.js` (strict)
 
 ### Performance Optimizations
 - Turbopack enabled for faster builds
@@ -155,10 +241,18 @@ NODE_ENV=
 
 ## Testing Strategy
 
-Currently using:
+### Frontend Testing
+- Jest with React Testing Library for unit tests
+- E2E testing framework configured
 - TypeScript for compile-time type checking
-- ESLint for code quality
-- Manual testing in development
+- Coverage reporting with thresholds
+
+### Edge Functions Testing
+- Jest with TypeScript support for Edge Functions
+- Unit and integration test patterns
+- Coverage threshold: 80% functions/lines, 70% branches
+- Test isolation with mocks for external services
+- Structured test reporting in `test-reports/`
 
 ## Common Tasks
 
@@ -171,35 +265,73 @@ Currently using:
 1. Create function directory in `supabase/functions/`
 2. Implement `index.ts` with proper error handling
 3. Use shared utilities from `supabase/functions/_shared/`
-4. Deploy with `supabase functions deploy [function-name]`
+4. Add tests in `__tests__/` directory following Jest patterns
+5. Run tests: `cd supabase/functions && npm test`
+6. Deploy with `supabase functions deploy [function-name]`
+
+### Running Tests
+- **Frontend**: Always run from `contador-solo-ai/` directory
+- **Edge Functions**: Always run from `supabase/functions/` directory
+- Use coverage reports to maintain quality standards
+- Check test reports in respective `test-reports/` directories
 
 ### Working with Database
 - Database types are auto-generated with `npm run supabase:types`
 - Use Supabase client from `src/lib/supabase.ts`
 - Follow RLS patterns for data security
+- User ID automatically available in RLS policies via `auth.uid()`
+- Reference users in tables using `user_id` fields pointing to `auth.users`
+
+### User Management Patterns
+- **Frontend Auth**: Use `supabase.auth.signInWithPassword()`, `signUp()`, `signOut()`
+- **User Data**: Access current user with `supabase.auth.getUser()`
+- **Password Reset**: Use `supabase.auth.resetPasswordForEmail()`
+- **Admin Operations**: Use Edge Functions with SERVICE_KEY for user invites
+- **Profile Management**: Create `profiles` table linked to `auth.users.id`
 
 ### Debugging
-- Use structured logging from `src/lib/simple-logger.ts`
-- Chrome DevTools for client-side debugging
-- Supabase logs for function debugging
-- Edge function inspector on port 8083
+- **Frontend**: Use structured logging from `src/lib/simple-logger.ts`
+- **Frontend**: Chrome DevTools for client-side debugging
+- **Edge Functions**: Use structured logger from `_shared/structured-logger.ts`
+- **Edge Functions**: Supabase logs with `supabase logs`
+- **Edge Functions**: Edge function inspector on port 8083
+- **Testing**: Jest verbose mode enabled for detailed test output
+
+### Platform-Specific Notes
+- **Windows**: Bundle analysis scripts use `set` command instead of `export`
+- **Cross-platform**: Turbopack is the recommended build tool for faster development
+- **Environment**: All environment files follow `.env.local` pattern with validation
 
 ## Important Files to Know
 
-- `contador-solo-ai/next.config.ts` - Next.js configuration with performance optimizations
-- `contador-solo-ai/eslint.config.mjs` - ESLint configuration (permissive for development)
-- `contador-solo-ai/src/lib/supabase.ts` - Supabase client configuration
+### Configuration Files
+- `contador-solo-ai/next.config.ts` - Next.js configuration with performance optimizations and bundle analyzer
+- `contador-solo-ai/eslint.config.mjs` - Main ESLint configuration
+- `contador-solo-ai/.eslintrc.development.js` - Development ESLint config (permissive)
+- `contador-solo-ai/.eslintrc.production.js` - Production ESLint config (strict)
+- `contador-solo-ai/src/lib/supabase.ts` - Supabase client configuration with error handling
 - `contador-solo-ai/src/lib/openai.ts` - OpenAI client setup
+- `contador-solo-ai/.env.example` - Environment variables template
 - `supabase/config.toml` - Supabase local development configuration
 - `contador-solo-ai/src/types/database.types.ts` - Auto-generated database types
+
+### Testing Configuration
+- `contador-solo-ai/jest.config.js` - Frontend Jest configuration
+- `supabase/functions/jest.config.js` - Edge Functions Jest configuration
+- `supabase/functions/jest.setup.js` - Test setup for Edge Functions
+- `supabase/functions/package.json` - Edge Functions dependencies and test scripts
+
+### Shared Utilities
+- `supabase/functions/_shared/structured-logger.ts` - Centralized logging
+- `supabase/functions/_shared/circuit-breaker.ts` - Circuit breaker pattern
+- `supabase/functions/_shared/memory-managed-cache.ts` - Memory management
+- `supabase/functions/_shared/error-handler.ts` - Error handling middleware
 
 ## Brazilian Tax Domain Knowledge
 
 The system includes specialized knowledge for:
 - DAS (Documento de Arrecadação do Simples Nacional) calculations
 - NFe (Nota Fiscal Eletrônica) processing
-- SEFAZ integrations
-- Receita Federal API integrations
 - Brazilian tax compliance monitoring
 - Document classification for Brazilian fiscal documents
 

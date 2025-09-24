@@ -174,7 +174,7 @@ export const createMockSupabaseClient = () => ({
             error: null
           })
 
-        case 'documentos-analytics-service':
+        case 'documentos-service':
           switch (body.operation) {
             case 'calculate_metrics':
               return Promise.resolve({

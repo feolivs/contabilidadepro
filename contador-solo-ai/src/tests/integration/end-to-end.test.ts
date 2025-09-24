@@ -205,10 +205,11 @@ describe('🔄 Testes End-to-End - Fluxo Completo', () => {
       expect(result.processing_time).toBeGreaterThan(0)
     })
 
-    it('deve processar documentos-analytics-service corretamente', async () => {
-      const result = await callEdgeFunction('documentos-analytics-service', {
+    it('deve processar documentos-service corretamente', async () => {
+      const result = await callEdgeFunction('documentos-service', {
         operation: 'calculate_metrics',
         empresa_id: testEmpresa.id,
+        user_id: 'test-user-id',
         period_months: 6
       })
 
@@ -219,10 +220,11 @@ describe('🔄 Testes End-to-End - Fluxo Completo', () => {
     })
 
     it('deve gerar insights de IA corretamente', async () => {
-      const result = await callEdgeFunction('documentos-analytics-service', {
+      const result = await callEdgeFunction('documentos-service', {
         operation: 'generate_insights',
         empresa_id: testEmpresa.id,
-        insight_type: 'financeiro'
+        user_id: 'test-user-id',
+        options: { insight_type: 'financeiro' }
       })
 
       expect(result.success).toBe(true)
@@ -232,9 +234,10 @@ describe('🔄 Testes End-to-End - Fluxo Completo', () => {
     })
 
     it('deve processar análise de compliance corretamente', async () => {
-      const result = await callEdgeFunction('documentos-analytics-service', {
+      const result = await callEdgeFunction('documentos-service', {
         operation: 'analyze_compliance',
-        empresa_id: testEmpresa.id
+        empresa_id: testEmpresa.id,
+        user_id: 'test-user-id'
       })
 
       expect(result.success).toBe(true)
@@ -401,9 +404,10 @@ describe('🔄 Testes End-to-End - Fluxo Completo', () => {
         const cached = cacheManager.get(cacheKey, params)
         if (cached) return { ...cached, fromCache: true }
 
-        const result = await callEdgeFunction('documentos-analytics-service', {
+        const result = await callEdgeFunction('documentos-service', {
           operation: 'calculate_metrics',
           empresa_id: testEmpresa.id,
+          user_id: 'test-user-id',
           period_months: 6
         })
 
@@ -447,9 +451,10 @@ describe('🔄 Testes End-to-End - Fluxo Completo', () => {
       expect(insights.empresa.nome).toBe(testEmpresa.nome)
 
       // 3. Buscar métricas financeiras
-      const metricas = await callEdgeFunction('documentos-analytics-service', {
+      const metricas = await callEdgeFunction('documentos-service', {
         operation: 'calculate_metrics',
         empresa_id: testEmpresa.id,
+        user_id: 'test-user-id',
         period_months: 6
       })
 
@@ -457,19 +462,21 @@ describe('🔄 Testes End-to-End - Fluxo Completo', () => {
       expect(metricas.resumo_executivo).toBeDefined()
 
       // 4. Buscar análise de compliance
-      const compliance = await callEdgeFunction('documentos-analytics-service', {
+      const compliance = await callEdgeFunction('documentos-service', {
         operation: 'analyze_compliance',
-        empresa_id: testEmpresa.id
+        empresa_id: testEmpresa.id,
+        user_id: 'test-user-id'
       })
 
       expect(compliance.success).toBe(true)
       expect(compliance.score_geral).toBeGreaterThanOrEqual(0)
 
       // 5. Gerar insights de IA
-      const aiInsights = await callEdgeFunction('documentos-analytics-service', {
+      const aiInsights = await callEdgeFunction('documentos-service', {
         operation: 'generate_insights',
         empresa_id: testEmpresa.id,
-        insight_type: 'completo'
+        user_id: 'test-user-id',
+        options: { insight_type: 'completo' }
       })
 
       expect(aiInsights.success).toBe(true)

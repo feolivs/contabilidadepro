@@ -236,13 +236,13 @@ export function DashboardOptimized({ empresaId, className }: DashboardOptimizedP
                 <p className="text-sm font-medium text-muted-foreground">Receita Total</p>
                 <p className="text-2xl font-bold">
                   {formatCurrency(
-                    insights?.financial_summary?.receita_total ||
+                    insights?.financial_summary?.faturamento_total ||
                     metricas?.resumo_executivo?.receita_total || 0
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatPercentage(
-                    insights?.financial_summary?.crescimento_medio ||
+                    insights?.financial_summary?.crescimento_mensal ||
                     metricas?.resumo_executivo?.crescimento_medio || 0
                   )} vs período anterior
                 </p>
@@ -349,11 +349,10 @@ export function DashboardOptimized({ empresaId, className }: DashboardOptimizedP
       </Tabs>
 
       {/* Performance Info */}
-      {(insights?.processing_time || metricas?.processing_time || compliance?.processing_time) && (
+      {(metricas?.processing_time || compliance?.processing_time) && (
         <div className="text-center">
           <p className="text-xs text-muted-foreground">
             Dados processados em {Math.max(
-              insights?.processing_time || 0,
               metricas?.processing_time || 0,
               compliance?.processing_time || 0
             )}ms via Edge Functions

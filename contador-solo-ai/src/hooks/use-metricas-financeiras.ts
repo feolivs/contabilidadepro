@@ -111,12 +111,12 @@ export function useMetricasFinanceiras(
 
       console.log(`[useMetricasFinanceiras] Calculando métricas para empresa ${empresaId}`)
 
-      // Chamar Edge Function documentos-analytics-service
-      const { data, error } = await supabase.functions.invoke('documentos-analytics-service', {
+      // Chamar Edge Function documentos-service
+      const { data, error } = await supabase.functions.invoke('documentos-service', {
         body: {
+          operation: 'calculate_metrics',
           empresa_id: empresaId,
           user_id: user.id,
-          operation: 'calculate_metrics',
           period_months: filtros?.period_months || 6,
           force_refresh: filtros?.force_refresh || false
         }

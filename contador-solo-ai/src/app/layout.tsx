@@ -5,10 +5,9 @@ import { QueryProvider } from "@/providers/query-provider";
 import { ToastProvider } from "@/providers/toast-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { NotificationProvider } from "@/providers/notification-provider";
 import { CacheProvider } from "@/providers/cache-provider";
 import { baseMetadata } from "@/lib/metadata";
-import { ServiceWorkerProvider } from "@/providers/service-worker-provider";
+import { LazyProviders } from "@/providers/lazy-providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,18 +52,16 @@ export default function RootLayout({
           storageKey="contador-solo-theme"
           themes={['light', 'dark', 'system']}
         >
-          <ServiceWorkerProvider>
-            <CacheProvider autoCleanup={true} cleanupInterval={5 * 60 * 1000}>
-              <QueryProvider>
-                <AuthProvider>
-                  <NotificationProvider>
-                    {children}
-                    <ToastProvider />
-                  </NotificationProvider>
-                </AuthProvider>
-              </QueryProvider>
+          <QueryProvider>
+            <CacheProvider autoCleanup={false} cleanupInterval={10 * 60 * 1000}>
+              <AuthProvider>
+                <LazyProviders>
+                  {children}
+                  <ToastProvider />
+                </LazyProviders>
+              </AuthProvider>
             </CacheProvider>
-          </ServiceWorkerProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

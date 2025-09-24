@@ -201,43 +201,42 @@ export function DocumentosTimelineChart({
       <CardContent>
         <div style={{ width: '100%', height }}>
           <ResponsiveContainer>
-            {chartType === 'line' && (
+            <>
+              {chartType === 'line' ? (
               <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis 
-                  dataKey="dataAbreviada" 
+                <XAxis
+                  dataKey="dataAbreviada"
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                 />
-                <YAxis 
+                <YAxis
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                
-                <Line 
-                  type="monotone" 
-                  dataKey="quantidade" 
+
+                <Line
+                  type="monotone"
+                  dataKey="quantidade"
                   name="Total"
-                  stroke="#3b82f6" 
+                  stroke="#3b82f6"
                   strokeWidth={2}
                   dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
                 />
                 {showProcessedLine && (
-                  <Line 
-                    type="monotone" 
-                    dataKey="processados" 
+                  <Line
+                    type="monotone"
+                    dataKey="processados"
                     name="Processados"
-                    stroke="#10b981" 
+                    stroke="#10b981"
                     strokeWidth={2}
                     dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
                   />
                 )}
               </LineChart>
-            )}
-
-            {chartType === 'area' && (
+            ) : chartType === 'area' ? (
               <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <defs>
                   <linearGradient id="quantidadeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -265,43 +264,39 @@ export function DocumentosTimelineChart({
                   dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
                 />
               </AreaChart>
-            )}
-
-            {chartType === 'bar' && (
+            ) : chartType === 'bar' ? (
               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis 
-                  dataKey="dataAbreviada" 
+                <XAxis
+                  dataKey="dataAbreviada"
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                 />
-                <YAxis 
+                <YAxis
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                
-                <Bar 
-                  dataKey="quantidade" 
+
+                <Bar
+                  dataKey="quantidade"
                   name="Total"
-                  fill="#3b82f6" 
+                  fill="#3b82f6"
                   radius={[2, 2, 0, 0]}
                   opacity={0.8}
                 />
                 {showProcessedLine && (
-                  <Bar 
-                    dataKey="processados" 
+                  <Bar
+                    dataKey="processados"
                     name="Processados"
-                    fill="#10b981" 
+                    fill="#10b981"
                     radius={[2, 2, 0, 0]}
                     opacity={0.8}
                   />
                 )}
               </BarChart>
-            )}
-
-            {chartType === 'composed' && (
+            ) : chartType === 'composed' ? (
               <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis 
@@ -358,7 +353,8 @@ export function DocumentosTimelineChart({
                   />
                 )}
               </ComposedChart>
-            )}
+              ) : null}
+            </>
           </ResponsiveContainer>
         </div>
       </CardContent>

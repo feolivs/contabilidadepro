@@ -65,11 +65,13 @@ export function CacheMonitor({
   // Auto refresh
   useEffect(() => {
     updateStats()
-    
+
     if (autoRefresh) {
       const interval = setInterval(updateStats, refreshInterval)
       return () => clearInterval(interval)
     }
+
+    return undefined
   }, [autoRefresh, refreshInterval])
 
   // Handlers

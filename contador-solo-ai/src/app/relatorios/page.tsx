@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -102,18 +103,21 @@ export default function RelatoriosPage() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Acesso Negado</h2>
-          <p className="text-muted-foreground">Você precisa estar logado para acessar esta página.</p>
+      <CleanLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Acesso Negado</h2>
+            <p className="text-muted-foreground">Você precisa estar logado para acessar esta página.</p>
+          </div>
         </div>
-      </div>
+      </CleanLayout>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
+    <CleanLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -396,6 +400,7 @@ export default function RelatoriosPage() {
           </p>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </CleanLayout>
   )
 }

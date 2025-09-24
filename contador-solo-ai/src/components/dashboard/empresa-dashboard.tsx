@@ -333,22 +333,21 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
                 <p className="text-sm font-medium text-muted-foreground">Faturamento</p>
                 <p className="text-2xl font-bold">
                   {formatCurrency(
-                    dashboardData.financial_summary?.receita_total ||
-                    dashboardData.metrics_summary?.resumo_executivo?.receita_total ||
-                    dadosFinanceiros?.receitas.total || 
+                    dashboardData.financial_summary?.faturamento_total ||
+                    dadosFinanceiros?.receitas.total ||
                     0
                   )}
                 </p>
                 <div className="flex items-center text-xs">
-                  {insights?.financeiro.crescimento_mensal !== undefined && (
+                  {dashboardData.financial_summary?.crescimento_mensal !== undefined && (
                     <>
-                      {insights.financeiro.crescimento_mensal >= 0 ? (
+                      {dashboardData.financial_summary.crescimento_mensal >= 0 ? (
                         <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
                       ) : (
                         <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
                       )}
-                      <span className={insights.financeiro.crescimento_mensal >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {formatPercentage(Math.abs(insights.financeiro.crescimento_mensal))}
+                      <span className={dashboardData.financial_summary.crescimento_mensal >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        {formatPercentage(Math.abs(dashboardData.financial_summary.crescimento_mensal))}
                       </span>
                     </>
                   )}
@@ -367,13 +366,13 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
                 <p className="text-sm font-medium text-muted-foreground">Taxa de Sucesso</p>
                 <p className="text-2xl font-bold">
                   {formatPercentage(
-                    insights?.documentos.taxa_sucesso || 
-                    documentosStats?.status.taxa_sucesso || 
+                    insights?.documents_summary?.taxa_sucesso ||
+                    documentosStats?.status.taxa_sucesso ||
                     0
                   )}
                 </p>
-                <Progress 
-                  value={insights?.documentos.taxa_sucesso || documentosStats?.status.taxa_sucesso || 0} 
+                <Progress
+                  value={insights?.documents_summary?.taxa_sucesso || documentosStats?.status.taxa_sucesso || 0}
                   className="mt-2 h-2"
                 />
               </div>
@@ -384,10 +383,8 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
 
         {/* Score de Compliance */}
         <ComplianceScoreCard
-          score={dashboardData.compliance_summary?.score_geral ||
-                 insights?.compliance?.score || 0}
-          nivel={dashboardData.compliance_summary?.nivel ||
-                 insights?.compliance?.nivel || 'baixo'}
+          score={dashboardData.compliance_summary?.score_geral || 0}
+          nivel={dashboardData.compliance_summary?.nivel || 'baixo'}
           loading={insightsLoading || complianceLoading}
         />
       </div>
@@ -496,7 +493,7 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Distribuição por Tipo */}
             <TiposDocumentosChart
-              data={insights?.documentos.tipos_mais_comuns || documentosStats?.tipos || []}
+              data={insights?.documents_summary?.tipos_mais_comuns || documentosStats?.tipos || []}
               loading={insightsLoading || statsLoading}
               height={280}
               chartType="donut"
@@ -514,10 +511,10 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Confiança Média</span>
-                    <span>{formatPercentage((insights?.qualidade_ocr.confianca_media || 0) * 100)}</span>
+                    <span>{formatPercentage((dashboardData.dados_estruturados?.qualidade_media || 0) * 100)}</span>
                   </div>
-                  <Progress 
-                    value={(insights?.qualidade_ocr.confianca_media || 0) * 100} 
+                  <Progress
+                    value={(dashboardData.dados_estruturados?.qualidade_media || 0) * 100}
                     className="h-2"
                   />
                 </div>
@@ -525,10 +522,10 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Taxa de Extração</span>
-                    <span>{formatPercentage(insights?.qualidade_ocr.taxa_extracao_sucesso || 0)}</span>
+                    <span>{formatPercentage(insights?.documents_summary?.taxa_sucesso || 0)}</span>
                   </div>
-                  <Progress 
-                    value={insights?.qualidade_ocr.taxa_extracao_sucesso || 0} 
+                  <Progress
+                    value={insights?.documents_summary?.taxa_sucesso || 0}
                     className="h-2"
                   />
                 </div>
@@ -536,13 +533,13 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-green-600">
-                      {insights?.qualidade_ocr.documentos_alta_confianca || 0}
+                      {dashboardData.dados_estruturados?.total_processados || 0}
                     </p>
                     <p className="text-xs text-muted-foreground">Alta Qualidade</p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-bold text-red-600">
-                      {insights?.qualidade_ocr.documentos_baixa_confianca || 0}
+                      {insights?.documents_summary?.com_erro || 0}
                     </p>
                     <p className="text-xs text-muted-foreground">Baixa Qualidade</p>
                   </div>
@@ -563,25 +560,14 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {insights?.compliance.fatores.map((fator, index) => (
+                  {dashboardData.compliance_summary?.riscos_identificados?.map((risco, index) => (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">{fator.fator}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{formatPercentage(fator.valor)}</span>
-                          <Badge 
-                            variant={
-                              fator.status === 'ok' ? 'default' :
-                              fator.status === 'atencao' ? 'secondary' : 'destructive'
-                            }
-                            className="text-xs"
-                          >
-                            {fator.status === 'ok' ? 'OK' :
-                             fator.status === 'atencao' ? 'Atenção' : 'Crítico'}
-                          </Badge>
-                        </div>
+                        <span className="text-sm font-medium">{risco}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          Identificado
+                        </Badge>
                       </div>
-                      <Progress value={fator.valor} className="h-2" />
                     </div>
                   ))}
                 </div>
@@ -595,14 +581,14 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {insights?.compliance.recomendacoes.map((recomendacao, index) => (
+                  {dashboardData.compliance_summary?.alertas_urgentes?.map((alerta, index) => (
                     <div key={index} className="flex items-start gap-2">
                       <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm">{recomendacao}</p>
+                      <p className="text-sm">{alerta}</p>
                     </div>
                   ))}
                   
-                  {(!insights?.compliance.recomendacoes || insights.compliance.recomendacoes.length === 0) && (
+                  {(!dashboardData.compliance_summary?.alertas_urgentes || dashboardData.compliance_summary.alertas_urgentes.length === 0) && (
                     <div className="flex items-center gap-2 text-green-600">
                       <CheckCircle className="h-4 w-4" />
                       <p className="text-sm">Nenhuma recomendação no momento. Excelente trabalho!</p>

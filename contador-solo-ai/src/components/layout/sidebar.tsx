@@ -21,9 +21,7 @@ import {
   FileBarChart,
   Settings,
   MessageSquare,
-  Upload,
   Download,
-  Calendar,
   Bot,
   TrendingUp,
   Shield,
@@ -88,7 +86,6 @@ function useNavigationSections(): NavigationSection[] {
           badge: alertasCriticos > 0 ? alertasCriticos : undefined,
           badgeVariant: alertasCriticos > 0 ? 'destructive' : undefined
         },
-        { name: 'Upload', href: '/upload', icon: Upload },
       ]
     },
     {
@@ -103,32 +100,11 @@ function useNavigationSections(): NavigationSection[] {
           badgeVariant: undefined
         },
         {
-          name: 'Comparação',
-          href: '/comparacao',
-          icon: BarChart3,
-          badge: 'NOVO',
-          badgeVariant: 'secondary'
-        },
-        {
           name: 'Relatórios',
           href: '/relatorios',
           icon: FileBarChart,
           badge: undefined,
           badgeVariant: undefined
-        },
-        {
-          name: 'Exportar Dados',
-          href: '/export',
-          icon: Download,
-          badge: 'NOVO',
-          badgeVariant: 'secondary'
-        },
-        {
-          name: 'Dashboard Comparativo',
-          href: '/dashboard-comparativo',
-          icon: TrendingUp,
-          badge: 'NOVO',
-          badgeVariant: 'secondary'
         },
       ]
     },

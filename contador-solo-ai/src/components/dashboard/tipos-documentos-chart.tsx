@@ -201,7 +201,8 @@ export function TiposDocumentosChart({
           {/* Gráfico */}
           <div style={{ width: '100%', height }}>
             <ResponsiveContainer>
-              {(chartType === 'pie' || chartType === 'donut') && (
+              <>
+                {(chartType === 'pie' || chartType === 'donut') ? (
                 <PieChart>
                   <Pie
                     data={chartData}
@@ -221,9 +222,7 @@ export function TiposDocumentosChart({
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
                 </PieChart>
-              )}
-
-              {chartType === 'bar' && (
+              ) : chartType === 'bar' ? (
                 <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis 
@@ -251,7 +250,8 @@ export function TiposDocumentosChart({
                     ))}
                   </Bar>
                 </BarChart>
-              )}
+                ) : null}
+              </>
             </ResponsiveContainer>
           </div>
 

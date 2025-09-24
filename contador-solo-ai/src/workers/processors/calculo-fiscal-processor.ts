@@ -258,7 +258,7 @@ export class CalculoFiscalProcessor implements JobProcessor<CalculoFiscalJob> {
     const tabela = tabelas[anexo as keyof typeof tabelas] || tabelas['I']
     const faixa = tabela.find(f => receita <= f.ate)
     
-    return faixa?.aliquota || tabela[tabela.length - 1].aliquota
+    return faixa?.aliquota || tabela[tabela.length - 1]?.aliquota || 0
   }
 
   private calcularDeducoes(deducoes: any): number {

@@ -107,12 +107,12 @@ export function useAIInsights(
 
       console.log(`[useAIInsights] Gerando insights para empresa ${empresaId}`)
 
-      // Chamar Edge Function documentos-analytics-service
-      const { data, error } = await supabase.functions.invoke('documentos-analytics-service', {
+      // Chamar Edge Function documentos-service
+      const { data, error } = await supabase.functions.invoke('documentos-service', {
         body: {
+          operation: 'generate_insights',
           empresa_id: empresaId,
           user_id: user.id,
-          operation: 'generate_insights',
           force_refresh: options?.force_refresh || false,
           options: {
             insight_type: options?.insight_type || 'completo',

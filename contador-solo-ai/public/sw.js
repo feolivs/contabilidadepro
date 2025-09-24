@@ -9,8 +9,11 @@ const API_CACHE = 'api-v1.2.0'
 // Assets essenciais para cache (estratégia Cache First)
 const STATIC_ASSETS = [
   '/',
-  '/dashboard',
-  '/manifest.json',
+  '/manifest.json'
+]
+
+// Assets opcionais que podem falhar sem quebrar o SW
+const OPTIONAL_ASSETS = [
   '/next.svg',
   '/vercel.svg',
   '/file.svg',
@@ -43,20 +46,44 @@ self.addEventListener('install', (event) => {
 
   event.waitUntil(
     Promise.all([
-      // Cache de assets estáticos
-      caches.open(STATIC_CACHE).then((cache) => {
-        console.log('📦 Cacheando assets estáticos')
-        return cache.addAll(STATIC_ASSETS)
+      // Cache de assets essenciais
+      caches.open(STATIC_CACHE).then(async (cache) => {
+        console.log('📦 Cacheando assets essenciais')
+        try {
+          await cache.addAll(STATIC_ASSETS)
+        } catch (error) {
+          console.warn('⚠️ Falha ao cachear alguns assets essenciais:', error)
+        }
+
+        // Cachear assets opcionais individualmente
+        console.log('📦 Cacheando assets opcionais')
+        for (const asset of OPTIONAL_ASSETS) {
+          try {
+            await cache.add(asset)
+          } catch (error) {
+            console.warn(`⚠️ Falha ao cachear ${asset}:`, error.message)
+          }
+        }
       }),
 
-      // Pre-cache de rotas principais
-      caches.open(DYNAMIC_CACHE).then((cache) => {
+      // Pre-cache de rotas principais (individual para evitar falha total)
+      caches.open(DYNAMIC_CACHE).then(async (cache) => {
         console.log('🗂️ Preparando cache dinâmico')
-        return cache.addAll(APP_ROUTES)
+        for (const route of APP_ROUTES) {
+          try {
+            await cache.add(route)
+          } catch (error) {
+            console.warn(`⚠️ Falha ao cachear rota ${route}:`, error.message)
+          }
+        }
       })
     ]).then(() => {
       console.log('✅ Service Worker instalado com sucesso')
       // Forçar ativação imediata
+      return self.skipWaiting()
+    }).catch((error) => {
+      console.error('❌ Erro na instalação do Service Worker:', error)
+      // Continuar mesmo com erros
       return self.skipWaiting()
     })
   )

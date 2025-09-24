@@ -79,9 +79,7 @@ export function ChatTripleAI({ empresaId, initialMode = 'auto' }: ChatTripleAIPr
         question: input.trim(),
         context: 'chat-interface',
         empresaId,
-        userId: user?.id,
-        useTripleAI: mode === 'smart',
-        complexityThreshold: mode
+        userId: user?.id
       })
 
       const assistantMessage: Message = {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MainLayout } from '@/components/layout/main-layout';
+import { CleanLayout } from '@/components/layout/clean-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -46,14 +46,14 @@ import {
 } from 'lucide-react';
 import { useCalculos, useEstatisticasCalculos, useMarcarComoPago, useExcluirCalculo } from '@/hooks/use-calculos';
 import { useEmpresas } from '@/hooks/use-empresas';
-import { NovoCalculoModal } from '@/components/calculos/novo-calculo-modal';
+
 import { CalculoAutomaticoModal } from '@/components/calculos/calculo-automatico-modal';
 import type { FiltroCalculos, TipoCalculo, StatusCalculo } from '@/types/calculo';
 
 export default function CalculosPage() {
   const [busca, setBusca] = useState('');
   const [filtros, setFiltros] = useState<FiltroCalculos>({});
-  const [novoCalculoOpen, setNovoCalculoOpen] = useState(false);
+
   const [calculoAutomaticoOpen, setCalculoAutomaticoOpen] = useState(false);
   
   
@@ -164,7 +164,7 @@ export default function CalculosPage() {
   };
 
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -185,12 +185,7 @@ export default function CalculosPage() {
               <Calculator className="mr-2 h-4 w-4" />
               Cálculo Automático
             </Button>
-            <Button
-              onClick={() => setNovoCalculoOpen(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Cálculo
-            </Button>
+
           </div>
         </div>
 
@@ -357,8 +352,8 @@ export default function CalculosPage() {
                       <div className="flex flex-col items-center gap-3">
                         <Calculator className="h-12 w-12 text-muted-foreground" />
                         <p className="text-muted-foreground">Nenhum cálculo encontrado</p>
-                        <Button 
-                          onClick={() => setNovoCalculoOpen(true)}
+                        <Button
+                          onClick={() => setCalculoAutomaticoOpen(true)}
                           variant="outline"
                         >
                           <Plus className="mr-2 h-4 w-4" />
@@ -455,11 +450,7 @@ export default function CalculosPage() {
         onOpenChange={setCalculoAutomaticoOpen}
       />
 
-      {/* Modal Novo Cálculo */}
-      <NovoCalculoModal
-        open={novoCalculoOpen}
-        onOpenChange={setNovoCalculoOpen}
-      />
-    </MainLayout>
+
+    </CleanLayout>
   );
 }

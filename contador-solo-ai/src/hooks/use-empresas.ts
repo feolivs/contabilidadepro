@@ -4,22 +4,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'react-hot-toast'
 import { useAuthStore } from '@/store/auth-store'
+import {
+  EmpresaUnified,
+  EmpresasStats,
+  EmpresasQueryOptions,
+  CreateEmpresaInput,
+  UpdateEmpresaInput,
+  UseEmpresasOptions,
+  UseEmpresasResult,
+  RegimeTributario,
+  normalizeRegimeTributario
+} from '@/types/empresa-unified.types'
 
-export interface Empresa {
-  id: string
-  nome: string
-  nome_fantasia?: string
-  cnpj?: string
-  regime_tributario?: string
-  atividade_principal?: string
-  status?: string
-  ativa: boolean
-  email?: string
-  telefone?: string
-  endereco?: string
-  created_at: string
-  updated_at: string
-}
+// Manter compatibilidade com código existente
+export interface Empresa extends EmpresaUnified {}
+
+// Re-exportar tipos para compatibilidade
+export type { EmpresaUnified, EmpresasStats }
 
 // Hook para buscar empresas
 export function useEmpresas() {
@@ -208,29 +209,68 @@ export function useDeleteEmpresa() {
   })
 }
 
-// Hook para estatísticas das empresas
-export function useEmpresasStats() {
+// Hook para estatísticas das empresas (versão melhorada)
+export function useEmpresasStats(): EmpresasStats {
   const { data: empresas = [] } = useEmpresas()
 
+  const now = new Date()
+  const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1)
+  const inicioAno = new Date(now.getFullYear(), 0, 1)
+
   const stats = {
+    // Estatísticas básicas
     total: empresas.length,
     ativas: empresas.filter(e => e.ativa).length,
-    simplesNacional: empresas.filter(e => e.regime_tributario === 'simples').length,
-    lucroPresumido: empresas.filter(e => e.regime_tributario === 'lucro_presumido').length,
-    lucroReal: empresas.filter(e => e.regime_tributario === 'lucro_real').length,
-    mei: empresas.filter(e => e.regime_tributario === 'mei').length,
+    inativas: empresas.filter(e => !e.ativa).length,
+
+    // Por regime tributário (usando normalização)
+    simplesNacional: empresas.filter(e =>
+      normalizeRegimeTributario(e.regime_tributario) === 'Simples Nacional'
+    ).length,
+    lucroPresumido: empresas.filter(e =>
+      normalizeRegimeTributario(e.regime_tributario) === 'Lucro Presumido'
+    ).length,
+    lucroReal: empresas.filter(e =>
+      normalizeRegimeTributario(e.regime_tributario) === 'Lucro Real'
+    ).length,
+    mei: empresas.filter(e =>
+      normalizeRegimeTributario(e.regime_tributario) === 'MEI'
+    ).length,
+
+    // Temporais
     novasEsteMes: empresas.filter(e => {
       const created = new Date(e.created_at)
-      const now = new Date()
-      return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear()
+      return created >= inicioMes
     }).length,
+    novasEsteAno: empresas.filter(e => {
+      const created = new Date(e.created_at)
+      return created >= inicioAno
+    }).length,
+
+    // Operacionais (placeholder - serão implementados com dados reais)
+    documentosPendentes: 0,
+    calculosPendentes: 0,
+    prazosPendentes: 0,
+    empresasComCalculosRecentes: 0,
+    empresasComDocumentosRecentes: 0,
+
+    // Crescimento (placeholder)
+    crescimentoMensal: 0,
+    crescimentoAnual: 0,
+
+    ultimaAtualizacao: new Date().toISOString()
+  }
+
+  // Calcular percentuais
+  const percentuais = {
+    percentualSimplesNacional: stats.total > 0 ? Math.round((stats.simplesNacional / stats.total) * 100) : 0,
+    percentualLucroPresumido: stats.total > 0 ? Math.round((stats.lucroPresumido / stats.total) * 100) : 0,
+    percentualLucroReal: stats.total > 0 ? Math.round((stats.lucroReal / stats.total) * 100) : 0,
+    percentualMEI: stats.total > 0 ? Math.round((stats.mei / stats.total) * 100) : 0,
   }
 
   return {
     ...stats,
-    percentualSimplesNacional: stats.total > 0 ? Math.round((stats.simplesNacional / stats.total) * 100) : 0,
-    percentualLucroPresumido: stats.total > 0 ? Math.round((stats.lucroPresumido / stats.total) * 100) : 0,
-    percentualLucroReal: stats.total > 0 ? Math.round((stats.lucroReal / stats.total) * 100) : 0,
-    percentualMei: stats.total > 0 ? Math.round((stats.mei / stats.total) * 100) : 0,
+    ...percentuais
   }
 }

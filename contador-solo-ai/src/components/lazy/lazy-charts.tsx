@@ -55,19 +55,23 @@ function ChartSkeleton({ title }: { title?: string }) {
 }
 
 export function LazyRealtimeChart(props: LazyRealtimeChartProps) {
+  if (props.loading) {
+    return <ChartSkeleton title={props.title || "Gráfico em tempo real"} />
+  }
+
   return (
-    <Suspense fallback={<ChartSkeleton title="Gráfico em tempo real" />}>
+    <Suspense fallback={<ChartSkeleton title={props.title || "Gráfico em tempo real"} />}>
       <RealtimeChart {...props} />
     </Suspense>
   )
 }
 
-export function LazyRealtimeDashboard(_props: LazyRealtimeDashboardProps) {
+export function LazyRealtimeDashboard(props: LazyRealtimeDashboardProps) {
   return (
     <Suspense fallback={
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <ChartSkeleton key={i} title={`Dashboard ${i + 1}`} />
+          <ChartSkeleton key={i} title={`${props.title || 'Dashboard'} ${i + 1}`} />
         ))}
       </div>
     }>

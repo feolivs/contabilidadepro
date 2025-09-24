@@ -113,12 +113,12 @@ export function useDadosEstruturadosEdge(
 
       console.log(`[useDadosEstruturadosEdge] Processando dados estruturados para empresa ${empresaId}`)
 
-      // Chamar Edge Function documentos-analytics-service
-      const { data, error } = await supabase.functions.invoke('documentos-analytics-service', {
+      // Chamar Edge Function documentos-service
+      const { data, error } = await supabase.functions.invoke('documentos-service', {
         body: {
+          operation: 'process_structured_data',
           empresa_id: empresaId,
           user_id: user.id,
-          operation: 'process_structured_data',
           period_months: options?.period_months || 6,
           force_refresh: options?.force_refresh || false
         }

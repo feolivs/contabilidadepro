@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { 
@@ -171,7 +171,7 @@ export default function DocumentosPage() {
   }
 
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -504,6 +504,6 @@ export default function DocumentosPage() {
           setSelectedDocument(null)
         }}
       />
-    </MainLayout>
+    </CleanLayout>
   )
 }

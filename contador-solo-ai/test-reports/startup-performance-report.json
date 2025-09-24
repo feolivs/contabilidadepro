@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-09-23T13:44:16.942Z",
+  "testResults": {
+    "build": false,
+    "optimizations": {
+      "total": 6,
+      "passed": 6
+    },
+    "dependencies": true
+  },
+  "summary": {
+    "buildSuccess": false,
+    "optimizationsImplemented": 6,
+    "totalOptimizations": 6,
+    "bundleSize": "N/A",
+    "dependenciesOk": true
+  },
+  "recommendations": [
+    "Corrigir erros de build antes de testar performance"
+  ]
+}

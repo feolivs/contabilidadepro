@@ -89,16 +89,16 @@ export interface DocumentoStats {
 
 // Labels para exibição
 export const TIPOS_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
-  'NFe': 'Nota Fiscal Eletrônica',
-  'NFCe': 'NFC-e (Cupom Fiscal)',
-  'NFSe': 'Nota Fiscal de Serviços',
-  'CTe': 'Conhecimento de Transporte',
-  'Recibo': 'Recibo',
-  'Contrato': 'Contrato',
-  'Boleto': 'Boleto Bancário',
-  'Extrato': 'Extrato Bancário',
-  'Pró-labore': 'Pró-labore',
-  'Outro': 'Outro Documento'
+  'NFE': 'Nota Fiscal Eletrônica',
+  'NFCE': 'NFC-e (Cupom Fiscal)',
+  'NFSE': 'Nota Fiscal de Serviços',
+  'CTE': 'Conhecimento de Transporte',
+  'RECIBO': 'Recibo',
+  'CONTRATO': 'Contrato',
+  'BOLETO': 'Boleto Bancário',
+  'EXTRATO': 'Extrato Bancário',
+  'COMPROVANTE': 'Comprovante',
+  'OUTROS': 'Outros Documentos'
 }
 
 export const STATUS_PROCESSAMENTO_LABELS: Record<StatusProcessamento, string> = {
@@ -120,16 +120,16 @@ export const STATUS_PROCESSAMENTO_COLORS: Record<StatusProcessamento, string> = 
 }
 
 export const TIPOS_DOCUMENTO_COLORS: Record<TipoDocumento, string> = {
-  'NFe': 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/30',
-  'NFCe': 'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-400 dark:border-cyan-800/30',
-  'NFSe': 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800/30',
-  'CTe': 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800/30',
-  'Recibo': 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30',
-  'Contrato': 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800/30',
-  'Boleto': 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/30',
-  'Extrato': 'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800/30',
-  'Pró-labore': 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800/30',
-  'Outro': 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800/30'
+  'NFE': 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/30',
+  'NFCE': 'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-400 dark:border-cyan-800/30',
+  'NFSE': 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800/30',
+  'CTE': 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800/30',
+  'RECIBO': 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30',
+  'CONTRATO': 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800/30',
+  'BOLETO': 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/30',
+  'EXTRATO': 'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800/30',
+  'COMPROVANTE': 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800/30',
+  'OUTROS': 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800/30'
 }
 
 // Tipos MIME aceitos para upload
@@ -200,35 +200,35 @@ export const detectarTipoDocumento = (nomeArquivo: string): TipoDocumento => {
   const nome = nomeArquivo.toLowerCase()
 
   if (nome.includes('nfe') || nome.includes('nota fiscal eletronica')) {
-    return 'NFe'
+    return 'NFE'
   }
   if (nome.includes('nfce') || nome.includes('cupom fiscal')) {
-    return 'NFCe'
+    return 'NFCE'
   }
   if (nome.includes('nfse') || nome.includes('nota fiscal servico')) {
-    return 'NFSe'
+    return 'NFSE'
   }
   if (nome.includes('cte') || nome.includes('conhecimento transporte')) {
-    return 'CTe'
+    return 'CTE'
   }
   if (nome.includes('recibo')) {
-    return 'Recibo'
+    return 'RECIBO'
   }
   if (nome.includes('contrato')) {
-    return 'Contrato'
+    return 'CONTRATO'
   }
   if (nome.includes('boleto')) {
-    return 'Boleto'
+    return 'BOLETO'
   }
   if (nome.includes('extrato')) {
-    return 'Extrato'
+    return 'EXTRATO'
   }
   if (nome.includes('pro labore') || nome.includes('pró-labore') || nome.includes('prolabore') ||
       nome.includes('pro-labore') || nome.includes('administrador') || nome.includes('socio')) {
-    return 'Pró-labore'
+    return 'OUTROS'
   }
 
-  return 'Outro'
+  return 'OUTROS'
 }
 
 // Interface base para dados extraídos (propriedades comuns)

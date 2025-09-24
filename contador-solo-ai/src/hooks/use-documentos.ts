@@ -15,21 +15,21 @@ import {
 // Função para mapear tipos do OCR para tipos da tabela
 function mapOCRTypeToDocumentType(ocrType: string): TipoDocumento | null {
   const mapping: Record<string, TipoDocumento> = {
-    'nota_fiscal': 'NFe',
-    'nota_fiscal_entrada': 'NFe',
-    'nota_fiscal_saida': 'NFe',
-    'nfe': 'NFe',
-    'nfce': 'NFCe',
-    'nfse': 'NFSe',
-    'cte': 'CTe',
-    'das': 'Outro', // DAS não está na enum, usar 'Outro'
-    'boleto': 'Boleto',
-    'boleto_bancario': 'Boleto',
-    'recibo': 'Recibo',
-    'recibo_pagamento': 'Recibo',
-    'contrato': 'Contrato',
-    'extrato': 'Extrato',
-    'extrato_bancario': 'Extrato'
+    'nota_fiscal': 'NFE',
+    'nota_fiscal_entrada': 'NFE',
+    'nota_fiscal_saida': 'NFE',
+    'nfe': 'NFE',
+    'nfce': 'NFCE',
+    'nfse': 'NFSE',
+    'cte': 'CTE',
+    'das': 'OUTROS', // DAS não está na enum, usar 'OUTROS'
+    'boleto': 'BOLETO',
+    'boleto_bancario': 'BOLETO',
+    'recibo': 'RECIBO',
+    'recibo_pagamento': 'RECIBO',
+    'contrato': 'CONTRATO',
+    'extrato': 'EXTRATO',
+    'extrato_bancario': 'EXTRATO'
   }
 
   return mapping[ocrType.toLowerCase()] || null

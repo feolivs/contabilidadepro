@@ -56,9 +56,9 @@ export function useMFA() {
     queryFn: async (): Promise<MFAStatus> => {
       if (!user?.id) throw new Error('Usuário não autenticado')
 
-      const { data, error } = await supabase.functions.invoke('mfa-enrollment-handler', {
+      const { data, error } = await supabase.functions.invoke('security-service', {
         body: {
-          action: 'get_mfa_status',
+          operation: 'get_mfa_status',
           user_id: user.id
         }
       })
@@ -81,9 +81,9 @@ export function useMFA() {
 
       setIsEnrolling(true)
 
-      const { data: result, error } = await supabase.functions.invoke('mfa-enrollment-handler', {
+      const { data: result, error } = await supabase.functions.invoke('security-service', {
         body: {
-          action: 'enroll_mfa',
+          operation: 'enroll_mfa',
           user_id: user.id,
           ...data
         }
@@ -108,9 +108,9 @@ export function useMFA() {
     mutationFn: async (data: VerifyMFAData) => {
       if (!user?.id) throw new Error('Usuário não autenticado')
 
-      const { data: result, error } = await supabase.functions.invoke('mfa-enrollment-handler', {
+      const { data: result, error } = await supabase.functions.invoke('security-service', {
         body: {
-          action: 'verify_mfa',
+          operation: 'verify_mfa',
           user_id: user.id,
           ...data
         }
@@ -133,9 +133,9 @@ export function useMFA() {
     mutationFn: async (factor_id: string) => {
       if (!user?.id) throw new Error('Usuário não autenticado')
 
-      const { data: result, error } = await supabase.functions.invoke('mfa-enrollment-handler', {
+      const { data: result, error } = await supabase.functions.invoke('security-service', {
         body: {
-          action: 'unenroll_mfa',
+          operation: 'unenroll_mfa',
           user_id: user.id,
           factor_id
         }
@@ -158,9 +158,9 @@ export function useMFA() {
     mutationFn: async () => {
       if (!user?.id) throw new Error('Usuário não autenticado')
 
-      const { data: result, error } = await supabase.functions.invoke('mfa-enrollment-handler', {
+      const { data: result, error } = await supabase.functions.invoke('security-service', {
         body: {
-          action: 'generate_backup_codes',
+          operation: 'generate_backup_codes',
           user_id: user.id
         }
       })
@@ -182,9 +182,9 @@ export function useMFA() {
     mutationFn: async (code: string) => {
       if (!user?.id) throw new Error('Usuário não autenticado')
 
-      const { data: result, error } = await supabase.functions.invoke('mfa-enrollment-handler', {
+      const { data: result, error } = await supabase.functions.invoke('security-service', {
         body: {
-          action: 'verify_backup_code',
+          operation: 'verify_backup_code',
           user_id: user.id,
           code
         }
@@ -312,9 +312,9 @@ export function useSecurityEvents() {
     mutationFn: async (eventData: any) => {
       if (!user?.id) throw new Error('Usuário não autenticado')
 
-      const { data, error } = await supabase.functions.invoke('auth-security-monitor', {
+      const { data, error } = await supabase.functions.invoke('security-service', {
         body: {
-          action: 'log_security_event',
+          operation: 'log_security_event',
           user_id: user.id,
           ...eventData
         }
@@ -350,9 +350,9 @@ export function useSecurityDashboard(days: number = 7) {
     queryFn: async () => {
       if (!user?.id) throw new Error('Usuário não autenticado')
 
-      const { data, error } = await supabase.functions.invoke('auth-security-monitor', {
+      const { data, error } = await supabase.functions.invoke('security-service', {
         body: {
-          action: 'get_security_dashboard',
+          operation: 'get_security_dashboard',
           user_id: user.id,
           days
         }

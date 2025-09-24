@@ -1,0 +1,25 @@
+{
+  "name": "contabilidadepro-edge-functions",
+  "version": "1.0.0",
+  "description": "Edge Functions para ContabilidadePRO",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest --testPathPattern=unit",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:ci": "jest --coverage --watchAll=false --passWithNoTests",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^6",
+    "@typescript-eslint/parser": "^6",
+    "eslint": "^8",
+    "jest": "^30.1.3",
+    "jest-junit": "^16.0.0",
+    "ts-jest": "^29.4.4",
+    "typescript": "^5.9.2"
+  }
+}

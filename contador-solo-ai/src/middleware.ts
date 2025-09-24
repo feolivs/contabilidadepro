@@ -2,15 +2,21 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // Middleware executado para: ${request.nextUrl.pathname}
+  // Logs detalhados para debugging
+  const isDev = process.env.NODE_ENV === 'development'
+  const pathname = request.nextUrl.pathname
 
-  // Middleware reativado após sincronização completa
+  if (isDev) {
+    console.log(`🔒 Middleware: ${pathname}`)
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   })
 
+  // Criar cliente Supabase para verificação de autenticação
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -57,30 +63,57 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // Verificar autenticação do usuário
   const {
     data: { user },
     error: userError
   } = await supabase.auth.getUser()
 
+  if (isDev && userError) {
+    console.log(`🚨 Auth Error: ${userError.message}`)
+  }
+
+  if (isDev) {
+    console.log(`👤 User: ${user ? user.email : 'Not authenticated'}`)
+  }
+
   // Rotas protegidas
-  const protectedRoutes = ['/dashboard', '/clientes', '/documentos', '/relatorios', '/assistente', '/seguranca']
+  const protectedRoutes = ['/dashboard', '/clientes', '/documentos', '/relatorios', '/assistente', '/seguranca', '/calculos', '/prazos', '/empresas']
   const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+    pathname.startsWith(route)
   )
 
-  // Rotas que requerem MFA (operações sensíveis)
-  const mfaRequiredRoutes = ['/calculos', '/novo-calculo', '/seguranca']
+  // Rotas que requerem MFA (operações sensíveis) - para implementação futura
+  const mfaRequiredRoutes = ['/calculos', '/seguranca']
   const requiresMFA = mfaRequiredRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+    pathname.startsWith(route)
   )
 
-  // Redirecionar para login se não autenticado
+  if (isDev) {
+    console.log(`🛡️ Protected route: ${isProtectedRoute}`)
+    console.log(`🔐 MFA required: ${requiresMFA}`)
+  }
+
+  // Página inicial - redirecionamento server-side otimizado
+  if (pathname === '/') {
+    if (user) {
+      if (isDev) console.log('🏠 Redirecting authenticated user to dashboard')
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    } else {
+      if (isDev) console.log('🏠 Redirecting unauthenticated user to login')
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+  }
+
+  // Redirecionar para login se não autenticado em rota protegida
   if (isProtectedRoute && !user) {
+    if (isDev) console.log(`🚫 Redirecting to login: ${pathname}`)
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   // Redirecionar para dashboard se já autenticado e tentando acessar login
-  if (user && request.nextUrl.pathname === '/login') {
+  if (user && pathname === '/login') {
+    if (isDev) console.log('✅ Redirecting authenticated user from login to dashboard')
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
@@ -89,12 +122,16 @@ export async function middleware(request: NextRequest) {
   //   return NextResponse.redirect(new URL('/mfa-verify', request.url))
   // }
 
+  if (isDev) {
+    console.log(`✅ Access granted: ${pathname}`)
+  }
+
   return response
 }
 
 export const config = {
   matcher: [
-    // Middleware reativado - protege todas as rotas exceto assets estáticos
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // ETAPA 2: Middleware básico - excluir assets estáticos e APIs
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

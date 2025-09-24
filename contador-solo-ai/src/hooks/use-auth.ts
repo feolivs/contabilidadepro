@@ -10,6 +10,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
+import { createAuthErrorHandler, getUserFriendlyMessage } from '@/lib/auth-error-handler'
 
 export interface AuthUser extends User {
   // Extensões específicas do ContabilidadePRO
@@ -21,6 +22,9 @@ export function useAuth() {
   const { user, isLoading, setUser, logout: storeLogout } = useAuthStore()
   const supabase = useSupabase()
   const router = useRouter()
+
+  // Error handler personalizado
+  const handleAuthError = createAuthErrorHandler((path) => router.push(path))
 
   // Login com email e senha
   const loginMutation = useMutation({
@@ -38,7 +42,8 @@ export function useAuth() {
       router.push('/dashboard')
     },
     onError: (error) => {
-      console.error('Erro no login:', error)
+      const errorInfo = handleAuthError(error)
+      console.error('Erro no login:', errorInfo)
     }
   })
 
@@ -56,7 +61,61 @@ export function useAuth() {
       return data
     },
     onError: (error) => {
-      console.error('Erro no login com Google:', error)
+      const errorInfo = handleAuthError(error)
+      console.error('Erro no login com Google:', errorInfo)
+    }
+  })
+
+  // Login com Magic Link (OTP via email)
+  const loginWithMagicLinkMutation = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`
+        }
+      })
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      // Informar usuário para verificar email
+      router.push('/login?message=check-email-magic-link')
+    },
+    onError: (error) => {
+      const errorInfo = handleAuthError(error)
+      console.error('Erro ao enviar magic link:', errorInfo)
+    }
+  })
+
+  // Verificar OTP (para magic links e outros)
+  const verifyOtpMutation = useMutation({
+    mutationFn: async ({
+      email,
+      token,
+      type = 'email'
+    }: {
+      email: string;
+      token: string;
+      type?: 'email' | 'sms' | 'phone_change' | 'signup'
+    }) => {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type
+      })
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: (data) => {
+      setUser(data.user)
+      router.push('/dashboard')
+    },
+    onError: (error) => {
+      const errorInfo = handleAuthError(error)
+      console.error('Erro na verificação OTP:', errorInfo)
     }
   })
 
@@ -87,7 +146,8 @@ export function useAuth() {
       router.push('/login?message=check-email')
     },
     onError: (error) => {
-      console.error('Erro no registro:', error)
+      const errorInfo = handleAuthError(error)
+      console.error('Erro no registro:', errorInfo)
     }
   })
 
@@ -102,7 +162,8 @@ export function useAuth() {
       router.push('/login')
     },
     onError: (error) => {
-      console.error('Erro no logout:', error)
+      const errorInfo = handleAuthError(error)
+      console.error('Erro no logout:', errorInfo)
       // Mesmo com erro, limpar estado local
       storeLogout()
       router.push('/login')
@@ -175,6 +236,23 @@ export function useAuth() {
     return user.user_metadata?.role === 'admin'
   }, [user])
 
+  // Sincronizar usuário atual (força refresh)
+  const syncUserMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.auth.getUser()
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: (data) => {
+      setUser(data.user)
+    },
+    onError: (error) => {
+      const errorInfo = handleAuthError(error)
+      console.error('Erro ao sincronizar usuário:', errorInfo)
+    }
+  })
+
   // Obter dados do perfil do usuário
   const getUserProfile = useQuery({
     queryKey: ['user-profile', user?.id],
@@ -190,17 +268,25 @@ export function useAuth() {
       if (error && error.code !== 'PGRST116') throw error
       return data
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    retry: (failureCount, error: any) => {
+      // Não tentar novamente se for erro de autenticação
+      if (error?.message?.includes('não autenticado')) return false
+      return failureCount < 3
+    }
   })
 
   // Funções de conveniência
   const login = loginMutation.mutate
   const loginWithGoogle = loginWithGoogleMutation.mutate
+  const loginWithMagicLink = loginWithMagicLinkMutation.mutate
+  const verifyOtp = verifyOtpMutation.mutate
   const register = registerMutation.mutate
   const logout = logoutMutation.mutate
   const resetPassword = resetPasswordMutation.mutate
   const updatePassword = updatePasswordMutation.mutate
   const updateProfile = updateProfileMutation.mutate
+  const syncUser = syncUserMutation.mutate
 
   return {
     // Estado
@@ -215,38 +301,51 @@ export function useAuth() {
     // Funções de autenticação
     login,
     loginWithGoogle,
+    loginWithMagicLink,
+    verifyOtp,
     register,
     logout,
     resetPassword,
     updatePassword,
     updateProfile,
-    
+    syncUser,
+
     // Estados de loading das operações
     loginLoading: loginMutation.isPending,
+    loginWithMagicLinkLoading: loginWithMagicLinkMutation.isPending,
+    verifyOtpLoading: verifyOtpMutation.isPending,
     registerLoading: registerMutation.isPending,
     logoutLoading: logoutMutation.isPending,
     resetPasswordLoading: resetPasswordMutation.isPending,
     updatePasswordLoading: updatePasswordMutation.isPending,
     updateProfileLoading: updateProfileMutation.isPending,
-    
+    syncUserLoading: syncUserMutation.isPending,
+
     // Erros
     loginError: loginMutation.error,
+    loginWithMagicLinkError: loginWithMagicLinkMutation.error,
+    verifyOtpError: verifyOtpMutation.error,
     registerError: registerMutation.error,
     logoutError: logoutMutation.error,
     resetPasswordError: resetPasswordMutation.error,
     updatePasswordError: updatePasswordMutation.error,
     updateProfileError: updateProfileMutation.error,
+    syncUserError: syncUserMutation.error,
     
     // Utilitários
     hasPermission,
     isAdmin,
+    getErrorMessage: (error: any) => getUserFriendlyMessage(error),
     
     // Reset de estados
     resetLoginError: loginMutation.reset,
+    resetLoginWithMagicLinkError: loginWithMagicLinkMutation.reset,
+    resetVerifyOtpError: verifyOtpMutation.reset,
     resetRegisterError: registerMutation.reset,
     resetResetPasswordError: resetPasswordMutation.reset,
     resetUpdatePasswordError: updatePasswordMutation.reset,
-    resetUpdateProfileError: updateProfileMutation.reset
+    resetUpdateProfileError: updateProfileMutation.reset,
+    resetSyncUserError: syncUserMutation.reset
   }
 }
 

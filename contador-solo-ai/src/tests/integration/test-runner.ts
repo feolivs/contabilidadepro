@@ -235,15 +235,16 @@ export class E2ETestRunner {
       }
     })
 
-    // Teste 2: documentos-analytics-service - Conectividade
-    await this.runTest(suite, 'Testar conectividade documentos-analytics-service', async () => {
+    // Teste 2: documentos-service - Conectividade
+    await this.runTest(suite, 'Testar conectividade documentos-service', async () => {
       const startTime = Date.now()
 
       try {
-        const { data, error } = await this.supabase.functions.invoke('documentos-analytics-service', {
+        const { data, error } = await this.supabase.functions.invoke('documentos-service', {
           body: {
             operation: 'calculate_metrics',
             empresa_id: '550e8400-e29b-41d4-a716-446655440000',
+            user_id: 'test-user-id',
             period_months: 1
           }
         })

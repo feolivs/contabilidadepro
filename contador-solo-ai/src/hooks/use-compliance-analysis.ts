@@ -102,12 +102,12 @@ export function useComplianceAnalysis(
 
       console.log(`[useComplianceAnalysis] Analisando compliance para empresa ${empresaId}`)
 
-      // Chamar Edge Function documentos-analytics-service
-      const { data, error } = await supabase.functions.invoke('documentos-analytics-service', {
+      // Chamar Edge Function documentos-service
+      const { data, error } = await supabase.functions.invoke('documentos-service', {
         body: {
+          operation: 'analyze_compliance',
           empresa_id: empresaId,
           user_id: user.id,
-          operation: 'analyze_compliance',
           force_refresh: options?.force_refresh || false
         }
       })

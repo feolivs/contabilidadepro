@@ -2,7 +2,7 @@
 
 import '@/styles/chat-animations.css'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -309,7 +309,7 @@ export default function AssistentePage() {
   }
 
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -526,6 +526,6 @@ export default function AssistentePage() {
           </TabsContent>
         </Tabs>
       </div>
-    </MainLayout>
+    </CleanLayout>
   )
 }

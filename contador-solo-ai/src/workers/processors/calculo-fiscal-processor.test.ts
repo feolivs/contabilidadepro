@@ -316,7 +316,7 @@ describe('CalculoFiscalProcessor', () => {
         empresaId: 'empresa-123',
         tipoCalculo: 'DAS' as const,
         periodoApuracao: '2024-01',
-        dadosEntrada: null,
+        dadosEntrada: null as any, // Explicitamente testando validação
         timestamp: '2024-01-15T10:00:00Z'
       }
 

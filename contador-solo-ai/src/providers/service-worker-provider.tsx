@@ -23,6 +23,21 @@ export function ServiceWorkerProvider({ children }: { children: React.ReactNode 
   const [cacheStats, setCacheStats] = useState({ size: 0, hitRate: 0 })
 
   useEffect(() => {
+    // TEMPORARIAMENTE DESABILITADO - Service Worker causando bloqueio
+    console.log('🔧 Service Worker desabilitado temporariamente para debug')
+
+    // Desregistrar qualquer Service Worker existente
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+          registration.unregister()
+          console.log('🗑️ Service Worker desregistrado')
+        })
+      })
+    }
+
+    return
+
     // Verificar suporte ao Service Worker
     const supported = 'serviceWorker' in navigator
     setIsSupported(supported)
@@ -32,20 +47,53 @@ export function ServiceWorkerProvider({ children }: { children: React.ReactNode 
       return
     }
 
-    // Inicializar Service Worker
+    // Inicializar Service Worker de forma assíncrona
     initializeServiceWorker()
 
-    // Inicializar preloader com Service Worker
-    resourcePreloader.initServiceWorker()
+    // Adiar preload para não bloquear inicialização
+    const startPreloadAfterInteraction = () => {
+      let hasInteracted = false
 
-    // Preload de assets críticos
-    resourcePreloader.preloadCriticalAssets()
+      const handleFirstInteraction = () => {
+        if (hasInteracted) return
+        hasInteracted = true
 
-    // Preload inteligente
-    resourcePreloader.intelligentPreload()
+        // Remover listeners
+        document.removeEventListener('click', handleFirstInteraction)
+        document.removeEventListener('scroll', handleFirstInteraction)
+        document.removeEventListener('keydown', handleFirstInteraction)
 
-    // Monitorar cache stats
-    const statsInterval = setInterval(updateCacheStats, 30000) // A cada 30s
+        // Iniciar preload usando requestIdleCallback para não bloquear UI
+        requestIdleCallback(() => {
+          resourcePreloader.initServiceWorker()
+          resourcePreloader.preloadCriticalAssets()
+        })
+
+        // Preload inteligente com delay adicional
+        setTimeout(() => {
+          requestIdleCallback(() => {
+            resourcePreloader.intelligentPreload()
+          })
+        }, 2000)
+      }
+
+      // Adicionar listeners para primeira interação
+      document.addEventListener('click', handleFirstInteraction, { passive: true })
+      document.addEventListener('scroll', handleFirstInteraction, { passive: true })
+      document.addEventListener('keydown', handleFirstInteraction, { passive: true })
+
+      // Fallback: iniciar após 5 segundos mesmo sem interação
+      setTimeout(() => {
+        if (!hasInteracted) {
+          handleFirstInteraction()
+        }
+      }, 5000)
+    }
+
+    startPreloadAfterInteraction()
+
+    // Monitorar cache stats com intervalo maior
+    const statsInterval = setInterval(updateCacheStats, 60000) // A cada 1 minuto
 
     return () => {
       clearInterval(statsInterval)

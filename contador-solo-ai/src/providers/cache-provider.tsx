@@ -89,33 +89,49 @@ export function CacheProvider({
     }
   }
 
-  // Inicialização
+  // Inicialização otimizada - adiar intervalos para não bloquear startup
   useEffect(() => {
     logger.info('Inicializando CacheProvider')
-    
-    // Primeira atualização das estatísticas
-    refreshStats()
+
+    // Primeira atualização das estatísticas (assíncrona)
+    requestIdleCallback(() => {
+      refreshStats()
+    })
     setIsInitialized(true)
 
-    // Configurar intervalos
-    const intervals: NodeJS.Timeout[] = []
+    // Adiar configuração de intervalos para não bloquear inicialização
+    const setupIntervals = () => {
+      const intervals: NodeJS.Timeout[] = []
 
-    // Auto cleanup
-    if (autoCleanup) {
-      const cleanupIntervalId = setInterval(cleanup, cleanupInterval)
-      intervals.push(cleanupIntervalId)
-      logger.debug('Auto cleanup configurado', { interval: cleanupInterval })
+      // Auto cleanup - apenas se habilitado
+      if (autoCleanup) {
+        const cleanupIntervalId = setInterval(cleanup, cleanupInterval)
+        intervals.push(cleanupIntervalId)
+        logger.debug('Auto cleanup configurado', { interval: cleanupInterval })
+      }
+
+      // Stats refresh - com intervalo maior para reduzir overhead
+      const statsIntervalId = setInterval(refreshStats, Math.max(statsRefreshInterval, 60000)) // Mínimo 1 minuto
+      intervals.push(statsIntervalId)
+      logger.debug('Stats refresh configurado', { interval: Math.max(statsRefreshInterval, 60000) })
+
+      return intervals
     }
 
-    // Stats refresh
-    const statsIntervalId = setInterval(refreshStats, statsRefreshInterval)
-    intervals.push(statsIntervalId)
-    logger.debug('Stats refresh configurado', { interval: statsRefreshInterval })
+    // Configurar intervalos após 2 segundos para não impactar startup
+    const setupTimer = setTimeout(() => {
+      const intervals = setupIntervals()
 
-    // Cleanup ao desmontar
+      // Cleanup ao desmontar
+      return () => {
+        intervals.forEach(clearInterval)
+        logger.info('CacheProvider desmontado')
+      }
+    }, 2000)
+
+    // Cleanup imediato do timer se componente for desmontado antes
     return () => {
-      intervals.forEach(clearInterval)
-      logger.info('CacheProvider desmontado')
+      clearTimeout(setupTimer)
     }
   }, [autoCleanup, cleanupInterval, statsRefreshInterval])
 

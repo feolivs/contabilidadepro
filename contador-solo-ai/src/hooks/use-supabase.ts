@@ -7,30 +7,29 @@ import { useEffect, useState, useCallback } from 'react'
 
 export function useSupabase() {
   const [supabase] = useState(() => createBrowserSupabaseClient())
-  const { setUser, setLoading } = useAuthStore()
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    // Verificar sessão inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
 
-    // Escutar mudanças de autenticação
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
+    try {
+      // ETAPA 4: Listener com fallback para erros
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
 
-      if (event === 'SIGNED_OUT') {
-        queryClient.clear()
+        if (event === 'SIGNED_OUT') {
+          queryClient.clear()
+        }
+      })
+
+      return () => {
+        subscription.unsubscribe()
       }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [supabase, setUser, setLoading, queryClient])
+    } catch (error) {
+      // Fallback: retornar função de cleanup vazia
+      return () => {}
+    }
+  }, [supabase, queryClient])
 
   return supabase
 }

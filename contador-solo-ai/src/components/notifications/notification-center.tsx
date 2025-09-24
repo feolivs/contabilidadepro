@@ -34,8 +34,28 @@ import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications'
 import { formatRelativeTime } from '@/lib/date-utils'
 import { cn } from '@/lib/utils'
 
+// Hook para verificar se o NotificationProvider está disponível
+function useNotificationProviderStatus() {
+  try {
+    const result = useRealtimeNotifications()
+    return { isAvailable: true, ...result }
+  } catch (error) {
+    return {
+      isAvailable: false,
+      notifications: [],
+      unreadCount: 0,
+      isLoading: false,
+      isConnected: false,
+      markAsRead: () => {},
+      markAllAsRead: () => {},
+      dismissNotification: () => {}
+    }
+  }
+}
+
 export function NotificationCenter() {
   const {
+    isAvailable,
     notifications,
     unreadCount,
     isLoading,
@@ -43,7 +63,7 @@ export function NotificationCenter() {
     markAsRead,
     markAllAsRead,
     dismissNotification
-  } = useRealtimeNotifications()
+  } = useNotificationProviderStatus()
 
   const [filter, setFilter] = useState<'all' | 'unread' | 'critical'>('all')
   const [isOpen, setIsOpen] = useState(false)
@@ -112,6 +132,15 @@ export function NotificationCenter() {
     }
   }
 
+  // Se o provider não estiver disponível, mostrar apenas o ícone sem funcionalidade
+  if (!isAvailable) {
+    return (
+      <Button variant="ghost" size="sm" className="relative" disabled>
+        <Bell className="h-5 w-5 opacity-30" />
+      </Button>
+    )
+  }
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -121,7 +150,7 @@ export function NotificationCenter() {
           ) : (
             <Bell className="h-5 w-5 opacity-50" />
           )}
-          
+
           {unreadCount > 0 && (
             <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs animate-pulse bg-red-500 text-white">
               {unreadCount > 99 ? '99+' : unreadCount}

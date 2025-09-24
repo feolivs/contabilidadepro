@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -104,7 +105,8 @@ export default function DocumentosOCRPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <CleanLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -276,6 +278,7 @@ export default function DocumentosOCRPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </CleanLayout>
   )
 }

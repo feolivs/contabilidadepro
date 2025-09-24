@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { Suspense } from 'react'
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { SistemaAlertasStatus } from '@/components/prazos/sistema-alertas-status'
 import { AlertasIntegration } from '@/components/prazos/alertas-integration'
 
@@ -30,7 +30,7 @@ export default function PrazosLayout({
   stats
 }: PrazosLayoutProps) {
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -120,7 +120,7 @@ export default function PrazosLayout({
           {children}
         </div>
       </div>
-    </MainLayout>
+    </CleanLayout>
   )
 }
 

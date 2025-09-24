@@ -13,6 +13,24 @@ export type { NotificationData }
  */
 export function useRealtimeNotifications() {
   const { user } = useAuthStore()
+
+  // Verificar se o NotificationProvider está disponível
+  let notificationContext
+  try {
+    notificationContext = useNotifications()
+  } catch (error) {
+    // Provider não está disponível ainda
+    return {
+      notifications: [],
+      unreadCount: 0,
+      isLoading: false,
+      isConnected: false,
+      markAsRead: async () => {},
+      markAllAsRead: async () => {},
+      dismissNotification: async () => {}
+    }
+  }
+
   const {
     notifications,
     unreadCount,
@@ -22,7 +40,7 @@ export function useRealtimeNotifications() {
     markAsRead,
     markAllAsRead,
     dismissNotification
-  } = useNotifications()
+  } = notificationContext
 
   // Auto-subscribe quando usuário está disponível
   useEffect(() => {

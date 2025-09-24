@@ -3,7 +3,7 @@
  */
 
 // Configurar variáveis de ambiente para testes
-process.env.NODE_ENV = 'test'
+// NODE_ENV é read-only, não pode ser alterado diretamente
 process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
 
 // Supabase

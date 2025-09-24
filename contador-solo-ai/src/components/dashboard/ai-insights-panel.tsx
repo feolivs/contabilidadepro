@@ -53,19 +53,20 @@ export function AIInsightsPanel({
   // Hook baseado na variante
   const useInsightsHook = variant === 'quick' ? useAIInsightsQuick : useAIInsights
   
+  // Usar hooks condicionalmente é contra as regras do React
+  // Vamos usar sempre o hook completo e filtrar os dados
   const {
     data: insights,
     isLoading,
     error,
     refetch
-  } = variant === 'quick' 
-    ? useAIInsightsQuick(empresaId, 'financeiro')
-    : useAIInsights(empresaId, {
-        insight_type: variant === 'financial' ? 'financeiro' : 
-                     variant === 'compliance' ? 'compliance' : 'completo',
-        force_refresh: forceRefresh,
-        enabled: !!empresaId
-      })
+  } = useAIInsights(empresaId, {
+    insight_type: variant === 'quick' ? 'financeiro' :
+                 variant === 'financial' ? 'financeiro' :
+                 variant === 'compliance' ? 'compliance' : 'completo',
+    force_refresh: forceRefresh,
+    enabled: !!empresaId
+  })
 
   const handleRefresh = async () => {
     setForceRefresh(true)

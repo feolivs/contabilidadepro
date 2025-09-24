@@ -600,11 +600,15 @@ function StatusBadge({ status }: { status: StatusProcessamento }) {
 function TipoBadge({ tipo }: { tipo: TipoDocumento }) {
   const tipoConfig = {
     NFE: { className: 'text-green-700 bg-green-100 border-green-200', label: 'NFe' },
+    NFCE: { className: 'text-emerald-700 bg-emerald-100 border-emerald-200', label: 'NFCe' },
     NFSE: { className: 'text-blue-700 bg-blue-100 border-blue-200', label: 'NFSe' },
+    CTE: { className: 'text-indigo-700 bg-indigo-100 border-indigo-200', label: 'CTe' },
     RECIBO: { className: 'text-yellow-700 bg-yellow-100 border-yellow-200', label: 'Recibo' },
+    CONTRATO: { className: 'text-orange-700 bg-orange-100 border-orange-200', label: 'Contrato' },
     BOLETO: { className: 'text-red-700 bg-red-100 border-red-200', label: 'Boleto' },
     EXTRATO: { className: 'text-purple-700 bg-purple-100 border-purple-200', label: 'Extrato' },
-    COMPROVANTE: { className: 'text-cyan-700 bg-cyan-100 border-cyan-200', label: 'Comprovante' }
+    COMPROVANTE: { className: 'text-cyan-700 bg-cyan-100 border-cyan-200', label: 'Comprovante' },
+    OUTROS: { className: 'text-gray-700 bg-gray-100 border-gray-200', label: 'Outros' }
   }
 
   const config = tipoConfig[tipo] || { 

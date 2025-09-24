@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { ClientesContent } from '@/components/clientes/clientes-content'
 import { ClientesStats } from '@/components/clientes/clientes-stats'
 import { createServerClient } from '@supabase/ssr'
@@ -152,7 +152,7 @@ export default async function ClientesPage() {
   const stats = calculateStats(empresas)
 
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -174,7 +174,7 @@ export default async function ClientesPage() {
           <ClientesContent initialEmpresas={empresas} initialStats={stats} />
         </Suspense>
       </div>
-    </MainLayout>
+    </CleanLayout>
   )
 }
 

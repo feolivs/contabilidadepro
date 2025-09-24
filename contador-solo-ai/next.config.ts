@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
   // TypeScript - não falhar build por warnings
   typescript: {
     // Durante builds, ignorar erros de tipo não críticos
-    ignoreBuildErrors: false, // Manter false para mostrar erros
+    ignoreBuildErrors: false, // Revertido: verificar erros TypeScript
   },
 
   // Otimizações de imagem
@@ -62,7 +62,12 @@ const nextConfig: NextConfig = {
       'react-markdown',
       'react-syntax-highlighter'
     ],
+    // Preload de módulos críticos
+    optimisticClientCache: true,
   },
+
+  // Server external packages (movido do experimental)
+  serverExternalPackages: ['@supabase/supabase-js'],
 
   // Configuração do Turbopack
   turbopack: {
@@ -123,18 +128,37 @@ const nextConfig: NextConfig = {
             test: /[\\/]node_modules[\\/](jspdf|pdfjs-dist)[\\/]/,
             chunks: 'async',
             priority: 35,
+            enforce: true,
           },
           charts: {
             name: 'charts',
             test: /[\\/]node_modules[\\/]recharts[\\/]/,
             chunks: 'async',
             priority: 30,
+            enforce: true,
           },
           excel: {
             name: 'excel',
             test: /[\\/]node_modules[\\/]xlsx[\\/]/,
             chunks: 'async',
             priority: 30,
+            enforce: true,
+          },
+          // Markdown e syntax highlighting - lazy load
+          markdown: {
+            name: 'markdown',
+            test: /[\\/]node_modules[\\/](react-markdown|react-syntax-highlighter|rehype-|remark-)[\\/]/,
+            chunks: 'async',
+            priority: 25,
+            enforce: true,
+          },
+          // OpenAI e AI libraries
+          ai: {
+            name: 'ai-libs',
+            test: /[\\/]node_modules[\\/](openai)[\\/]/,
+            chunks: 'async',
+            priority: 20,
+            enforce: true,
           },
           // Date utilities
           dateFns: {

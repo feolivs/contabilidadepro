@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { MainLayout } from '@/components/layout/main-layout'
+import { CleanLayout } from '@/components/layout/clean-layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,7 +32,7 @@ export default function EmpresaFullPage() {
 
   if (loading) {
     return (
-      <MainLayout>
+      <CleanLayout>
         <div className="space-y-6">
           {/* Header Skeleton */}
           <div className="flex items-center justify-between">
@@ -87,13 +87,13 @@ export default function EmpresaFullPage() {
             </div>
           </div>
         </div>
-      </MainLayout>
+      </CleanLayout>
     )
   }
 
   if (error || !empresa) {
     return (
-      <MainLayout>
+      <CleanLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">
             <Building2 className="h-16 w-16 text-gray-400 mx-auto" />
@@ -109,18 +109,18 @@ export default function EmpresaFullPage() {
               <Button onClick={() => window.location.reload()} variant="outline">
                 Tentar novamente
               </Button>
-              <Button onClick={() => router.push('/clientes')} variant="ghost">
-                Voltar aos clientes
+              <Button onClick={() => router.push('/empresas')} variant="ghost">
+                Voltar às empresas
               </Button>
             </div>
           </div>
         </div>
-      </MainLayout>
+      </CleanLayout>
     )
   }
 
   return (
-    <MainLayout>
+    <CleanLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -128,7 +128,7 @@ export default function EmpresaFullPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => router.push('/clientes')}
+              onClick={() => router.push('/empresas')}
               className="flex items-center"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -334,6 +334,6 @@ export default function EmpresaFullPage() {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </CleanLayout>
   )
 }

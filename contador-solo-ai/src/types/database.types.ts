@@ -83,6 +83,151 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_insights: {
+        Row: {
+          alertas_prioritarios: Json
+          analise_compliance: Json
+          analise_financeira: Json
+          benchmarking: Json
+          confianca_analise: number | null
+          configuracao_geracao: Json
+          created_at: string
+          data_geracao: string
+          empresa_id: string
+          id: string
+          insights_operacionais: Json
+          limitacoes: Json
+          modelo_usado: string
+          nivel_detalhamento: string
+          projecoes_estrategicas: Json
+          proxima_revisao_sugerida: string | null
+          resumo_executivo: Json
+          tempo_processamento_ms: number
+          tipo_insight: string
+          tokens_utilizados: number
+          updated_at: string
+          valido_ate: string | null
+        }
+        Insert: {
+          alertas_prioritarios?: Json
+          analise_compliance?: Json
+          analise_financeira?: Json
+          benchmarking?: Json
+          confianca_analise?: number | null
+          configuracao_geracao?: Json
+          created_at?: string
+          data_geracao?: string
+          empresa_id: string
+          id?: string
+          insights_operacionais?: Json
+          limitacoes?: Json
+          modelo_usado?: string
+          nivel_detalhamento: string
+          projecoes_estrategicas?: Json
+          proxima_revisao_sugerida?: string | null
+          resumo_executivo?: Json
+          tempo_processamento_ms?: number
+          tipo_insight: string
+          tokens_utilizados?: number
+          updated_at?: string
+          valido_ate?: string | null
+        }
+        Update: {
+          alertas_prioritarios?: Json
+          analise_compliance?: Json
+          analise_financeira?: Json
+          benchmarking?: Json
+          confianca_analise?: number | null
+          configuracao_geracao?: Json
+          created_at?: string
+          data_geracao?: string
+          empresa_id?: string
+          id?: string
+          insights_operacionais?: Json
+          limitacoes?: Json
+          modelo_usado?: string
+          nivel_detalhamento?: string
+          projecoes_estrategicas?: Json
+          proxima_revisao_sugerida?: string | null
+          resumo_executivo?: Json
+          tempo_processamento_ms?: number
+          tipo_insight?: string
+          tokens_utilizados?: number
+          updated_at?: string
+          valido_ate?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_insights_cache: {
+        Row: {
+          confianca_cache: number
+          config_hash: string
+          configuracao_original: Json
+          created_at: string
+          empresa_id: string
+          expires_at: string
+          hit_count: number
+          id: string
+          insights_data: Json
+          last_hit_at: string | null
+          modelo_usado: string
+          tempo_geracao_ms: number
+          tipo_insight: string
+          tokens_utilizados: number
+          updated_at: string
+        }
+        Insert: {
+          confianca_cache?: number
+          config_hash: string
+          configuracao_original: Json
+          created_at?: string
+          empresa_id: string
+          expires_at: string
+          hit_count?: number
+          id?: string
+          insights_data: Json
+          last_hit_at?: string | null
+          modelo_usado?: string
+          tempo_geracao_ms?: number
+          tipo_insight: string
+          tokens_utilizados?: number
+          updated_at?: string
+        }
+        Update: {
+          confianca_cache?: number
+          config_hash?: string
+          configuracao_original?: Json
+          created_at?: string
+          empresa_id?: string
+          expires_at?: string
+          hit_count?: number
+          id?: string
+          insights_data?: Json
+          last_hit_at?: string | null
+          modelo_usado?: string
+          tempo_geracao_ms?: number
+          tipo_insight?: string
+          tokens_utilizados?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_cache_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_metrics: {
         Row: {
           cache_hit: boolean | null
@@ -296,6 +441,62 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_cache: {
+        Row: {
+          cache_data: Json
+          cache_key: string
+          cache_type: string
+          compression_ratio: number | null
+          created_at: string
+          data_size_bytes: number
+          empresa_id: string | null
+          expires_at: string
+          hit_count: number
+          id: string
+          last_hit_at: string | null
+          metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          cache_data: Json
+          cache_key: string
+          cache_type: string
+          compression_ratio?: number | null
+          created_at?: string
+          data_size_bytes?: number
+          empresa_id?: string | null
+          expires_at: string
+          hit_count?: number
+          id?: string
+          last_hit_at?: string | null
+          metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          cache_data?: Json
+          cache_key?: string
+          cache_type?: string
+          compression_ratio?: number | null
+          created_at?: string
+          data_size_bytes?: number
+          empresa_id?: string | null
+          expires_at?: string
+          hit_count?: number
+          id?: string
+          last_hit_at?: string | null
+          metadata?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_cache_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analytics_events: {
         Row: {
           entity_id: string | null
@@ -331,6 +532,47 @@ export type Database = {
           value_numeric?: number | null
         }
         Relationships: []
+      }
+      cache_invalidation_log: {
+        Row: {
+          cache_key: string
+          cache_type: string
+          empresa_id: string | null
+          id: string
+          invalidation_reason: string
+          metadata: Json
+          timestamp: string
+          triggered_by: string | null
+        }
+        Insert: {
+          cache_key: string
+          cache_type: string
+          empresa_id?: string | null
+          id?: string
+          invalidation_reason: string
+          metadata?: Json
+          timestamp?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          cache_key?: string
+          cache_type?: string
+          empresa_id?: string | null
+          id?: string
+          invalidation_reason?: string
+          metadata?: Json
+          timestamp?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cache_invalidation_log_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calculos_fiscais: {
         Row: {
@@ -490,6 +732,80 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance_analysis: {
+        Row: {
+          alertas_urgentes: Json
+          configuracao_analise: Json
+          consistencia_dados: Json
+          created_at: string
+          data_analise: string
+          documentos_analisados: number
+          empresa_id: string
+          historico_compliance: Json
+          id: string
+          nivel: string
+          obrigacoes_fiscais: Json
+          periodo_analise_fim: string | null
+          periodo_analise_inicio: string | null
+          prazos_fiscais: Json
+          qualidade_documentacao: Json
+          riscos_identificados: Json
+          score_geral: number
+          updated_at: string
+          versao_analyzer: string
+        }
+        Insert: {
+          alertas_urgentes?: Json
+          configuracao_analise?: Json
+          consistencia_dados?: Json
+          created_at?: string
+          data_analise?: string
+          documentos_analisados?: number
+          empresa_id: string
+          historico_compliance?: Json
+          id?: string
+          nivel: string
+          obrigacoes_fiscais?: Json
+          periodo_analise_fim?: string | null
+          periodo_analise_inicio?: string | null
+          prazos_fiscais?: Json
+          qualidade_documentacao?: Json
+          riscos_identificados?: Json
+          score_geral: number
+          updated_at?: string
+          versao_analyzer?: string
+        }
+        Update: {
+          alertas_urgentes?: Json
+          configuracao_analise?: Json
+          consistencia_dados?: Json
+          created_at?: string
+          data_analise?: string
+          documentos_analisados?: number
+          empresa_id?: string
+          historico_compliance?: Json
+          id?: string
+          nivel?: string
+          obrigacoes_fiscais?: Json
+          periodo_analise_fim?: string | null
+          periodo_analise_inicio?: string | null
+          prazos_fiscais?: Json
+          qualidade_documentacao?: Json
+          riscos_identificados?: Json
+          score_geral?: number
+          updated_at?: string
+          versao_analyzer?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_analysis_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultas_ia: {
         Row: {
           confianca: number
@@ -585,6 +901,274 @@ export type Database = {
           },
         ]
       }
+      dados_estruturados: {
+        Row: {
+          campos_extraidos: string[]
+          confianca_extracao: number
+          created_at: string
+          dados_processados: Json
+          data_processamento: string
+          documento_id: string | null
+          erros_validacao: Json
+          id: string
+          metadados_processamento: Json
+          processado_por: string
+          tipo_documento: string
+          updated_at: string
+          versao_processador: string
+        }
+        Insert: {
+          campos_extraidos?: string[]
+          confianca_extracao?: number
+          created_at?: string
+          dados_processados?: Json
+          data_processamento?: string
+          documento_id?: string | null
+          erros_validacao?: Json
+          id?: string
+          metadados_processamento?: Json
+          processado_por?: string
+          tipo_documento: string
+          updated_at?: string
+          versao_processador?: string
+        }
+        Update: {
+          campos_extraidos?: string[]
+          confianca_extracao?: number
+          created_at?: string
+          dados_processados?: Json
+          data_processamento?: string
+          documento_id?: string | null
+          erros_validacao?: Json
+          id?: string
+          metadados_processamento?: Json
+          processado_por?: string
+          tipo_documento?: string
+          updated_at?: string
+          versao_processador?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dados_estruturados_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_exports: {
+        Row: {
+          arquivo_url: string | null
+          config: Json
+          created_at: string | null
+          erro_detalhes: string | null
+          formato: string
+          id: string
+          nome_arquivo: string
+          status: string
+          tamanho_arquivo: number | null
+          tipo_dados: string
+          total_registros: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          arquivo_url?: string | null
+          config?: Json
+          created_at?: string | null
+          erro_detalhes?: string | null
+          formato: string
+          id?: string
+          nome_arquivo: string
+          status?: string
+          tamanho_arquivo?: number | null
+          tipo_dados: string
+          total_registros?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          arquivo_url?: string | null
+          config?: Json
+          created_at?: string | null
+          erro_detalhes?: string | null
+          formato?: string
+          id?: string
+          nome_arquivo?: string
+          status?: string
+          tamanho_arquivo?: number | null
+          tipo_dados?: string
+          total_registros?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      document_processing_config: {
+        Row: {
+          auto_cleanup_enabled: boolean | null
+          batch_size: number | null
+          created_at: string | null
+          id: string
+          max_concurrent_jobs: number | null
+          ocr_cache_ttl_hours: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_cleanup_enabled?: boolean | null
+          batch_size?: number | null
+          created_at?: string | null
+          id?: string
+          max_concurrent_jobs?: number | null
+          ocr_cache_ttl_hours?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_cleanup_enabled?: boolean | null
+          batch_size?: number | null
+          created_at?: string | null
+          id?: string
+          max_concurrent_jobs?: number | null
+          ocr_cache_ttl_hours?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      document_processing_metrics: {
+        Row: {
+          avg_processing_time_seconds: number | null
+          cache_hit_rate: number | null
+          created_at: string | null
+          date: string | null
+          id: string
+          peak_concurrent_jobs: number | null
+          storage_used_bytes: number | null
+          total_failed: number | null
+          total_processed: number | null
+        }
+        Insert: {
+          avg_processing_time_seconds?: number | null
+          cache_hit_rate?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          peak_concurrent_jobs?: number | null
+          storage_used_bytes?: number | null
+          total_failed?: number | null
+          total_processed?: number | null
+        }
+        Update: {
+          avg_processing_time_seconds?: number | null
+          cache_hit_rate?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          peak_concurrent_jobs?: number | null
+          storage_used_bytes?: number | null
+          total_failed?: number | null
+          total_processed?: number | null
+        }
+        Relationships: []
+      }
+      document_processing_queue: {
+        Row: {
+          created_at: string | null
+          documento_id: string | null
+          error_details: string | null
+          estimated_processing_time: unknown | null
+          id: string
+          max_retries: number | null
+          priority: number | null
+          processing_completed_at: string | null
+          processing_started_at: string | null
+          retry_count: number | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          documento_id?: string | null
+          error_details?: string | null
+          estimated_processing_time?: unknown | null
+          id?: string
+          max_retries?: number | null
+          priority?: number | null
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          documento_id?: string | null
+          error_details?: string | null
+          estimated_processing_time?: unknown | null
+          id?: string
+          max_retries?: number | null
+          priority?: number | null
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_processing_queue_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_fiscais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_type_support: {
+        Row: {
+          confidence_threshold: number | null
+          created_at: string | null
+          document_type: string
+          extraction_patterns: Json | null
+          id: string
+          is_brazilian_fiscal: boolean | null
+          max_file_size_mb: number | null
+          mime_types: string[]
+          processing_priority: number | null
+          recognition_method: string
+          supports_ocr: boolean | null
+          supports_structured_data: boolean | null
+        }
+        Insert: {
+          confidence_threshold?: number | null
+          created_at?: string | null
+          document_type: string
+          extraction_patterns?: Json | null
+          id?: string
+          is_brazilian_fiscal?: boolean | null
+          max_file_size_mb?: number | null
+          mime_types: string[]
+          processing_priority?: number | null
+          recognition_method: string
+          supports_ocr?: boolean | null
+          supports_structured_data?: boolean | null
+        }
+        Update: {
+          confidence_threshold?: number | null
+          created_at?: string | null
+          document_type?: string
+          extraction_patterns?: Json | null
+          id?: string
+          is_brazilian_fiscal?: boolean | null
+          max_file_size_mb?: number | null
+          mime_types?: string[]
+          processing_priority?: number | null
+          recognition_method?: string
+          supports_ocr?: boolean | null
+          supports_structured_data?: boolean | null
+        }
+        Relationships: []
+      }
       documento_analises_ia: {
         Row: {
           analise_resultado: Json
@@ -652,19 +1236,27 @@ export type Database = {
           arquivo_tamanho: number
           arquivo_tipo: string
           arquivo_url: string
+          confianca_estruturacao: number | null
           created_at: string | null
+          dados_estruturados: Json | null
           dados_extraidos: Json | null
           data_emissao: string | null
+          data_estruturacao: string | null
           data_processamento: string | null
           empresa_id: string
+          erro_processamento: string | null
+          erros_estruturacao: Json | null
           id: string
+          mensagem_status: string | null
           numero_documento: string | null
           observacoes: string | null
           ocr_confidence: number | null
           ocr_method: string | null
           processing_metadata: Json | null
+          progresso_processamento: number | null
           serie: string | null
           status_processamento: Database["public"]["Enums"]["status_processamento"]
+          tentativas_processamento: number | null
           text_extraction_quality: Json | null
           tipo_documento: Database["public"]["Enums"]["tipo_documento"]
           updated_at: string | null
@@ -676,19 +1268,27 @@ export type Database = {
           arquivo_tamanho: number
           arquivo_tipo: string
           arquivo_url: string
+          confianca_estruturacao?: number | null
           created_at?: string | null
+          dados_estruturados?: Json | null
           dados_extraidos?: Json | null
           data_emissao?: string | null
+          data_estruturacao?: string | null
           data_processamento?: string | null
           empresa_id: string
+          erro_processamento?: string | null
+          erros_estruturacao?: Json | null
           id?: string
+          mensagem_status?: string | null
           numero_documento?: string | null
           observacoes?: string | null
           ocr_confidence?: number | null
           ocr_method?: string | null
           processing_metadata?: Json | null
+          progresso_processamento?: number | null
           serie?: string | null
           status_processamento?: Database["public"]["Enums"]["status_processamento"]
+          tentativas_processamento?: number | null
           text_extraction_quality?: Json | null
           tipo_documento: Database["public"]["Enums"]["tipo_documento"]
           updated_at?: string | null
@@ -700,19 +1300,27 @@ export type Database = {
           arquivo_tamanho?: number
           arquivo_tipo?: string
           arquivo_url?: string
+          confianca_estruturacao?: number | null
           created_at?: string | null
+          dados_estruturados?: Json | null
           dados_extraidos?: Json | null
           data_emissao?: string | null
+          data_estruturacao?: string | null
           data_processamento?: string | null
           empresa_id?: string
+          erro_processamento?: string | null
+          erros_estruturacao?: Json | null
           id?: string
+          mensagem_status?: string | null
           numero_documento?: string | null
           observacoes?: string | null
           ocr_confidence?: number | null
           ocr_method?: string | null
           processing_metadata?: Json | null
+          progresso_processamento?: number | null
           serie?: string | null
           status_processamento?: Database["public"]["Enums"]["status_processamento"]
+          tentativas_processamento?: number | null
           text_extraction_quality?: Json | null
           tipo_documento?: Database["public"]["Enums"]["tipo_documento"]
           updated_at?: string | null
@@ -1069,6 +1677,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      export_templates: {
+        Row: {
+          config: Json
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          publico: boolean | null
+          updated_at: string | null
+          user_id: string
+          uso_count: number | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          publico?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          uso_count?: number | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          publico?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          uso_count?: number | null
+        }
+        Relationships: []
       }
       feedback_responses: {
         Row: {
@@ -1580,6 +2224,71 @@ export type Database = {
           },
         ]
       }
+      metricas_financeiras: {
+        Row: {
+          confianca_calculo: number
+          created_at: string
+          data_calculo: string
+          documentos_analisados: number
+          empresa_id: string
+          fluxo_caixa: Json
+          id: string
+          indicadores_performance: Json
+          metricas_mensais: Json
+          metricas_por_tipo: Json
+          periodo_fim: string
+          periodo_inicio: string
+          projecoes: Json
+          resumo_executivo: Json
+          updated_at: string
+          versao_calculadora: string
+        }
+        Insert: {
+          confianca_calculo?: number
+          created_at?: string
+          data_calculo?: string
+          documentos_analisados?: number
+          empresa_id: string
+          fluxo_caixa?: Json
+          id?: string
+          indicadores_performance?: Json
+          metricas_mensais?: Json
+          metricas_por_tipo?: Json
+          periodo_fim: string
+          periodo_inicio: string
+          projecoes?: Json
+          resumo_executivo?: Json
+          updated_at?: string
+          versao_calculadora?: string
+        }
+        Update: {
+          confianca_calculo?: number
+          created_at?: string
+          data_calculo?: string
+          documentos_analisados?: number
+          empresa_id?: string
+          fluxo_caixa?: Json
+          id?: string
+          indicadores_performance?: Json
+          metricas_mensais?: Json
+          metricas_por_tipo?: Json
+          periodo_fim?: string
+          periodo_inicio?: string
+          projecoes?: Json
+          resumo_executivo?: Json
+          updated_at?: string
+          versao_calculadora?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metricas_financeiras_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mfa_backup_codes: {
         Row: {
           code_hash: string
@@ -1820,6 +2529,62 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_metrics: {
+        Row: {
+          cpu_usage_percent: number | null
+          data_processed_bytes: number | null
+          empresa_id: string | null
+          error_message: string | null
+          execution_time_ms: number
+          id: string
+          memory_usage_mb: number | null
+          metadata: Json
+          metric_type: string
+          operation_name: string
+          success: boolean
+          timestamp: string
+          tokens_used: number | null
+        }
+        Insert: {
+          cpu_usage_percent?: number | null
+          data_processed_bytes?: number | null
+          empresa_id?: string | null
+          error_message?: string | null
+          execution_time_ms: number
+          id?: string
+          memory_usage_mb?: number | null
+          metadata?: Json
+          metric_type: string
+          operation_name: string
+          success?: boolean
+          timestamp?: string
+          tokens_used?: number | null
+        }
+        Update: {
+          cpu_usage_percent?: number | null
+          data_processed_bytes?: number | null
+          empresa_id?: string | null
+          error_message?: string | null
+          execution_time_ms?: number
+          id?: string
+          memory_usage_mb?: number | null
+          metadata?: Json
+          metric_type?: string
+          operation_name?: string
+          success?: boolean
+          timestamp?: string
+          tokens_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_metrics_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plano_contas: {
         Row: {
           aceita_lancamento: boolean | null
@@ -1967,6 +2732,50 @@ export type Database = {
           validation_notes?: string | null
         }
         Relationships: []
+      }
+      processing_progress: {
+        Row: {
+          created_at: string | null
+          current_operation: string | null
+          document_id: string
+          error_message: string | null
+          estimated_time_remaining: number | null
+          id: string
+          progress_percent: number
+          stage: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_operation?: string | null
+          document_id: string
+          error_message?: string | null
+          estimated_time_remaining?: number | null
+          id?: string
+          progress_percent?: number
+          stage: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_operation?: string | null
+          document_id?: string
+          error_message?: string | null
+          estimated_time_remaining?: number | null
+          id?: string
+          progress_percent?: number
+          stage?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processing_progress_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prompts_especializados: {
         Row: {
@@ -2800,6 +3609,19 @@ export type Database = {
         }
         Relationships: []
       }
+      cache_statistics: {
+        Row: {
+          active_entries: number | null
+          avg_hits_per_entry: number | null
+          avg_size_bytes: number | null
+          cache_type: string | null
+          expired_entries: number | null
+          total_entries: number | null
+          total_hits: number | null
+          total_size_bytes: number | null
+        }
+        Relationships: []
+      }
       dashboard_metrics_realtime: {
         Row: {
           calculos_hoje: number | null
@@ -2887,6 +3709,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      performance_summary: {
+        Row: {
+          avg_execution_time_ms: number | null
+          failed_operations: number | null
+          max_execution_time_ms: number | null
+          metric_type: string | null
+          min_execution_time_ms: number | null
+          operation_name: string | null
+          p95_execution_time_ms: number | null
+          success_rate_percent: number | null
+          successful_operations: number | null
+          total_operations: number | null
+        }
+        Relationships: []
       }
       pg_all_foreign_keys: {
         Row: {
@@ -3245,6 +4082,10 @@ export type Database = {
         }
         Returns: Json
       }
+      clean_expired_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_expired_cache: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -3265,6 +4106,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_old_data: {
+        Args: { p_days_to_keep?: number }
+        Returns: Json
+      }
       cleanup_old_documents: {
         Args: { days_to_keep?: number }
         Returns: number
@@ -3274,6 +4119,18 @@ export type Database = {
         Returns: number
       }
       cleanup_old_partitions_system_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_processing_progress: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_old_progress: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_temp_uploads: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -3422,6 +4279,10 @@ export type Database = {
         Args: Record<PropertyKey, never> | { "": string } | { "": unknown }
         Returns: string[]
       }
+      document_processing_flow_info: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       domains_are: {
         Args: { "": unknown[] }
         Returns: string
@@ -3561,13 +4422,43 @@ export type Database = {
           schedule: string
         }[]
       }
+      get_dados_estruturados_empresa: {
+        Args: {
+          p_confianca_minima?: number
+          p_data_fim?: string
+          p_data_inicio?: string
+          p_empresa_id: string
+          p_tipos_documento?: string[]
+        }
+        Returns: {
+          arquivo_nome: string
+          campos_extraidos: string[]
+          confianca_extracao: number
+          dados_processados: Json
+          data_emissao: string
+          data_processamento: string
+          documento_id: string
+          erros_validacao: Json
+          id: string
+          tipo_documento: string
+          valor_total: number
+        }[]
+      }
       get_dashboard_complete: {
         Args: { p_end_date?: string; p_start_date?: string; p_user_id: string }
+        Returns: Json
+      }
+      get_documentos_stats_empresa: {
+        Args: { p_empresa_id: string; p_periodo_meses?: number }
         Returns: Json
       }
       get_embedding_column_name: {
         Args: { dimension: number }
         Returns: string
+      }
+      get_empresa_dashboard_complete: {
+        Args: { p_empresa_id: string; p_periodo_meses?: number }
+        Returns: Json
       }
       get_fiscal_alerts_status: {
         Args: Record<PropertyKey, never>
@@ -3590,6 +4481,18 @@ export type Database = {
           total_value: number
         }[]
       }
+      get_latest_ai_insights: {
+        Args: { p_empresa_id: string; p_tipo_insight?: string }
+        Returns: Json
+      }
+      get_latest_compliance_analysis: {
+        Args: { p_empresa_id: string }
+        Returns: Json
+      }
+      get_latest_metricas_financeiras: {
+        Args: { p_empresa_id: string }
+        Returns: Json
+      }
       get_monitoring_statistics: {
         Args: { days_back?: number }
         Returns: {
@@ -3599,6 +4502,14 @@ export type Database = {
           resolved_alerts: number
           system_uptime_percent: number
           total_alerts: number
+        }[]
+      }
+      get_next_document_batch: {
+        Args: { worker_id?: string }
+        Returns: {
+          documento_id: string
+          priority: number
+          retry_count: number
         }[]
       }
       get_ocr_quality_by_method: {
@@ -4114,6 +5025,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      invalidate_empresa_cache: {
+        Args: { p_empresa_id: string; p_reason?: string }
+        Returns: number
+      }
       is_aggregate: {
         Args: { "": unknown }
         Returns: string
@@ -4480,6 +5395,10 @@ export type Database = {
         Args: { "": string[] }
         Returns: string
       }
+      optimize_ocr_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       optimize_system_performance: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -4507,6 +5426,10 @@ export type Database = {
       plan: {
         Args: { "": number }
         Returns: string
+      }
+      process_document_batch: {
+        Args: { batch_size_param?: number }
+        Returns: Json
       }
       process_webhook_retries: {
         Args: Record<PropertyKey, never>
@@ -4546,6 +5469,14 @@ export type Database = {
         Returns: undefined
       }
       run_cleanup_expired_cron: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      run_compliance_monitor_cron_optimized: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      run_incremental_backup_cron_optimized: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -4661,6 +5592,14 @@ export type Database = {
         Args: { "": unknown[] }
         Returns: string
       }
+      test_document_recognition: {
+        Args: {
+          file_mime_type: string
+          file_name?: string
+          sample_content?: string
+        }
+        Returns: Json
+      }
       test_rls_security: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -4734,8 +5673,16 @@ export type Database = {
         Args: { p_agent_id: string }
         Returns: boolean
       }
+      update_cache_hit: {
+        Args: { p_cache_key: string }
+        Returns: undefined
+      }
       update_kpi_snapshot: {
         Args: { p_user_id: string }
+        Returns: undefined
+      }
+      update_processing_metrics: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       update_user_satisfaction: {

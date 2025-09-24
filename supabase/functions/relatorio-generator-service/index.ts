@@ -191,10 +191,10 @@ async function coletarDadosRelatorio(config: RelatorioConfig, userId: string): P
  */
 async function buscarMetricasFinanceiras(empresaId: string, periodo: { inicio: string; fim: string }) {
   try {
-    const { data, error } = await supabase.functions.invoke('documentos-analytics-service', {
+    const { data, error } = await supabase.functions.invoke('documentos-service', {
       body: {
-        empresa_id: empresaId,
         operation: 'calculate_metrics',
+        empresa_id: empresaId,
         period_start: periodo.inicio,
         period_end: periodo.fim,
         options: {
@@ -230,10 +230,10 @@ async function buscarMetricasFinanceiras(empresaId: string, periodo: { inicio: s
  */
 async function buscarAnaliseCompliance(empresaId: string) {
   try {
-    const { data, error } = await supabase.functions.invoke('documentos-analytics-service', {
+    const { data, error } = await supabase.functions.invoke('documentos-service', {
       body: {
-        empresa_id: empresaId,
-        operation: 'analyze_compliance'
+        operation: 'analyze_compliance',
+        empresa_id: empresaId
       }
     })
 
@@ -261,10 +261,10 @@ async function buscarAnaliseCompliance(empresaId: string) {
  */
 async function buscarInsightsIA(empresaId: string) {
   try {
-    const { data, error } = await supabase.functions.invoke('documentos-analytics-service', {
+    const { data, error } = await supabase.functions.invoke('documentos-service', {
       body: {
-        empresa_id: empresaId,
         operation: 'generate_insights',
+        empresa_id: empresaId,
         options: {
           insight_type: 'completo'
         }

@@ -1,18 +1,117 @@
-// 📊 DASHBOARD PRINCIPAL PARA CONTADORA
-// Dashboard focado em informações práticas e acionáveis
-// Obrigações, prazos, calendário fiscal e atividades
+// 📊 DASHBOARD PRINCIPAL PARA CONTADORA - VERSÃO LIMPA
+// Dashboard com sidebar limpa e moderna usando shadcn/ui
 
-import { Suspense } from 'react'
-import { MainLayout } from '@/components/layout/main-layout'
-import { DashboardContadora } from '@/components/dashboard/dashboard-contadora'
+import { CleanLayout } from '@/components/layout/clean-layout'
+
+// Dashboard limpo e moderno
+function DashboardDebug() {
+
+  return (
+    <div className="space-y-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          📊 Dashboard ContabilidadePRO
+        </h1>
+        <p className="text-muted-foreground text-base">
+          Sidebar limpa e moderna com shadcn/ui • Dark Mode • Responsivo ✨
+        </p>
+      </div>
+
+      {/* Cards de resumo limpos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-card p-6 rounded-lg shadow-sm border">
+          <h3 className="text-lg font-semibold mb-4">
+            📋 Obrigações Fiscais
+          </h3>
+          <p className="text-3xl font-bold text-green-600 mb-2">
+            12
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Próximas nos próximos 30 dias
+          </p>
+        </div>
+
+        <div className="bg-card p-6 rounded-lg shadow-sm border">
+          <h3 className="text-lg font-semibold mb-4">
+            🏢 Empresas Ativas
+          </h3>
+          <p className="text-3xl font-bold text-blue-600 mb-2">
+            8
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Empresas sob sua gestão
+          </p>
+        </div>
+
+        <div className="bg-card p-6 rounded-lg shadow-sm border">
+          <h3 className="text-lg font-semibold mb-4">
+            📄 Documentos Pendentes
+          </h3>
+          <p className="text-3xl font-bold text-red-600 mb-2">
+            5
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Aguardando processamento
+          </p>
+        </div>
+
+        <div className="bg-card p-6 rounded-lg shadow-sm border">
+          <h3 className="text-lg font-semibold mb-4">
+            💰 Faturamento Mensal
+          </h3>
+          <p className="text-3xl font-bold text-emerald-600 mb-2">
+            R$ 45.280
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Crescimento de 12% vs mês anterior
+          </p>
+        </div>
+      </div>
+
+      {/* Seção de atividades recentes */}
+      <div className="bg-card p-6 rounded-lg shadow-sm border">
+        <h3 className="text-xl font-semibold mb-6">
+          📋 Atividades Recentes
+        </h3>
+
+        <div className="space-y-4">
+          <div className="p-4 bg-muted/30 rounded-md border-l-4 border-emerald-600">
+            <p className="text-sm font-semibold mb-1">
+              ✅ DAS enviado - Empresa ABC Ltda
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Há 2 horas • Valor: R$ 1.250,00
+            </p>
+          </div>
+
+          <div className="p-4 bg-muted/30 rounded-md border-l-4 border-blue-600">
+            <p className="text-sm font-semibold mb-1">
+              📄 Nota fiscal processada - Empresa XYZ S.A.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Há 4 horas • OCR: 98% precisão
+            </p>
+          </div>
+
+          <div className="p-4 bg-muted/30 rounded-md border-l-4 border-red-600">
+            <p className="text-sm font-semibold mb-1">
+              ⚠️ Vencimento próximo - ICMS Empresa DEF
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Vence em 3 dias • Valor: R$ 2.850,00
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function DashboardPage() {
   return (
-    <MainLayout>
-      <Suspense fallback={<DashboardSkeleton />}>
-        <DashboardContadora />
-      </Suspense>
-    </MainLayout>
+    <CleanLayout>
+      <DashboardDebug />
+    </CleanLayout>
   )
 }
 

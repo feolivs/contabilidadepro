@@ -1,0 +1,37 @@
+NOTA FISCAL DE SERVIÇOS ELETRÔNICA - NFSe
+Número: 12345
+Data de Emissão: 25/09/2025
+Competência: 09/2025
+
+PRESTADOR DE SERVIÇOS:
+Razão Social: Tech Solutions Brasil Ltda
+CNPJ: 12.345.678/0001-90
+Inscrição Municipal: 123456789
+Endereço: Rua das Flores, 123 - Centro - São Paulo/SP
+
+TOMADOR DE SERVIÇOS:
+Razão Social: Empresa Cliente ABC Ltda
+CNPJ: 98.765.432/0001-10
+Endereço: Av. Paulista, 1000 - Bela Vista - São Paulo/SP
+
+DISCRIMINAÇÃO DOS SERVIÇOS:
+Consultoria em Tecnologia da Informação
+Desenvolvimento de sistema web personalizado
+Período: 01/09/2025 a 30/09/2025
+
+VALORES:
+Valor dos Serviços: R$ 8.500,00
+(-) Desconto: R$ 0,00
+Base de Cálculo: R$ 8.500,00
+
+TRIBUTOS:
+ISS (5%): R$ 425,00
+COFINS (3%): R$ 255,00
+PIS (0,65%): R$ 55,25
+IR (1,5%): R$ 127,50
+CSLL (1%): R$ 85,00
+
+VALOR LÍQUIDO: R$ 7.552,25
+
+Regime Tributário: Simples Nacional
+Código de Serviço: 01.01 - Análise e desenvolvimento de sistemas

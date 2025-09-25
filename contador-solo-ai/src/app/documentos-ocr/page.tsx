@@ -14,24 +14,25 @@ import {
   Plus,
   Settings
 } from 'lucide-react'
-import { DocumentUpload } from '@/components/documents/document-upload'
 import { DocumentList } from '@/components/documents/document-list'
 import { DocumentViewer } from '@/components/documents/document-viewer'
-import { useDocumentOCR } from '@/hooks/use-document-ocr'
+import { UnifiedUploadModal } from '@/components/documentos/unified-upload-modal'
+import { useDocumentProcessorUnified } from '@/hooks/use-document-processor-unified'
 
 export default function DocumentosOCRPage() {
   const [activeTab, setActiveTab] = useState('upload')
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   const [showDocumentViewer, setShowDocumentViewer] = useState(false)
+  const [showUpload, setShowUpload] = useState(false)
   
-  const { useProcessedDocuments, useDocumentStats } = useDocumentOCR()
+  const { processingStatus } = useDocumentProcessorUnified()
   
-  // Buscar documento selecionado
-  const { data: documents = [] } = useProcessedDocuments()
+  // Dados mockados para demonstração
+  const documents: any[] = []
   const selectedDocument = documents.find(d => d.id === selectedDocumentId)
-  
-  // Estatísticas
-  const { data: stats = [] } = useDocumentStats()
+
+  // Estatísticas mockadas
+  const stats: any[] = []
 
   const handleViewDocument = (documentId: string) => {
     setSelectedDocumentId(documentId)
@@ -154,7 +155,15 @@ export default function DocumentosOCRPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <DocumentUpload onUploadComplete={handleUploadComplete} />
+              <div className="text-center py-8">
+                <Button
+                  onClick={() => setShowUpload(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload de Documentos
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -278,6 +287,17 @@ export default function DocumentosOCRPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Upload Unificado */}
+      <UnifiedUploadModal
+        open={showUpload}
+        onOpenChange={setShowUpload}
+        mode="batch"
+        onUploadComplete={(results) => {
+          console.log('Upload concluído:', results)
+          setActiveTab('list')
+        }}
+      />
       </div>
     </CleanLayout>
   )

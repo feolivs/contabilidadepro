@@ -130,16 +130,34 @@ export function UnifiedUploadModal({
   // Limpar arquivos quando modal fecha
   useEffect(() => {
     if (!open) {
-      arquivosSelecionados.forEach(arquivo => {
-        if (arquivo.preview) {
-          URL.revokeObjectURL(arquivo.preview)
-        }
+      // Usar callback para acessar o estado atual sem dependência
+      setArquivosSelecionados(prev => {
+        prev.forEach(arquivo => {
+          if (arquivo.preview) {
+            URL.revokeObjectURL(arquivo.preview)
+          }
+        })
+        return []
       })
-      setArquivosSelecionados([])
       setUploadAtivo(false)
       form.reset()
     }
   }, [open, form])
+
+  // Cleanup ao desmontar componente
+  useEffect(() => {
+    return () => {
+      // Limpar todas as URLs de preview ao desmontar
+      setArquivosSelecionados(prev => {
+        prev.forEach(arquivo => {
+          if (arquivo.preview) {
+            URL.revokeObjectURL(arquivo.preview)
+          }
+        })
+        return []
+      })
+    }
+  }, [])
 
   // Configuração do dropzone
   const onDrop = useCallback((acceptedFiles: File[]) => {

@@ -255,21 +255,4 @@ export const useAssistenteContabilIAStreaming = () => {
   }
 }
 
-// Hook para processamento de documentos
-export function useDocumentProcessor() {
-  const supabase = useSupabase()
-
-  return useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const { data, error } = await supabase.functions.invoke('process-document', {
-        body: formData,
-      })
-
-      if (error) throw error
-      return data
-    },
-  })
-}
+// Hook para processamento de documentos - REMOVIDO (usar useDocumentProcessorUnified)

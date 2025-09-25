@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { createDocumentSignedUrl } from '@/lib/storage-utils'
-import { usePDFOCR } from '@/hooks/use-pdf-ocr'
+import { useDocumentProcessorUnified } from '@/hooks/use-document-processor-unified'
 import { 
   Bug, 
   RefreshCw, 
@@ -31,7 +31,7 @@ interface PDFDebugPanelProps {
 export function PDFDebugPanel({ documento }: PDFDebugPanelProps) {
   const [debugInfo, setDebugInfo] = useState<any>(null)
   const [isDebugging, setIsDebugging] = useState(false)
-  const { processPDF, isProcessing } = usePDFOCR()
+  const { processOCR, isProcessing } = useDocumentProcessorUnified()
 
   const runDebugTests = async () => {
     setIsDebugging(true)

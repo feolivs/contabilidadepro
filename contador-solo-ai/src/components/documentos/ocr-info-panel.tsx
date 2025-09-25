@@ -16,7 +16,7 @@ import {
   AlertTriangle,
   Info
 } from 'lucide-react'
-import { usePDFOCR, useDocumentOCRHistory, ocrUtils } from '@/hooks/use-pdf-ocr'
+import { useDocumentProcessorUnified } from '@/hooks/use-document-processor-unified'
 import { Documento } from '@/types/documento'
 
 interface OCRInfoPanelProps {
@@ -26,8 +26,9 @@ interface OCRInfoPanelProps {
 
 export function OCRInfoPanel({ documento, className = '' }: OCRInfoPanelProps) {
   const [showHistory, setShowHistory] = useState(false)
-  const { reprocessDocument, isProcessing } = usePDFOCR()
-  const { data: ocrHistory, isLoading: historyLoading } = useDocumentOCRHistory(documento.id)
+  const { reprocessDocument, isProcessing } = useDocumentProcessorUnified()
+  const ocrHistory: any[] = []
+  const historyLoading = false
 
   // Extrair informações de OCR dos dados extraídos
   const ocrData = documento.dados_extraidos

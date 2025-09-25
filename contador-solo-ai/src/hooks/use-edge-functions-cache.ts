@@ -21,26 +21,7 @@ export function useEdgeFunctionsCache() {
     })
   }
 
-  // Cache para OCR de documentos
-  const useDocumentOCR = () => {
-    return useMutation({
-      mutationFn: (data: { documentUrl: string, tipo: 'NFE' | 'RECIBO' | 'CONTRATO' }) =>
-        OptimizedEdgeFunctions.invokeDocumentOCR(data),
-      onSuccess: (result) => {
-        // Cache do resultado por 30 minutos
-        queryClient.setQueryData(
-          ['document-ocr', result.data?.documentUrl],
-          result,
-          { updatedAt: Date.now() + (30 * 60 * 1000) }
-        )
-        toast.success('Documento processado com sucesso!')
-      },
-      onError: (error) => {
-        console.error('Erro no OCR:', error)
-        toast.error('Erro ao processar documento')
-      }
-    })
-  }
+  // Cache para OCR de documentos - REMOVIDO (usar useDocumentProcessorUnified)
 
   // Cache para assistente IA com contexto
   const useAssistenteIA = (message: string, context?: any) => {
@@ -99,25 +80,7 @@ export function useEdgeFunctionsCache() {
     })
   }
 
-  // Processador de documentos unificado
-  const useDocumentProcessor = () => {
-    return useMutation({
-      mutationFn: (data: { files: File[], empresaId: string, tipo: string }) =>
-        OptimizedEdgeFunctions.invokeDocumentProcessor(data),
-      onMutate: () => {
-        toast.loading('Processando documentos...', { id: 'document-processing' })
-      },
-      onSuccess: (result) => {
-        toast.success('Documentos processados com sucesso!', { id: 'document-processing' })
-        // Invalidar cache de documentos da empresa
-        queryClient.invalidateQueries({ queryKey: ['documentos'] })
-      },
-      onError: (error) => {
-        console.error('Erro no processamento:', error)
-        toast.error('Erro ao processar documentos', { id: 'document-processing' })
-      }
-    })
-  }
+  // Processador de documentos unificado - REMOVIDO (usar useDocumentProcessorUnified)
 
   // Utilitários de cache
   const invalidateCache = (pattern: string[]) => {
@@ -141,12 +104,10 @@ export function useEdgeFunctionsCache() {
   return {
     // Hooks de cache
     useCalculoFiscal,
-    useDocumentOCR,
     useAssistenteIA,
     useAnalytics,
     useEmpresaContext,
     useRelatorioGenerator,
-    useDocumentProcessor,
 
     // Utilitários
     invalidateCache,

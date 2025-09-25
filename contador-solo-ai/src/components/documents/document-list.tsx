@@ -19,8 +19,12 @@ import {
   Download,
   Edit
 } from 'lucide-react'
-import { useDocumentOCR, DocumentType, ProcessingStatus } from '@/hooks/use-document-ocr'
+import { useDocumentProcessorUnified } from '@/hooks/use-document-processor-unified'
 import { cn } from '@/lib/utils'
+
+// Tipos locais
+type DocumentType = 'NFE' | 'RECIBO' | 'CONTRATO' | 'COMPROVANTE' | 'BOLETO' | 'EXTRATO'
+type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
 const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   NFE: 'Nota Fiscal Eletrônica',
@@ -68,14 +72,11 @@ export function DocumentList({
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedType, setSelectedType] = useState<DocumentType | 'all'>('all')
   const [selectedStatus, setSelectedStatus] = useState<ProcessingStatus | 'all'>('all')
-  
-  const { useProcessedDocuments } = useDocumentOCR()
-  
-  const { data: documents = [], isLoading, error } = useProcessedDocuments({
-    documentType: selectedType === 'all' ? undefined : selectedType,
-    status: selectedStatus === 'all' ? undefined : selectedStatus,
-    limit: 50
-  })
+
+  // Dados mockados para demonstração
+  const documents: any[] = []
+  const isLoading = false
+  const error = null
 
   const formatCurrency = (value: number | null | undefined) => {
     if (!value) return 'N/A'

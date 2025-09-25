@@ -135,17 +135,18 @@ export function EmpresaDocumentsModal({
   })
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FolderOpen className="h-5 w-5" />
-            Documentos da Empresa
-          </DialogTitle>
-          <DialogDescription>
-            Gerencie os documentos de {empresa.nome}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FolderOpen className="h-5 w-5" />
+              Documentos da Empresa
+            </DialogTitle>
+            <DialogDescription>
+              Gerencie os documentos de {empresa.nome}
+            </DialogDescription>
+          </DialogHeader>
 
         <div className="space-y-4">
           {/* Barra de ações */}
@@ -252,17 +253,18 @@ export function EmpresaDocumentsModal({
       </DialogContent>
     </Dialog>
 
-    {/* Modal de Upload Unificado */}
-    <UnifiedUploadModal
-      open={uploadModalOpen}
-      onOpenChange={setUploadModalOpen}
-      empresaIdPadrao={empresa?.id}
-      mode="single"
-      title="Upload de Documentos da Empresa"
-      onUploadComplete={(results) => {
-        console.log('Upload concluído para empresa:', empresa?.nome, results)
-        // Aqui você pode atualizar a lista de documentos se necessário
-      }}
-    />
+      {/* Modal de Upload Unificado */}
+      <UnifiedUploadModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        empresaIdPadrao={empresa?.id}
+        mode="single"
+        title="Upload de Documentos da Empresa"
+        onUploadComplete={(results) => {
+          console.log('Upload concluído para empresa:', empresa?.nome, results)
+          // Aqui você pode atualizar a lista de documentos se necessário
+        }}
+      />
+    </>
   )
 }

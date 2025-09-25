@@ -1,3 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="0" failures="0" errors="0" time="2.118">
+<testsuites name="jest tests" tests="21" failures="0" errors="0" time="1.896">
+  <testsuite name="StructuredLogger" errors="0" failures="0" skipped="0" timestamp="2025-09-25T00:06:20" time="1.701" tests="21">
+    <testcase classname="StructuredLogger Basic Logging should log INFO messages with correct structure" name="StructuredLogger Basic Logging should log INFO messages with correct structure" time="0.006">
+    </testcase>
+    <testcase classname="StructuredLogger Basic Logging should log ERROR messages with error details" name="StructuredLogger Basic Logging should log ERROR messages with error details" time="0.001">
+    </testcase>
+    <testcase classname="StructuredLogger Basic Logging should not log DEBUG messages when log level is INFO" name="StructuredLogger Basic Logging should not log DEBUG messages when log level is INFO" time="0">
+    </testcase>
+    <testcase classname="StructuredLogger Basic Logging should log WARN and FATAL messages" name="StructuredLogger Basic Logging should log WARN and FATAL messages" time="0.001">
+    </testcase>
+    <testcase classname="StructuredLogger Context Management should set and use context" name="StructuredLogger Context Management should set and use context" time="0.001">
+    </testcase>
+    <testcase classname="StructuredLogger Context Management should set user context" name="StructuredLogger Context Management should set user context" time="0">
+    </testcase>
+    <testcase classname="StructuredLogger Context Management should extract request context" name="StructuredLogger Context Management should extract request context" time="0.002">
+    </testcase>
+    <testcase classname="StructuredLogger Performance Tracking should track performance metrics" name="StructuredLogger Performance Tracking should track performance metrics" time="0.001">
+    </testcase>
+    <testcase classname="StructuredLogger Performance Tracking should calculate performance metrics correctly" name="StructuredLogger Performance Tracking should calculate performance metrics correctly" time="0">
+    </testcase>
+    <testcase classname="StructuredLogger Specialized Logging Methods should log API calls" name="StructuredLogger Specialized Logging Methods should log API calls" time="0.001">
+    </testcase>
+    <testcase classname="StructuredLogger Specialized Logging Methods should log cache operations" name="StructuredLogger Specialized Logging Methods should log cache operations" time="0">
+    </testcase>
+    <testcase classname="StructuredLogger Specialized Logging Methods should log business events" name="StructuredLogger Specialized Logging Methods should log business events" time="0.001">
+    </testcase>
+    <testcase classname="StructuredLogger Specialized Logging Methods should log security events" name="StructuredLogger Specialized Logging Methods should log security events" time="0">
+    </testcase>
+    <testcase classname="Factory Functions should create logger with service name" name="Factory Functions should create logger with service name" time="0.001">
+    </testcase>
+    <testcase classname="Factory Functions should create request logger with request context" name="Factory Functions should create request logger with request context" time="0">
+    </testcase>
+    <testcase classname="Log Analytics should parse log entries" name="Log Analytics should parse log entries" time="0.001">
+    </testcase>
+    <testcase classname="Log Analytics should handle invalid JSON gracefully" name="Log Analytics should handle invalid JSON gracefully" time="0">
+    </testcase>
+    <testcase classname="Log Analytics should filter logs by criteria" name="Log Analytics should filter logs by criteria" time="0">
+    </testcase>
+    <testcase classname="Log Analytics should filter logs by time range" name="Log Analytics should filter logs by time range" time="0.001">
+    </testcase>
+    <testcase classname="Log Analytics should calculate metrics correctly" name="Log Analytics should calculate metrics correctly" time="0">
+    </testcase>
+    <testcase classname="Log Analytics should handle empty logs gracefully" name="Log Analytics should handle empty logs gracefully" time="0">
+    </testcase>
+  </testsuite>
 </testsuites>

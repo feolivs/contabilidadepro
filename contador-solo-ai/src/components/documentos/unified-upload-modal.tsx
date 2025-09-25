@@ -82,6 +82,7 @@ interface UnifiedUploadModalProps {
   empresaIdPadrao?: string
   mode?: 'single' | 'batch'
   onUploadComplete?: (results: any[]) => void
+  title?: string
 }
 
 // Schema de validação
@@ -99,8 +100,9 @@ export function UnifiedUploadModal({
   open,
   onOpenChange,
   empresaIdPadrao,
-  mode = 'single',
-  onUploadComplete
+  mode = 'batch',
+  onUploadComplete,
+  title
 }: UnifiedUploadModalProps) {
   const [arquivosSelecionados, setArquivosSelecionados] = useState<ArquivoSelecionado[]>([])
   const [uploadAtivo, setUploadAtivo] = useState(false)
@@ -331,9 +333,9 @@ export function UnifiedUploadModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Upload Unificado de Documentos
+            {title || 'Upload de Documentos'}
             <Badge variant="outline" className="ml-2">
-              {mode === 'batch' ? 'Modo Lote' : 'Modo Individual'}
+              Suporte Individual e em Lote
             </Badge>
           </DialogTitle>
         </DialogHeader>

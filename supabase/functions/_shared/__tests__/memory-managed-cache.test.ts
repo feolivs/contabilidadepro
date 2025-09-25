@@ -100,7 +100,7 @@ describe('MemoryManagedCache', () => {
       const key = 'fallback-test'
       const value = { data: 'from fallback' }
 
-      mockFallbackCache.get.mockResolvedValue(value)
+      (mockFallbackCache.get as any).mockResolvedValue(value)
 
       const result = await cache.get(key)
 
@@ -118,7 +118,7 @@ describe('MemoryManagedCache', () => {
     })
 
     it('should handle fallback cache errors gracefully', async () => {
-      mockFallbackCache.get.mockRejectedValue(new Error('Fallback error'))
+      (mockFallbackCache.get as any).mockRejectedValue(new Error('Fallback error'))
 
       const result = await cache.get('error-test')
       expect(result).toBeNull()
@@ -220,7 +220,7 @@ describe('MemoryManagedCache', () => {
 describe('Debug Utils', () => {
   it('should log cache state', () => {
     const cache = createMemoryManagedCache()
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
 
     // debugUtils.logCacheState(cache)
 

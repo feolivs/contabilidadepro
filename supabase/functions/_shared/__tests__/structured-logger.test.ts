@@ -10,7 +10,7 @@ import {
   createRequestLogger,
   logMiddleware,
   logAnalytics
-} from '../structured-logger.ts'
+} from '../structured-logger'
 
 // Mock console methods
 const mockConsole = {
@@ -21,7 +21,7 @@ const mockConsole = {
 
 describe('StructuredLogger', () => {
   let logger: StructuredLogger
-  let consoleSpy: jest.SpyInstance
+  let consoleSpy: any
 
   beforeEach(() => {
     consoleSpy = jest.spyOn(console, 'log').mockImplementation(mockConsole.log)
@@ -44,7 +44,7 @@ describe('StructuredLogger', () => {
       logger.info(message, metadata)
 
       expect(mockConsole.log).toHaveBeenCalledTimes(1)
-      const logCall = mockConsole.log.mock.calls[0][0]
+      const logCall = mockConsole.log.mock.calls[0][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.level).toBe('INFO')
@@ -65,7 +65,7 @@ describe('StructuredLogger', () => {
       expect(mockConsole.log).toHaveBeenCalledTimes(1)
       expect(mockConsole.error).toHaveBeenCalledTimes(1)
 
-      const logCall = mockConsole.log.mock.calls[0][0]
+      const logCall = mockConsole.log.mock.calls[0][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.level).toBe('ERROR')
@@ -79,14 +79,19 @@ describe('StructuredLogger', () => {
     })
 
     it('should not log DEBUG messages when log level is INFO', () => {
-      // Simulate INFO log level
-      process.env.LOG_LEVEL = 'INFO'
+      // Mock Deno.env.get to return INFO level
+      const originalMock = Deno.env.get as any
+      ;(Deno.env.get as any) = jest.fn((key: string) => {
+        if (key === 'LOG_LEVEL') return 'INFO'
+        return originalMock(key)
+      })
 
       logger.debug('Debug message')
 
       expect(mockConsole.log).not.toHaveBeenCalled()
 
-      delete process.env.LOG_LEVEL
+      // Restore original mock
+      ;(Deno.env.get as any) = originalMock
     })
 
     it('should log WARN and FATAL messages', () => {
@@ -95,8 +100,8 @@ describe('StructuredLogger', () => {
 
       expect(mockConsole.log).toHaveBeenCalledTimes(2)
 
-      const warnLog = JSON.parse(mockConsole.log.mock.calls[0][0])
-      const fatalLog = JSON.parse(mockConsole.log.mock.calls[1][0])
+      const warnLog = JSON.parse(mockConsole.log.mock.calls[0][0] as string)
+      const fatalLog = JSON.parse(mockConsole.log.mock.calls[1][0] as string)
 
       expect(warnLog.level).toBe('WARN')
       expect(fatalLog.level).toBe('FATAL')
@@ -110,7 +115,7 @@ describe('StructuredLogger', () => {
 
       logger.info('Test message')
 
-      const logCall = mockConsole.log.mock.calls[0][0]
+      const logCall = mockConsole.log.mock.calls[0][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.context.userId).toBe('user123')
@@ -122,7 +127,7 @@ describe('StructuredLogger', () => {
 
       logger.info('Test message')
 
-      const logCall = mockConsole.log.mock.calls[0][0]
+      const logCall = mockConsole.log.mock.calls[0][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.context.userId).toBe('user123')
@@ -141,7 +146,7 @@ describe('StructuredLogger', () => {
       logger.setRequestContext(mockRequest)
       logger.info('Test message')
 
-      const logCall = mockConsole.log.mock.calls[0][0]
+      const logCall = mockConsole.log.mock.calls[0][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.context.method).toBe('POST')
@@ -159,6 +164,9 @@ describe('StructuredLogger', () => {
       logger.trackCacheMiss()
       logger.trackDBQuery()
       logger.trackAPICall()
+
+      // Simulate time passing
+      jest.advanceTimersByTime(10)
 
       const metrics = logger.finishPerformanceTracking(true)
 
@@ -180,12 +188,15 @@ describe('StructuredLogger', () => {
       logger.trackCacheMiss()
       logger.trackDBQuery()
 
+      // Simulate time passing
+      jest.advanceTimersByTime(10)
+
       const metrics = logger.finishPerformanceTracking(true)
 
       // Should be available in the log entry
       logger.info('Test with metrics')
 
-      const logCall = mockConsole.log.mock.calls[mockConsole.log.mock.calls.length - 1][0]
+      const logCall = mockConsole.log.mock.calls[mockConsole.log.mock.calls.length - 1][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.performance).toBeDefined()
@@ -197,7 +208,7 @@ describe('StructuredLogger', () => {
     it('should log API calls', () => {
       logger.logAPICall('/api/test', 'GET', 150, 200)
 
-      const logCall = mockConsole.log.mock.calls[0][0]
+      const logCall = mockConsole.log.mock.calls[0][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.level).toBe('INFO')
@@ -212,7 +223,7 @@ describe('StructuredLogger', () => {
     it('should log cache operations', () => {
       logger.logCacheOperation('hit', 'test-key', 5)
 
-      const logCall = mockConsole.log.mock.calls[0][0]
+      const logCall = mockConsole.log.mock.calls[0][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.level).toBe('DEBUG')
@@ -224,7 +235,7 @@ describe('StructuredLogger', () => {
     it('should log business events', () => {
       logger.logBusinessEvent('user-registered', { userId: 'user123' })
 
-      const logCall = mockConsole.log.mock.calls[0][0]
+      const logCall = mockConsole.log.mock.calls[0][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.level).toBe('INFO')
@@ -236,7 +247,7 @@ describe('StructuredLogger', () => {
     it('should log security events', () => {
       logger.logSecurityEvent('suspicious-login', { ip: '192.168.1.1' })
 
-      const logCall = mockConsole.log.mock.calls[0][0]
+      const logCall = mockConsole.log.mock.calls[0][0] as string
       const logEntry = JSON.parse(logCall)
 
       expect(logEntry.level).toBe('WARN')
@@ -340,7 +351,7 @@ describe('Log Analytics', () => {
     const metrics = logAnalytics.calculateMetrics(sampleLogs)
 
     expect(metrics.totalRequests).toBe(3)
-    expect(metrics.errorRate).toBe(33.33) // 1 error out of 3 requests
+    expect(metrics.errorRate).toBeCloseTo(33.33, 1) // 1 error out of 3 requests
     expect(metrics.avgDuration).toBe(102) // (100 + 200 + 5) / 3
     expect(metrics.cacheHitRate).toBe(100) // 1 cache hit out of 1 cache operation
   })

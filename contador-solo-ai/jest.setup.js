@@ -77,6 +77,33 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   disconnect: jest.fn(),
 }))
 
+// Mock do getComputedStyle para testes de acessibilidade
+Object.defineProperty(window, 'getComputedStyle', {
+  value: jest.fn().mockImplementation((_element, _pseudoElement) => ({
+    getPropertyValue: jest.fn().mockImplementation((_property) => {
+      // Mock values for common CSS properties used in accessibility tests
+      const mockStyles = {
+        'outline': '2px solid blue',
+        'box-shadow': '0 0 0 2px rgba(0, 0, 255, 0.5)',
+        'visibility': 'visible',
+        'display': 'block',
+        'opacity': '1',
+        'color': 'rgb(0, 0, 0)',
+        'background-color': 'rgb(255, 255, 255)',
+        'font-size': '16px',
+        'line-height': '1.5'
+      }
+      return mockStyles[property] || ''
+    }),
+    // Common properties as getters
+    outline: '2px solid blue',
+    boxShadow: '0 0 0 2px rgba(0, 0, 255, 0.5)',
+    visibility: 'visible',
+    display: 'block',
+    opacity: '1'
+  }))
+})
+
 // Configurações globais para testes
 global.console = {
   ...console,

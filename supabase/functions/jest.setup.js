@@ -16,7 +16,14 @@ global.Deno = {
       }
       return env[key]
     })
-  }
+  },
+  serve: jest.fn((handler) => {
+    // Mock do Deno.serve para Edge Functions
+    return {
+      finished: Promise.resolve(),
+      shutdown: jest.fn().mockResolvedValue(undefined)
+    }
+  })
 }
 
 // Mock do performance API

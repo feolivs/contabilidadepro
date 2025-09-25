@@ -92,6 +92,14 @@ export const ROUTE_METADATA: Record<string, RouteMetadata> = {
     icon: 'Users',
     category: 'gestao'
   },
+  [APP_ROUTES.EMPRESAS_CLIENTES]: {
+    title: 'Empresas & Clientes',
+    description: 'Gestão unificada de empresas e clientes',
+    requiresAuth: true,
+    permissions: ['read:clientes', 'read:empresas'],
+    icon: 'Building2',
+    category: 'gestao'
+  },
   [APP_ROUTES.DOCUMENTOS]: {
     title: 'Documentos',
     description: 'Gestão e processamento de documentos',

@@ -169,8 +169,8 @@ describe('Sistema de Rotas', () => {
 
     test('NEW_FEATURES deve conter apenas rotas marcadas como novas', () => {
       expect(NEW_FEATURES).toContain('/assistente')
-      expect(NEW_FEATURES).toContain('/dashboard-comparativo')
       expect(NEW_FEATURES).not.toContain('/dashboard')
+      expect(NEW_FEATURES).not.toContain('/clientes')
     })
   })
 

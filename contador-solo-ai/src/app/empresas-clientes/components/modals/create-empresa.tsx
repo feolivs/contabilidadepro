@@ -47,7 +47,7 @@ const createEmpresaSchema = z.object({
   telefone: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   atividade_principal: z.string().optional(),
-  ativa: z.boolean().default(true),
+  ativa: z.boolean().optional().default(true),
   observacoes: z.string().optional(),
 })
 
@@ -64,7 +64,7 @@ export function CreateEmpresaModal({ open, onOpenChange, onSuccess }: CreateEmpr
   const createEmpresaMutation = useCreateEmpresaUnified()
 
   const form = useForm<CreateEmpresaFormData>({
-    resolver: zodResolver(createEmpresaSchema),
+    resolver: zodResolver(createEmpresaSchema) as any,
     defaultValues: {
       nome: '',
       nome_fantasia: '',
@@ -153,7 +153,7 @@ export function CreateEmpresaModal({ open, onOpenChange, onSuccess }: CreateEmpr
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Nome */}
               <FormField

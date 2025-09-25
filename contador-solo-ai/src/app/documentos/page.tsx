@@ -108,7 +108,6 @@ export default function DocumentosPage() {
   const [selectedTipo, setSelectedTipo] = useState<TipoDocumento | 'all'>('all')
   const [selectedStatus, setSelectedStatus] = useState<StatusProcessamento | 'all'>('all')
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
-  const [uploadMode, setUploadMode] = useState<'single' | 'batch'>('single')
   const [viewerModalOpen, setViewerModalOpen] = useState(false)
   const [verificationModalOpen, setVerificationModalOpen] = useState(false)
   const [errorRecoveryModalOpen, setErrorRecoveryModalOpen] = useState(false)
@@ -195,19 +194,9 @@ export default function DocumentosPage() {
               <BarChart className="h-4 w-4 mr-2" />
               Performance
             </Button>
-            <Button variant="outline" onClick={() => {
-              setUploadMode('batch')
-              setUploadModalOpen(true)
-            }}>
+            <Button onClick={() => setUploadModalOpen(true)}>
               <Upload className="h-4 w-4 mr-2" />
-              Upload em Lote
-            </Button>
-            <Button onClick={() => {
-              setUploadMode('single')
-              setUploadModalOpen(true)
-            }}>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Documento
+              Upload de Documentos
             </Button>
           </div>
         </div>
@@ -354,10 +343,7 @@ export default function DocumentosPage() {
                         : 'Nenhum documento encontrado'
                       }
                     </p>
-                    <Button onClick={() => {
-                      setUploadMode('single')
-                      setUploadModalOpen(true)
-                    }}>
+                    <Button onClick={() => setUploadModalOpen(true)}>
                       <Upload className="h-4 w-4 mr-2" />
                       Fazer primeiro upload
                     </Button>
@@ -461,7 +447,7 @@ export default function DocumentosPage() {
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         empresaIdPadrao={selectedEmpresa === 'all' ? undefined : selectedEmpresa}
-        mode={uploadMode}
+        mode="batch"
         onUploadComplete={(results) => {
           console.log('Upload concluído:', results)
           // Invalidar queries para atualizar a lista

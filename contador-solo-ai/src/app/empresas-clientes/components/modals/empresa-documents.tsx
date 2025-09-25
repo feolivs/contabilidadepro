@@ -27,6 +27,7 @@ import {
   Plus,
 } from 'lucide-react'
 import { EmpresaUnified } from '@/types/empresa-unified.types'
+import { UnifiedUploadModal } from '@/components/documentos/unified-upload-modal'
 
 // Mock data para documentos (será substituído por dados reais)
 interface DocumentoEmpresa {
@@ -80,6 +81,7 @@ export function EmpresaDocumentsModal({
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('todos')
   const [documentos] = useState<DocumentoEmpresa[]>(mockDocumentos)
+  const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
   if (!empresa) return null
 
@@ -171,7 +173,7 @@ export function EmpresaDocumentsModal({
                 <option value="outros">Outros</option>
               </select>
 
-              <Button size="sm">
+              <Button size="sm" onClick={() => setUploadModalOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar
               </Button>
@@ -249,5 +251,18 @@ export function EmpresaDocumentsModal({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Modal de Upload Unificado */}
+    <UnifiedUploadModal
+      open={uploadModalOpen}
+      onOpenChange={setUploadModalOpen}
+      empresaIdPadrao={empresa?.id}
+      mode="single"
+      title="Upload de Documentos da Empresa"
+      onUploadComplete={(results) => {
+        console.log('Upload concluído para empresa:', empresa?.nome, results)
+        // Aqui você pode atualizar a lista de documentos se necessário
+      }}
+    />
   )
 }

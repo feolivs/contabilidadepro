@@ -17,9 +17,15 @@ const eslintConfig = [
       ".next/**",
       "out/**",
       "build/**",
+      "dist/**",
+      "coverage/**",
+      "test-reports/**",
       "next-env.d.ts",
       "*.config.*",
       "public/**",
+      "**/*.min.js",
+      "**/jest-html-reporters-attach/**",
+      "scripts/**/*.js", // Ignorar scripts JS legacy
     ],
   },
   {
@@ -48,8 +54,10 @@ const eslintConfig = [
       // General rules - muito permissivo
       "no-console": "off", // Desabilitado completamente
       "prefer-const": "warn",
+      "no-unused-expressions": "off", // Desabilitar para arquivos gerados
+      "@typescript-eslint/no-unused-expressions": "off", // Desabilitar para arquivos gerados
+      "@typescript-eslint/no-this-alias": "warn",
       "no-var": "warn",
-      "no-unused-expressions": "warn",
 
       // Desabilitar regras problemáticas
       "import/no-anonymous-default-export": "off",

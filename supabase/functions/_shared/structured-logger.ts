@@ -296,7 +296,7 @@ export class StructuredLogger {
   private getMemoryUsage(): number {
     try {
       // Estimar uso de memória (limitado no Deno)
-      return Math.round(performance.memory?.usedJSHeapSize || 0)
+      return Math.round((performance as any).memory?.usedJSHeapSize || 0)
     } catch {
       return 0
     }

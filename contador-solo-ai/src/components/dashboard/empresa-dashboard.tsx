@@ -333,13 +333,13 @@ export function EmpresaDashboard({ empresaId, className }: EmpresaDashboardProps
                 <p className="text-sm font-medium text-muted-foreground">Faturamento</p>
                 <p className="text-2xl font-bold">
                   {formatCurrency(
-                    dashboardData.financial_summary?.faturamento_total ||
+                    (dashboardData.financial_summary as any)?.faturamento_total ||
                     dadosFinanceiros?.receitas.total ||
                     0
                   )}
                 </p>
                 <div className="flex items-center text-xs">
-                  {dashboardData.financial_summary?.crescimento_mensal !== undefined && (
+                  {(dashboardData.financial_summary as any)?.crescimento_mensal !== undefined && (
                     <>
                       {dashboardData.financial_summary.crescimento_mensal >= 0 ? (
                         <TrendingUp className="h-3 w-3 text-green-600 mr-1" />

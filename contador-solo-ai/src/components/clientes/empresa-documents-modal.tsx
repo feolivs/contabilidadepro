@@ -29,7 +29,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { useDocumentos, useDownloadDocumento, useDeleteDocumento } from '@/hooks/use-documentos'
-import { UploadDocumentoModal } from '@/components/documentos/upload-documento-modal'
+import { UnifiedUploadModal } from '@/components/documentos/unified-upload-modal'
 import {
   Documento,
   StatusProcessamento,
@@ -278,11 +278,15 @@ export function EmpresaDocumentsModal({
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Upload */}
-      <UploadDocumentoModal
+      {/* Modal de Upload Unificado */}
+      <UnifiedUploadModal
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         empresaIdPadrao={empresa?.id}
+        mode="single"
+        onUploadComplete={(results) => {
+          console.log('Upload concluído para empresa:', empresa?.nome_fantasia, results)
+        }}
       />
     </>
   )

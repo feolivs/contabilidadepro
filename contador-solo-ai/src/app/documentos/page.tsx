@@ -52,8 +52,7 @@ import { useEmpresas } from '@/hooks/use-empresas'
 import { DocumentProcessingStatus } from '@/components/documentos/document-processing-status'
 import { DocumentViewerModal } from '@/components/documentos/document-viewer-modal'
 import { DocumentVerificationModal } from '@/components/documentos/document-verification-modal'
-import { UploadDocumentoModal } from '@/components/documentos/upload-documento-modal'
-import { BatchUploadModal } from '@/components/documentos/batch-upload-modal'
+import { UnifiedUploadModal } from '@/components/documentos/unified-upload-modal'
 import { ErrorRecoveryPanel } from '@/components/documentos/error-recovery-panel'
 import { DeleteDocumentoModal } from '@/components/documentos/delete-documento-modal'
 import {
@@ -109,7 +108,7 @@ export default function DocumentosPage() {
   const [selectedTipo, setSelectedTipo] = useState<TipoDocumento | 'all'>('all')
   const [selectedStatus, setSelectedStatus] = useState<StatusProcessamento | 'all'>('all')
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
-  const [batchUploadModalOpen, setBatchUploadModalOpen] = useState(false)
+  const [uploadMode, setUploadMode] = useState<'single' | 'batch'>('single')
   const [viewerModalOpen, setViewerModalOpen] = useState(false)
   const [verificationModalOpen, setVerificationModalOpen] = useState(false)
   const [errorRecoveryModalOpen, setErrorRecoveryModalOpen] = useState(false)
@@ -196,11 +195,17 @@ export default function DocumentosPage() {
               <BarChart className="h-4 w-4 mr-2" />
               Performance
             </Button>
-            <Button variant="outline" onClick={() => setBatchUploadModalOpen(true)}>
+            <Button variant="outline" onClick={() => {
+              setUploadMode('batch')
+              setUploadModalOpen(true)
+            }}>
               <Upload className="h-4 w-4 mr-2" />
               Upload em Lote
             </Button>
-            <Button onClick={() => setUploadModalOpen(true)}>
+            <Button onClick={() => {
+              setUploadMode('single')
+              setUploadModalOpen(true)
+            }}>
               <Upload className="h-4 w-4 mr-2" />
               Upload Documento
             </Button>
@@ -349,7 +354,10 @@ export default function DocumentosPage() {
                         : 'Nenhum documento encontrado'
                       }
                     </p>
-                    <Button onClick={() => setUploadModalOpen(true)}>
+                    <Button onClick={() => {
+                      setUploadMode('single')
+                      setUploadModalOpen(true)
+                    }}>
                       <Upload className="h-4 w-4 mr-2" />
                       Fazer primeiro upload
                     </Button>
@@ -448,18 +456,17 @@ export default function DocumentosPage() {
         </div>
       </div>
 
-      {/* Modal de Upload */}
-      <UploadDocumentoModal
+      {/* Modal de Upload Unificado */}
+      <UnifiedUploadModal
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         empresaIdPadrao={selectedEmpresa === 'all' ? undefined : selectedEmpresa}
-      />
-
-      {/* Modal de Upload em Lote */}
-      <BatchUploadModal
-        open={batchUploadModalOpen}
-        onOpenChange={setBatchUploadModalOpen}
-        empresaIdPadrao={selectedEmpresa === 'all' ? undefined : selectedEmpresa}
+        mode={uploadMode}
+        onUploadComplete={(results) => {
+          console.log('Upload concluído:', results)
+          // Invalidar queries para atualizar a lista
+          // (já é feito automaticamente no modal)
+        }}
       />
 
       {/* Modal de Visualização */}
